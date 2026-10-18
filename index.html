@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Volleyball Scoreboard Overlay - VNL Edition v1.3</title>
+  <title>Volleyball Scoreboard Overlay - VNL Edition v1.3.1</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -92,7 +92,26 @@
     .sets-score { font-size: 22px; color: #f8fafc; letter-spacing: 3px; font-weight: 900; }
     .sets-label { font-size: 8px; color: #38bdf8; text-transform: uppercase; letter-spacing: 2px; font-weight: 900; }
 
-    /* Auswechslungs-Popups (Nur Nummern, Namen & Pfeil) */
+    .timeout-badge {
+      display: none;
+      background: #ef4444;
+      color: #ffffff;
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 2px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      animation: pulse 1s infinite;
+    }
+    .timeout-active { display: inline-block; }
+
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.95); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Auswechslungs-Popups unter dem Scoreboard (Nur Namen, Nummern & Pfeil) */
     .sub-container {
       display: flex;
       flex-direction: column;
@@ -154,7 +173,7 @@
       backdrop-filter: blur(4px);
     }
 
-    /* VNL FULLSCREEN SPIELFELD-OVERLAY (Im Stil deines Bildes) */
+    /* VNL FULLSCREEN SPIELFELD-OVERLAY */
     .vnl-fullscreen {
       position: fixed;
       top: 6%;
@@ -204,29 +223,30 @@
       font-weight: 800;
     }
 
-    /* Spielfeld-Container im perspektivischen Look */
-    .vnl-court-perspective {
+    /* Spielfeld-Layout exakt nach Vorlagenbild */
+    .vnl-court-diagram {
       flex-grow: 1;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      background: linear-gradient(180deg, rgba(15, 23, 42, 0.7) 0%, rgba(3, 7, 18, 0.9) 100%);
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.9) 100%);
       border: 3px solid var(--color-home);
-      border-radius: 8px;
+      border-radius: 10px;
       margin: 15px 0;
       padding: 25px 40px;
       position: relative;
+      box-shadow: inset 0 0 40px rgba(0,0,0,0.6);
     }
-    .guest-mode .vnl-court-perspective { border-color: var(--color-guest); }
+    .guest-mode .vnl-court-diagram { border-color: var(--color-guest); }
 
-    /* Angriffslinie / Netz-Visualisierung in der Mitte */
+    /* Netzlinie / Angriffslinie quer in der Mitte */
     .court-net-line {
       position: absolute;
       top: 50%;
-      left: 10%;
-      width: 80%;
+      left: 15%;
+      width: 70%;
       height: 2px;
-      border-top: 2px dashed rgba(255, 255, 255, 0.4);
+      border-top: 2px dashed rgba(255, 255, 255, 0.5);
     }
 
     .vnl-court-header {
@@ -240,84 +260,57 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
-      margin-bottom: 10px;
+      z-index: 2;
     }
     .guest-mode .vnl-court-header { color: var(--color-guest); }
 
-    /* Reihen: Vorderreihe (Zone 4,3,2) oben, Hinterreihe (Zone 5,6,1) unten */
+    /* Positionierung analog zum Bild: Oben (Vorderreihe), Unten (Hinterreihe) */
     .court-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      max-width: 950px;
-      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
       width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
       z-index: 2;
     }
 
     .vnl-player-card {
-      background: rgba(15, 23, 42, 0.95);
-      border: 1px solid rgba(0, 242, 254, 0.4);
-      border-radius: 6px;
+      background: linear-gradient(135deg, #070b19 0%, #1e293b 100%);
+      border: 2px solid var(--color-home);
+      border-radius: 8px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 14px 10px;
-      text-align: center;
-      position: relative;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.6);
-    }
-    .guest-mode .vnl-player-card { border-color: rgba(245, 158, 11, 0.4); }
-
-    .vnl-p-number {
-      font-size: 24px;
-      font-weight: 900;
-      color: #030712;
-      background: var(--color-home);
-      min-width: 44px;
-      height: 38px;
-      display: flex;
-      align-items: center;
       justify-content: center;
-      border-radius: 4px;
-      margin-bottom: 6px;
+      padding: 12px 18px;
+      text-align: center;
+      min-width: 260px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
     }
-    .guest-mode .vnl-p-number { background: var(--color-guest); }
+    .guest-mode .vnl-player-card { border-color: var(--color-guest); }
 
-    .vnl-p-name {
-      font-size: 14px;
-      font-weight: 800;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
+    .vnl-p-content {
+      font-size: 16px;
+      font-weight: 900;
+      color: #ffffff;
       letter-spacing: 0.5px;
+      white-space: nowrap;
     }
 
-    .vnl-p-pos {
+    .vnl-zone-tag {
       font-size: 9px;
       color: #38bdf8;
       text-transform: uppercase;
       letter-spacing: 1px;
+      margin-top: 3px;
       font-weight: 700;
-      margin-top: 2px;
-    }
-
-    .vnl-zone-label {
-      position: absolute;
-      top: 4px;
-      right: 8px;
-      font-size: 8px;
-      color: rgba(255,255,255,0.4);
-      font-weight: 900;
-      letter-spacing: 1px;
     }
   </style>
 </head>
 <body>
 
   <!-- Versions-Badge -->
-  <div class="version-badge">v1.3</div>
+  <div class="version-badge">v1.3.1</div>
 
   <!-- Scoreboard & Sub-Popups -->
   <div class="scoreboard-wrapper">
@@ -350,7 +343,7 @@
       <div id="vnl-subtitle" class="vnl-match-subtitle">SC Halle vs. TV Hörde</div>
     </div>
 
-    <div class="vnl-court-perspective">
+    <div class="vnl-court-diagram">
       <div class="court-net-line"></div>
       
       <div class="vnl-court-header">
@@ -358,10 +351,10 @@
         <span id="vnl-single-team-name">SC Halle</span>
       </div>
 
-      <!-- Oben: Vorderreihe (Zonen 4, 3, 2) -->
+      <!-- OBERE REIHE (Vorderreihe: Zone 4, Zone 3, Zone 2) -->
       <div class="court-row" id="vnl-front-row"></div>
 
-      <!-- Unten: Hinterreihe (Zonen 5, 6, 1) -->
+      <!-- UNTERE REIHE (Hinterreihe: Zone 5, Zone 6, Zone 1) -->
       <div class="court-row" id="vnl-back-row"></div>
     </div>
   </div>
@@ -422,7 +415,7 @@
       if (d.logo2) { logo2El.src = d.logo2; logo2El.style.display = 'block'; }
     }
 
-    // Zeigt die Startaufstellung im getrennten Vorder- und Hinterreihen-Layout
+    // Setzt die Spieler exakt in das Raster der Vorlage ein
     function showTeamLineup(title, matchSub, teamName, players, logoUrl = null, isGuest = false) {
       document.getElementById('vnl-title').innerText = title;
       document.getElementById('vnl-subtitle').innerText = matchSub;
@@ -436,27 +429,23 @@
       if (logoUrl) { logoEl.src = logoUrl; logoEl.style.display = 'block'; } 
       else { logoEl.style.display = 'none'; }
 
-      // Spieler aufteilen: Index 0,1,2 = Vorderreihe (Zone 4, 3, 2) | Index 3,4,5 = Hinterreihe (Zone 5, 6, 1)
-      const frontPlayers = players.slice(0, 3);
-      const backPlayers = players.slice(3, 6);
-      const frontZones = ["Zone 4", "Zone 3", "Zone 2"];
-      const backZones = ["Zone 5", "Zone 6", "Zone 1"];
+      // Aufteilung entsprechend deiner Vorlage: 
+      // Oben (Vorderreihe): Index 0 (Links/Z4), Index 1 (Mitte/Z3), Index 2 (Rechts/Z2)
+      // Unten (Hinterreihe): Index 3 (Links/Z5), Index 4 (Mitte/Z6), Index 5 (Rechts/Z1)
+      const frontPlayers = [players[0], players[1], players[2]];
+      const backPlayers = [players[3], players[4], players[5]];
 
-      document.getElementById('vnl-front-row').innerHTML = frontPlayers.map((p, idx) => `
+      document.getElementById('vnl-front-row').innerHTML = frontPlayers.map(p => `
         <div class="vnl-player-card">
-          <span class="vnl-zone-label">${frontZones[idx]}</span>
-          <div class="vnl-p-number">${p.number}</div>
-          <div class="vnl-p-name">${p.name}</div>
-          <div class="vnl-p-pos">${p.pos}</div>
+          <div class="vnl-p-content">${p.number} ${p.name}</div>
+          <div class="vnl-zone-tag">${p.pos}</div>
         </div>
       `).join('');
 
-      document.getElementById('vnl-back-row').innerHTML = backPlayers.map((p, idx) => `
+      document.getElementById('vnl-back-row').innerHTML = backPlayers.map(p => `
         <div class="vnl-player-card">
-          <span class="vnl-zone-label">${backZones[idx]}</span>
-          <div class="vnl-p-number">${p.number}</div>
-          <div class="vnl-p-name">${p.name}</div>
-          <div class="vnl-p-pos">${p.pos}</div>
+          <div class="vnl-p-content">${p.number} ${p.name}</div>
+          <div class="vnl-zone-tag">${p.pos}</div>
         </div>
       `).join('');
 
@@ -499,12 +488,12 @@
       const matchSub = `${hTeam} vs. ${gTeam}`;
 
       const lineUp1 = [
-        { number: 4, name: "Nikolas Jensen", pos: "Annahme" },
-        { number: 5, name: "Grady Ford", pos: "Mitte" },
-        { number: 6, name: "Alexi Ulrich", pos: "Diagonal" },
-        { number: 1, name: "Omenga Jona", pos: "Annahme" },
-        { number: 2, name: "Robert Schulz", pos: "Zuspiel" },
-        { number: 3, name: "Milan Jaksic", pos: "Libero" }
+        { number: 9, name: "Giesbrecht / Cordt", pos: "Annahme" },
+        { number: "10/12", name: "Dunkel / Specht", pos: "Mitte" },
+        { number: 1, name: "Lüttel", pos: "Diagonal" },
+        { number: "5/6", name: "Franke / Galbo", pos: "Annahme" },
+        { number: "31/4", name: "Sarschizki / Krotter", pos: "Libero" },
+        { number: "19/8", name: "Klinger / Partej", pos: "Zuspiel" }
       ];
 
       const lineUp2 = [
@@ -518,10 +507,8 @@
 
       updateUI({ team1: hTeam, team2: gTeam, p1: 0, p2: 0, s1: 0, s2: 0 });
 
-      // 1. Heimteam Aufstellung (Vorderreihe oben, Hinterreihe unten)
       showTeamLineup("Satz 1 – Startaufstellung", matchSub, hTeam, lineUp1, null, false);
 
-      // Nach 4 Sekunden Gastteam Aufstellung
       setTimeout(() => {
         showTeamLineup("Satz 1 – Startaufstellung", matchSub, gTeam, lineUp2, null, true);
       }, 4000);
@@ -533,7 +520,7 @@
       }, 10000);
 
       setTimeout(() => {
-        showSubPopup({ team: "SC Halle", outNum: 2, outName: "Robert Schulz", inNum: 10, inName: "Havryliuk" }, false);
+        showSubPopup({ team: "SC Halle", outNum: 1, outName: "Lüttel", inNum: 10, inName: "Dunkel" }, false);
       }, 13000);
     }
   </script>
