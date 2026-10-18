@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Volleyball Scoreboard Overlay - VNL Style</title>
+  <title>Volleyball Scoreboard Overlay - VNL Edition</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -21,70 +21,93 @@
       left: 30px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       z-index: 10;
     }
 
-    /* Haupt-Scoreboard (Oben Links) */
+    /* VNL Haupt-Scoreboard (Eckiges, aggressives Tech-Design) */
     .scoreboard {
       display: inline-flex;
       align-items: center;
-      background: linear-gradient(135deg, #070b19 0%, #111827 100%);
-      border-radius: 8px;
-      padding: 10px 20px;
+      background: linear-gradient(135deg, #030712 0%, #0f172a 100%);
+      border-radius: 4px;
+      padding: 10px 22px;
       color: #ffffff;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-      border-top: 4px solid #00f2fe;
-      font-weight: 700;
-      gap: 16px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8);
+      border-left: 6px solid #00f2fe;
+      border-right: 1px solid rgba(0, 242, 254, 0.2);
+      border-top: 1px solid rgba(0, 242, 254, 0.2);
+      border-bottom: 2px solid #00f2fe;
+      font-weight: 800;
+      gap: 18px;
     }
 
-    .team { display: flex; align-items: center; gap: 12px; }
+    .team { display: flex; align-items: center; gap: 14px; }
+    
+    /* Team Logos */
+    .team-logo {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    }
+
     .team-name {
-      font-size: 20px;
-      letter-spacing: 1px;
+      font-size: 21px;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
-      max-width: 180px;
+      max-width: 170px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-    }
-    .points {
-      background: #ffffff;
-      color: #070b19;
-      font-size: 28px;
       font-weight: 900;
-      padding: 2px 12px;
-      border-radius: 6px;
-      min-width: 50px;
-      text-align: center;
     }
-    .guest .points { background: #f59e0b; color: #ffffff; }
+
+    .points {
+      background: #00f2fe;
+      color: #030712;
+      font-size: 30px;
+      font-weight: 900;
+      padding: 2px 14px;
+      border-radius: 2px;
+      min-width: 55px;
+      text-align: center;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .guest .points { background: #f59e0b; color: #030712; }
 
     .sets-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 0 10px;
+      padding: 0 12px;
       border-left: 2px solid rgba(255,255,255,0.1);
       border-right: 2px solid rgba(255,255,255,0.1);
     }
-    .sets-score { font-size: 20px; color: #f8fafc; letter-spacing: 2px; font-weight: 900; }
-    .sets-label { font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; }
+    .sets-score { font-size: 22px; color: #f8fafc; letter-spacing: 3px; font-weight: 900; }
+    .sets-label { font-size: 8px; color: #38bdf8; text-transform: uppercase; letter-spacing: 2px; font-weight: 900; }
 
-    /* Timeout Indicator */
+    /* Timeout / Auszeit Badge im VNL Style */
     .timeout-badge {
       display: none;
       background: #ef4444;
       color: #ffffff;
-      font-size: 10px;
+      font-size: 9px;
       padding: 2px 6px;
-      border-radius: 4px;
+      border-radius: 2px;
       font-weight: 900;
+      letter-spacing: 1px;
+      animation: pulse 1s infinite;
     }
     .timeout-active { display: inline-block; }
 
-    /* Container für Auswechslungs-Popups (können gleichzeitig untereinander stehen) */
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.95); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Auswechslungs-Popups unter dem Scoreboard */
     .sub-container {
       display: flex;
       flex-direction: column;
@@ -92,49 +115,53 @@
     }
 
     .sub-popup {
-      background: rgba(15, 23, 42, 0.95);
-      border-left: 4px solid #38bdf8;
-      padding: 10px 14px;
-      border-radius: 6px;
+      background: rgba(3, 7, 18, 0.95);
+      border-left: 4px solid #00f2fe;
+      border-top: 1px solid rgba(0, 242, 254, 0.3);
+      border-right: 1px solid rgba(0, 242, 254, 0.3);
+      border-bottom: 1px solid rgba(0, 242, 254, 0.3);
+      padding: 8px 14px;
+      border-radius: 4px;
       color: #ffffff;
       font-size: 13px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.7);
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       opacity: 0;
       transform: translateY(-10px);
       transition: all 0.3s ease;
-      max-width: 380px;
+      max-width: 400px;
     }
     .sub-popup.show {
       opacity: 1;
       transform: translateY(0);
     }
     .sub-tag {
-      background: #38bdf8;
-      color: #000;
+      background: #00f2fe;
+      color: #030712;
       font-size: 9px;
       font-weight: 900;
-      padding: 2px 5px;
-      border-radius: 3px;
+      padding: 2px 6px;
+      border-radius: 2px;
       text-transform: uppercase;
+      letter-spacing: 1px;
     }
-    .sub-in { color: #4ade80; font-weight: 700; }
-    .sub-out { color: #f87171; font-weight: 700; }
+    .sub-in { color: #4ade80; font-weight: 800; }
+    .sub-out { color: #f87171; font-weight: 800; }
     .sub-icon { font-weight: bold; color: #fbbf24; }
 
-    /* VNL SPIELFELD-OVERLAY (Einzelnes Team für nacheinander-Anzeige) */
+    /* VNL FULLSCREEN SPIELFELD-OVERLAY */
     .vnl-fullscreen {
       position: fixed;
       top: 3%;
       left: 3%;
       width: 94vw;
       height: 94vh;
-      background: rgba(5, 9, 23, 0.96);
-      border: 2px solid rgba(0, 242, 254, 0.4);
-      backdrop-filter: blur(12px);
-      border-radius: 16px;
+      background: radial-gradient(circle at center, #0f172a 0%, #030712 100%);
+      border: 2px solid #00f2fe;
+      backdrop-filter: blur(16px);
+      border-radius: 12px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -145,7 +172,7 @@
       transform: scale(0.96);
       transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 100;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.9);
     }
     .vnl-active {
       opacity: 1;
@@ -157,79 +184,85 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 2px solid rgba(255,255,255,0.1);
+      border-bottom: 2px solid rgba(0, 242, 254, 0.3);
       padding-bottom: 15px;
     }
     .vnl-event-title {
-      font-size: 24px;
+      font-size: 26px;
       font-weight: 900;
       text-transform: uppercase;
-      letter-spacing: 2px;
-      background: linear-gradient(90deg, #00f2fe, #4facfe);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      letter-spacing: 3px;
+      color: #ffffff;
+      text-shadow: 0 0 15px rgba(0, 242, 254, 0.6);
     }
     .vnl-match-subtitle {
       font-size: 14px;
-      color: #94a3b8;
-      letter-spacing: 1px;
+      color: #38bdf8;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
-      font-weight: 700;
+      font-weight: 800;
     }
 
-    /* Das Volleyball-Spielfeld Layout (Einzelne Teamhälfte im Fokus) */
+    /* Das Volleyball-Spielfeld Layout (VNL Match Court Style) */
     .vnl-court-single {
       flex-grow: 1;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      background: linear-gradient(180deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.7) 100%);
-      border: 2px dashed rgba(255, 255, 255, 0.15);
-      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.6) 0%, rgba(3, 7, 18, 0.8) 100%);
+      border: 2px solid rgba(0, 242, 254, 0.2);
+      border-radius: 8px;
       margin: 20px 0;
       padding: 40px;
       position: relative;
     }
 
     .vnl-court-header {
-      font-size: 22px;
-      font-weight: 800;
+      font-size: 24px;
+      font-weight: 900;
       text-transform: uppercase;
-      color: #38bdf8;
-      margin-bottom: 25px;
+      color: #00f2fe;
+      margin-bottom: 30px;
       text-align: center;
-      letter-spacing: 1px;
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
     }
 
     .vnl-grid-6 {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 20px;
-      max-width: 1000px;
+      max-width: 1050px;
       margin: 0 auto;
       width: 100%;
     }
 
     .vnl-player-card {
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(0, 242, 254, 0.25);
-      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(0, 242, 254, 0.4);
+      border-radius: 6px;
       display: flex;
       align-items: center;
-      padding: 16px 20px;
-      gap: 16px;
+      padding: 18px 22px;
+      gap: 18px;
       position: relative;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.5);
     }
 
     .vnl-p-number {
-      font-size: 28px;
+      font-size: 30px;
       font-weight: 900;
-      color: #00f2fe;
-      min-width: 45px;
-      text-align: center;
-      background: rgba(0, 242, 254, 0.1);
-      border-radius: 6px;
-      padding: 4px;
+      color: #030712;
+      background: #00f2fe;
+      min-width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
     }
 
     .vnl-p-info {
@@ -239,18 +272,21 @@
     }
 
     .vnl-p-name {
-      font-size: 16px;
-      font-weight: 700;
+      font-size: 17px;
+      font-weight: 800;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      letter-spacing: 0.5px;
     }
 
     .vnl-p-pos {
       font-size: 11px;
-      color: #94a3b8;
+      color: #38bdf8;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 1px;
+      font-weight: 700;
+      margin-top: 3px;
     }
 
     .vnl-zone-label {
@@ -258,8 +294,9 @@
       top: 6px;
       right: 10px;
       font-size: 9px;
-      color: rgba(255,255,255,0.3);
-      font-weight: bold;
+      color: rgba(255,255,255,0.4);
+      font-weight: 900;
+      letter-spacing: 1px;
     }
   </style>
 </head>
@@ -271,6 +308,7 @@
 
     <div class="scoreboard" id="main-scoreboard">
       <div class="team home">
+        <img id="team1-logo" class="team-logo" src="" style="display:none;" alt="">
         <span id="team1-to" class="timeout-badge">AUSZEIT</span>
         <span id="team1-name" class="team-name">HEIM</span>
         <span id="team1-points" class="points">0</span>
@@ -284,6 +322,7 @@
       <div class="team guest">
         <span id="team2-points" class="points">0</span>
         <span id="team2-name" class="team-name">GAST</span>
+        <img id="team2-logo" class="team-logo" src="" style="display:none;" alt="">
         <span id="team2-to" class="timeout-badge">AUSZEIT</span>
       </div>
     </div>
@@ -297,7 +336,10 @@
     </div>
 
     <div class="vnl-court-single">
-      <div class="vnl-court-header" id="vnl-single-team-name">SC Halle</div>
+      <div class="vnl-court-header">
+        <img id="vnl-team-logo" class="team-logo" style="width:40px; height:40px; display:none;" alt="">
+        <span id="vnl-single-team-name">SC Halle</span>
+      </div>
       <div class="vnl-grid-6" id="vnl-single-grid"></div>
     </div>
   </div>
@@ -332,6 +374,8 @@
         updateUI({
           team1: matchInfo.teamDescription1 || 'Heim',
           team2: matchInfo.teamDescription2 || 'Gast',
+          logo1: matchInfo.teamLogo1 || matchInfo.logo1 || null,
+          logo2: matchInfo.teamLogo2 || matchInfo.logo2 || null,
           p1: currentSetScore.team1 ?? 0,
           p2: currentSetScore.team2 ?? 0,
           s1: stateInfo.setPoints?.team1 ?? 0,
@@ -348,13 +392,34 @@
       document.getElementById('team1-points').innerText = d.p1;
       document.getElementById('team2-points').innerText = d.p2;
       document.getElementById('sets-score').innerText = `${d.s1} : ${d.s2}`;
+
+      // Logos dynamisch einbinden, falls die API URLs liefert
+      const logo1El = document.getElementById('team1-logo');
+      if (d.logo1) {
+        logo1El.src = d.logo1;
+        logo1El.style.display = 'block';
+      }
+
+      const logo2El = document.getElementById('team2-logo');
+      if (d.logo2) {
+        logo2El.src = d.logo2;
+        logo2El.style.display = 'block';
+      }
     }
 
     // Zeigt die Startaufstellung für ein einzelnes Team im VNL-Fullscreen
-    function showTeamLineup(title, matchSub, teamName, players) {
+    function showTeamLineup(title, matchSub, teamName, players, logoUrl = null) {
       document.getElementById('vnl-title').innerText = title;
       document.getElementById('vnl-subtitle').innerText = matchSub;
       document.getElementById('vnl-single-team-name').innerText = teamName;
+
+      const logoEl = document.getElementById('vnl-team-logo');
+      if (logoUrl) {
+        logoEl.src = logoUrl;
+        logoEl.style.display = 'block';
+      } else {
+        logoEl.style.display = 'none';
+      }
 
       const zones = ["Zone 4", "Zone 3", "Zone 2", "Zone 5", "Zone 6", "Zone 1"];
 
@@ -376,7 +441,7 @@
       document.getElementById('vnl-overlay').classList.remove('vnl-active');
     }
 
-    // Mehrere Wechsel können GLEICHZEITIG als Pop-ups untereinander erscheinen
+    // Mehrere Wechsel können gleichzeitig als Pop-ups untereinander erscheinen
     function showSubPopup(substitutions) {
       const subs = Array.isArray(substitutions) ? substitutions : [substitutions];
       const container = document.getElementById('sub-container');
@@ -391,13 +456,12 @@
             <span class="sub-icon"> ⇄ </span> 
             <span class="sub-in">REIN #${sub.inNum} ${sub.inName}</span>
           </span>
-          <span style="font-size: 11px; color: #94a3b8; margin-left: auto;">(${sub.team})</span>
+          <span style="font-size: 11px; color: #38bdf8; margin-left: auto; font-weight: 700;">(${sub.team})</span>
         `;
         
         container.appendChild(popup);
         setTimeout(() => popup.classList.add('show'), 50);
 
-        // Nach 5 Sekunden wieder ausblenden und entfernen
         setTimeout(() => {
           popup.classList.remove('show');
           setTimeout(() => popup.remove(), 300);
@@ -439,7 +503,7 @@
         showTeamLineup("Satz 1 – Startaufstellung", matchSub, gTeam, lineUp2);
       }, 4000);
 
-      // Nach weiteren 4 Sekunden Vollbild schließen & Spiel läuft
+      // Nach weiteren 4 Sekunden Vollbild schließen
       setTimeout(() => {
         hideVnlLineup();
       }, 8000);
@@ -449,7 +513,7 @@
         updateUI({ team1: hTeam, team2: gTeam, p1: 8, p2: 6, s1: 0, s2: 0 });
       }, 10000);
 
-      // Doppelwechsel aus BEIDEN Teams gleichzeitig als Pop-ups untereinander
+      // Doppelwechsel aus BEIDEN Teams gleichzeitig untereinander
       setTimeout(() => {
         showSubPopup([
           { team: "SC Halle", outNum: 7, outName: "Voth", inNum: 10, inName: "Havryliuk" },
