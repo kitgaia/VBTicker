@@ -132,7 +132,8 @@
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const matchId = urlParams.get('match');
+    // Wenn keine ID übergeben wird, nutzt er standardmäßig Schwerte vs. Herten als Fallback
+    const matchId = urlParams.get('match') || '8f4c7539-96c9-4404-805c-62d54f184275';
 
     // MOCK / TEST MODUS LOGIK
     if (matchId === 'test') {
@@ -145,31 +146,44 @@
       document.getElementById('team2-name').innerText = ' ?match=...';
     }
 
- // Echtes SAMS Abrufen über deinen EIGENEN Proxy
+    // Abruf direkt über deinen Cloudflare Worker
     async function fetchScore() {
       try {
-        const dvvUrl = encodeURIComponent(`https://dvv.sams-ticker.de/api/v1/matches/${matchId}`);
-        
-        // FÜGE HIER DEINE KOPIERTE CLOUDFLARE URL EIN:
-        const myProxy = "https://withered-sea-3b06.nick-valbert2006.workers.dev"; 
-        
-        const response = await fetch(`${myProxy}?url=${dvvUrl}`);
+        const myWorker = "https://withered-sea-3b06.nick-valbert2006.workers.dev"; 
+        const response = await fetch(`${myWorker}/?match=${matchId}`);
         
         if (!response.ok) return;
 
         const data = await response.json();
         console.log("LIVE-DATEN EMPFANGEN:", data); 
         
+        if (data.error) {
+          console.error("Worker-Fehler:", data.error);
+          return;
+        }
+
+        const matchInfo = data.match || {};
+        const stateInfo = data.state || {};
+
+        // Aktuellen Satzstand aus dem matchSets-Array ermitteln
+        let currentSetScore = { team1: 0, team2: 0 };
+        if (stateInfo.matchSets && stateInfo.matchSets.length > 0) {
+          const latestSet = stateInfo.matchSets[stateInfo.matchSets.length - 1];
+          if (latestSet && latestSet.setScore) {
+            currentSetScore = latestSet.setScore;
+          }
+        }
+
         updateUI({
-          team1: data.team1?.name || 'Team 1',
-          team2: data.team2?.name || 'Team 2',
-          p1: data.currentSet?.team1Points ?? 0,
-          p2: data.currentSet?.team2Points ?? 0,
-          s1: data.team1Sets ?? 0,
-          s2: data.team2Sets ?? 0,
-          to1: data.team1InTimeout || false,
-          to2: data.team2InTimeout || false,
-          isSetFinished: data.currentSet?.state === 'FINISHED'
+          team1: matchInfo.teamDescription1 || 'Team 1',
+          team2: matchInfo.teamDescription2 || 'Team 2',
+          p1: currentSetScore.team1 ?? 0,
+          p2: currentSetScore.team2 ?? 0,
+          s1: stateInfo.setPoints?.team1 ?? 0,
+          s2: stateInfo.setPoints?.team2 ?? 0,
+          to1: false, 
+          to2: false,
+          isSetFinished: stateInfo.finished || false
         });
       } catch (err) {
         console.error('Ticker-Fehler:', err);
@@ -189,35 +203,3 @@
 
       // Satzende Banner
       const banner = document.getElementById('set-banner');
-      if (d.isSetFinished) {
-        document.getElementById('banner-text').innerText = `Satzende! Stand: ${d.p1}:${d.p2}`;
-        banner.classList.add('banner-show');
-      } else {
-        banner.classList.remove('banner-show');
-      }
-    }
-
-    // Simuliert ein volles Spiel im Zeitraffer zum Testen
-    function runTestSimulation() {
-      let state = { team1: 'DVC Düren', team2: 'TuS Lintorf', p1: 18, p2: 21, s1: 1, s2: 0, to1: false, to2: false, isSetFinished: false };
-      updateUI(state);
-
-      setInterval(() => {
-        if (state.p2 < 25) {
-          state.p2++;
-          if (state.p2 === 23) state.to1 = true; // Auszeit testen
-          if (state.p2 === 24) state.to1 = false;
-        } else if (!state.isSetFinished) {
-          state.isSetFinished = true;
-          state.s2 = 1;
-        } else {
-          state.isSetFinished = false;
-          state.p1 = 0;
-          state.p2 = 0;
-        }
-        updateUI(state);
-      }, 1500);
-    }
-  </script>
-</body>
-</html>
