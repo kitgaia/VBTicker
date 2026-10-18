@@ -135,15 +135,12 @@
     const urlParams = new URLSearchParams(window.location.search);
     let matchId = urlParams.get('match') || 'a27bea5a-1330-4f40-b567-64c138dbd7ba';
 
-    // MOCK / TEST MODUS LOGIK (Aufruf über ?match=test)
+    // KLARE TRENNUNG: Wenn match=test übergeben wird, starte sofort die Simulation und brich ab
     if (matchId === 'test') {
       runTestSimulation();
-    } else if (matchId) {
+    } else {
       fetchScore();
       setInterval(fetchScore, 1500);
-    } else {
-      document.getElementById('team1-name').innerText = 'LINK FEHLT';
-      document.getElementById('team2-name').innerText = ' ?match=...';
     }
 
     async function fetchScore() {
@@ -165,7 +162,6 @@
           }
         }
 
-        // Letztes Event aus der EventHistory auslesen, falls vorhanden
         let latestEventText = "";
         if (stateInfo.eventHistory && stateInfo.eventHistory.length > 0) {
           const ev = stateInfo.eventHistory[stateInfo.eventHistory.length - 1];
@@ -200,7 +196,6 @@
       document.getElementById('team2-points').innerText = d.p2;
       document.getElementById('sets-score').innerText = `${d.s1} : ${d.s2}`;
 
-      // Banner / Events / Satzende anzeigen
       const banner = document.getElementById('set-banner');
       const bannerText = document.getElementById('banner-text');
 
@@ -215,23 +210,21 @@
       }
     }
 
-    // Vollständige Testsimulation im Zeitraffer (Aufruf via ?match=test)
+    // Testsimulation im Zeitraffer (Aufruf via ?match=test)
     function runTestSimulation() {
       const steps = [
-        { team1: 'SC Halle', team2: 'TV Hörde', p1: 0, p2: 0, s1: 0, s2: 0, msg: 'Satz 1 gestartet – Startaufstellungen aufgestellt' },
+        { team1: 'SC Halle', team2: 'TV Hörde', p1: 0, p2: 0, s1: 0, s2: 0, msg: 'Satz 1 gestartet – Startaufstellungen aktiv' },
         { team1: 'SC Halle', team2: 'TV Hörde', p1: 1, p2: 0, s1: 0, s2: 0, msg: 'Punkt für SC Halle (1:0)' },
         { team1: 'SC Halle', team2: 'TV Hörde', p1: 5, p2: 5, s1: 0, s2: 0, msg: 'Spielstand ausgeglichen 5:5' },
         { team1: 'SC Halle', team2: 'TV Hörde', p1: 8, p2: 6, s1: 0, s2: 0, msg: 'Spielerwechsel bei SC Halle (Ein-/Auswechslung)' },
         { team1: 'SC Halle', team2: 'TV Hörde', p1: 25, p2: 20, s1: 1, s2: 0, msg: 'Satz 1 beendet! Satzgewinn für SC Halle' },
         { team1: 'SC Halle', team2: 'TV Hörde', p1: 0, p2: 0, s1: 1, s2: 0, msg: 'Satz 2 gestartet – Neue Startaufstellungen' },
         { team1: 'SC Halle', team2: 'TV Hörde', p1: 20, p2: 25, s1: 1, s2: 1, msg: 'Satz 2 beendet! Satzgewinn für TV Hörde' },
-        { team1: 'SC Halle', team2: 'TV Hörde', p1: 0, p2: 0, s1: 1, s2: 2, msg: 'Satz 3 gestartet' },
+        { team1: 'SC Halle', team2: 'TV Hörde', p1: 0, p2: 0, s1: 1, s2: 1, msg: 'Satz 3 gestartet' },
         { team1: 'SC Halle', team2: 'TV Hörde', p1: 21, p2: 25, s1: 1, s2: 3, isSetFinished: true, msg: 'Spiel beendet!' }
       ];
 
       let currentStep = 0;
-      
-      // Initialer Step
       updateUI({ ...steps[0], to1: false, to2: false, isSetFinished: false, eventMessage: steps[0].msg });
 
       const interval = setInterval(() => {
@@ -247,7 +240,7 @@
         } else {
           clearInterval(interval);
         }
-      }, 3000); // alle 3 Sekunden schaltet es einen Schritt weiter
+      }, 3000);
     }
   </script>
 </body>
