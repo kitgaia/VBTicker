@@ -148,9 +148,7 @@
     // Echtes SAMS Abrufen
    async function fetchScore() {
       try {
-        // Neuer Proxy und saubere URL-Codierung
-        const targetUrl = encodeURIComponent(`https://dvv.sams-ticker.de/api/v1/matches/${matchId}`);
-        const response = await fetch(`https://corsproxy.io/?${targetUrl}`);
+        const response = await fetch(`https://api.codetabs.com/v1/proxy?quest=https://dvv.sams-ticker.de/api/v1/matches/${matchId}`);
         
         if (!response.ok) {
           console.log("Warte auf Daten... Proxy meldet Status:", response.status);
@@ -158,7 +156,7 @@
         }
 
         const data = await response.json();
-        console.log("LIVE-DATEN EMPFANGEN:", data); // <-- Das druckt die Daten ab jetzt in deine F12 Konsole!
+        console.log("LIVE-DATEN EMPFANGEN:", data); 
         
         updateUI({
           team1: data.team1?.name || 'Team 1',
