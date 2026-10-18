@@ -78,7 +78,7 @@
       100% { opacity: 1; transform: scale(1); }
     }
 
-    /* Automatisches Satzende-Banner */
+    /* Automatisches Event-/Satzende-Banner */
     .banner {
       display: none;
       position: absolute;
@@ -89,9 +89,10 @@
       border-radius: 10px;
       padding: 12px 20px;
       color: white;
-      font-size: 16px;
+      font-size: 15px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.6);
       animation: slideDown 0.4s ease-out forwards;
+      max-width: 350px;
     }
     .banner-show { display: block; }
 
@@ -125,18 +126,16 @@
     </div>
   </div>
 
-  <!-- Satzende-Benachrichtigung -->
+  <!-- Event- & Satzende-Benachrichtigung -->
   <div id="set-banner" class="banner">
-    <span id="banner-text">Satz beendet!</span>
+    <span id="banner-text">Event</span>
   </div>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
-    // Wenn keine ID übergeben wird, nutzt er standardmäßig die Match-ID als Fallback
     let matchId = urlParams.get('match') || 'a27bea5a-1330-4f40-b567-64c138dbd7ba';
-    //matchId = matchId.split(':')[0].trim();
 
-    // MOCK / TEST MODUS LOGIK
+    // MOCK / TEST MODUS LOGIK (Aufruf über ?match=test)
     if (matchId === 'test') {
       runTestSimulation();
     } else if (matchId) {
@@ -147,7 +146,6 @@
       document.getElementById('team2-name').innerText = ' ?match=...';
     }
 
-    // Abruf direkt über deinen Cloudflare Worker
     async function fetchScore() {
       try {
         const myWorker = "https://withered-sea-3b06.nick-valbert2006.workers.dev"; 
@@ -156,22 +154,25 @@
         if (!response.ok) return;
 
         const data = await response.json();
-        console.log("LIVE-DATEN EMPFANGEN:", data); 
-        
-        if (data.error) {
-          console.error("Worker-Fehler:", data.error);
-          return;
-        }
-
         const matchInfo = data.match || {};
         const stateInfo = data.state || {};
 
-        // Aktuellen Satzstand aus dem matchSets-Array ermitteln
         let currentSetScore = { team1: 0, team2: 0 };
         if (stateInfo.matchSets && stateInfo.matchSets.length > 0) {
           const latestSet = stateInfo.matchSets[stateInfo.matchSets.length - 1];
           if (latestSet && latestSet.setScore) {
             currentSetScore = latestSet.setScore;
+          }
+        }
+
+        // Letztes Event aus der EventHistory auslesen, falls vorhanden
+        let latestEventText = "";
+        if (stateInfo.eventHistory && stateInfo.eventHistory.length > 0) {
+          const ev = stateInfo.eventHistory[stateInfo.eventHistory.length - 1];
+          if (ev.type === "START_SET") {
+            latestEventText = `Satz ${ev.setNumber} gestartet (Startaufstellung aktiv)`;
+          } else if (ev.type === "SUBSTITUTION") {
+            latestEventText = `Auswechslung (${ev.teamCode === 'team1' ? 'Heim' : 'Gast'})`;
           }
         }
 
@@ -184,7 +185,8 @@
           s2: stateInfo.setPoints?.team2 ?? 0,
           to1: false, 
           to2: false,
-          isSetFinished: stateInfo.finished || false
+          isSetFinished: stateInfo.finished || false,
+          eventMessage: latestEventText
         });
       } catch (err) {
         console.error('Ticker-Fehler:', err);
@@ -198,34 +200,54 @@
       document.getElementById('team2-points').innerText = d.p2;
       document.getElementById('sets-score').innerText = `${d.s1} : ${d.s2}`;
 
-      // Timeouts
-      document.getElementById('team1-to').className = 'timeout-badge' + (d.to1 ? ' timeout-active' : '');
-      document.getElementById('team2-to').className = 'timeout-badge' + (d.to2 ? ' timeout-active' : '');
-
-      // Satzende Banner
+      // Banner / Events / Satzende anzeigen
       const banner = document.getElementById('set-banner');
+      const bannerText = document.getElementById('banner-text');
+
       if (d.isSetFinished) {
-        document.getElementById('banner-text').innerText = `Spiel beendet! Endstand: ${d.s1}:${d.s2}`;
+        bannerText.innerText = `Spiel beendet! Endstand Sätze: ${d.s1}:${d.s2}`;
+        banner.classList.add('banner-show');
+      } else if (d.eventMessage) {
+        bannerText.innerText = d.eventMessage;
         banner.classList.add('banner-show');
       } else {
         banner.classList.remove('banner-show');
       }
     }
 
-    // Simuliert ein volles Spiel im Zeitraffer zum Testen
+    // Vollständige Testsimulation im Zeitraffer (Aufruf via ?match=test)
     function runTestSimulation() {
-      let state = { team1: 'VV Schwerte', team2: 'TuS Herten', p1: 18, p2: 21, s1: 2, s2: 2, to1: false, to2: false, isSetFinished: false };
-      updateUI(state);
+      const steps = [
+        { team1: 'SC Halle', team2: 'TV Hörde', p1: 0, p2: 0, s1: 0, s2: 0, msg: 'Satz 1 gestartet – Startaufstellungen aufgestellt' },
+        { team1: 'SC Halle', team2: 'TV Hörde', p1: 1, p2: 0, s1: 0, s2: 0, msg: 'Punkt für SC Halle (1:0)' },
+        { team1: 'SC Halle', team2: 'TV Hörde', p1: 5, p2: 5, s1: 0, s2: 0, msg: 'Spielstand ausgeglichen 5:5' },
+        { team1: 'SC Halle', team2: 'TV Hörde', p1: 8, p2: 6, s1: 0, s2: 0, msg: 'Spielerwechsel bei SC Halle (Ein-/Auswechslung)' },
+        { team1: 'SC Halle', team2: 'TV Hörde', p1: 25, p2: 20, s1: 1, s2: 0, msg: 'Satz 1 beendet! Satzgewinn für SC Halle' },
+        { team1: 'SC Halle', team2: 'TV Hörde', p1: 0, p2: 0, s1: 1, s2: 0, msg: 'Satz 2 gestartet – Neue Startaufstellungen' },
+        { team1: 'SC Halle', team2: 'TV Hörde', p1: 20, p2: 25, s1: 1, s2: 1, msg: 'Satz 2 beendet! Satzgewinn für TV Hörde' },
+        { team1: 'SC Halle', team2: 'TV Hörde', p1: 0, p2: 0, s1: 1, s2: 2, msg: 'Satz 3 gestartet' },
+        { team1: 'SC Halle', team2: 'TV Hörde', p1: 21, p2: 25, s1: 1, s2: 3, isSetFinished: true, msg: 'Spiel beendet!' }
+      ];
 
-      setInterval(() => {
-        if (state.p2 < 15) {
-          state.p2++;
-        } else if (!state.isSetFinished) {
-          state.isSetFinished = true;
-          state.s2 = 3;
+      let currentStep = 0;
+      
+      // Initialer Step
+      updateUI({ ...steps[0], to1: false, to2: false, isSetFinished: false, eventMessage: steps[0].msg });
+
+      const interval = setInterval(() => {
+        currentStep++;
+        if (currentStep < steps.length) {
+          updateUI({ 
+            ...steps[currentStep], 
+            to1: false, 
+            to2: false, 
+            isSetFinished: steps[currentStep].isSetFinished || false, 
+            eventMessage: steps[currentStep].msg 
+          });
+        } else {
+          clearInterval(interval);
         }
-        updateUI(state);
-      }, 1500);
+      }, 3000); // alle 3 Sekunden schaltet es einen Schritt weiter
     }
   </script>
 </body>
