@@ -145,17 +145,24 @@
       document.getElementById('team2-name').innerText = ' ?match=...';
     }
 
-    // Echtes SAMS Abrufen
-   async function fetchScore() {
+  // Echtes SAMS Abrufen
+    async function fetchScore() {
       try {
-        const response = await fetch(`https://api.codetabs.com/v1/proxy?quest=https://dvv.sams-ticker.de/api/v1/matches/${matchId}`);
+        const targetUrl = encodeURIComponent(`https://dvv.sams-ticker.de/api/v1/matches/${matchId}`);
+        // Nutze den /get Endpoint (Briefumschlag-Methode) statt /raw
+        const response = await fetch(`https://api.allorigins.win/get?url=${targetUrl}`);
         
         if (!response.ok) {
-          console.log("Warte auf Daten... Proxy meldet Status:", response.status);
+          console.log("Proxy antwortet nicht:", response.status);
           return;
         }
 
-        const data = await response.json();
+        const wrapper = await response.json();
+        
+        // Die DVV-Daten stecken als Text im Briefumschlag (.contents). Wir packen sie aus:
+        if (!wrapper.contents) return;
+        const data = JSON.parse(wrapper.contents);
+        
         console.log("LIVE-DATEN EMPFANGEN:", data); 
         
         updateUI({
