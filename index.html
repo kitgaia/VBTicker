@@ -151,6 +151,25 @@
     .sub-out { color: #f87171; font-weight: 800; }
     .sub-icon { font-weight: bold; color: #fbbf24; }
 
+    /* Versions-Badge (unten rechts in der Ecke) */
+    .version-badge {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(3, 7, 18, 0.85);
+      border: 1px solid rgba(0, 242, 254, 0.4);
+      color: #00f2fe;
+      font-size: 11px;
+      font-weight: 900;
+      padding: 4px 10px;
+      border-radius: 4px;
+      letter-spacing: 1.5px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+      z-index: 1000;
+      text-transform: uppercase;
+      backdrop-filter: blur(4px);
+    }
+
     /* VNL FULLSCREEN SPIELFELD-OVERLAY */
     .vnl-fullscreen {
       position: fixed;
@@ -302,6 +321,9 @@
 </head>
 <body>
 
+  <!-- Permanentes Versions-Badge unten rechts -->
+  <div class="version-badge">v1.1</div>
+
   <!-- Scoreboard & Sub-Popups oben links -->
   <div class="scoreboard-wrapper">
     <div id="sub-container" class="sub-container"></div>
@@ -393,7 +415,6 @@
       document.getElementById('team2-points').innerText = d.p2;
       document.getElementById('sets-score').innerText = `${d.s1} : ${d.s2}`;
 
-      // Logos dynamisch einbinden, falls die API URLs liefert
       const logo1El = document.getElementById('team1-logo');
       if (d.logo1) {
         logo1El.src = d.logo1;
@@ -407,7 +428,6 @@
       }
     }
 
-    // Zeigt die Startaufstellung für ein einzelnes Team im VNL-Fullscreen
     function showTeamLineup(title, matchSub, teamName, players, logoUrl = null) {
       document.getElementById('vnl-title').innerText = title;
       document.getElementById('vnl-subtitle').innerText = matchSub;
@@ -441,7 +461,6 @@
       document.getElementById('vnl-overlay').classList.remove('vnl-active');
     }
 
-    // Mehrere Wechsel können gleichzeitig als Pop-ups untereinander erscheinen
     function showSubPopup(substitutions) {
       const subs = Array.isArray(substitutions) ? substitutions : [substitutions];
       const container = document.getElementById('sub-container');
@@ -469,7 +488,6 @@
       });
     }
 
-    // Testsimulation für den Test-Modus (?match=test)
     function runTestSimulation() {
       const hTeam = "SC Halle";
       const gTeam = "TV Hörde";
@@ -495,25 +513,20 @@
 
       updateUI({ team1: hTeam, team2: gTeam, p1: 0, p2: 0, s1: 0, s2: 0 });
 
-      // 1. Startaufstellung Team 1 (Heim) anzeigen
       showTeamLineup("Satz 1 – Startaufstellung", matchSub, hTeam, lineUp1);
 
-      // Nach 4 Sekunden zu Team 2 (Gast) wechseln
       setTimeout(() => {
         showTeamLineup("Satz 1 – Startaufstellung", matchSub, gTeam, lineUp2);
       }, 4000);
 
-      // Nach weiteren 4 Sekunden Vollbild schließen
       setTimeout(() => {
         hideVnlLineup();
       }, 8000);
 
-      // Punkte laufen lassen
       setTimeout(() => {
         updateUI({ team1: hTeam, team2: gTeam, p1: 8, p2: 6, s1: 0, s2: 0 });
       }, 10000);
 
-      // Doppelwechsel aus BEIDEN Teams gleichzeitig untereinander
       setTimeout(() => {
         showSubPopup([
           { team: "SC Halle", outNum: 7, outName: "Voth", inNum: 10, inName: "Havryliuk" },
