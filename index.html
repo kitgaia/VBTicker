@@ -134,7 +134,7 @@
     const urlParams = new URLSearchParams(window.location.search);
     // Wenn keine ID übergeben wird, nutzt er standardmäßig die Match-ID als Fallback
     let matchId = urlParams.get('match') || 'a27bea5a-1330-4f40-b567-64c138dbd7ba';
-    matchId = matchId.split(':')[0].trim();
+    //matchId = matchId.split(':')[0].trim();
 
     // MOCK / TEST MODUS LOGIK
     if (matchId === 'test') {
