@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Volleyball Scoreboard Overlay - VNL Edition</title>
+  <title>Volleyball Scoreboard Overlay - VNL Edition v1.2</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -21,11 +21,11 @@
       left: 30px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       z-index: 10;
     }
 
-    /* VNL Haupt-Scoreboard (Eckiges, aggressives Tech-Design) */
+    /* VNL Haupt-Scoreboard */
     .scoreboard {
       display: inline-flex;
       align-items: center;
@@ -44,7 +44,6 @@
 
     .team { display: flex; align-items: center; gap: 14px; }
     
-    /* Team Logos */
     .team-logo {
       width: 32px;
       height: 32px;
@@ -87,7 +86,6 @@
     .sets-score { font-size: 22px; color: #f8fafc; letter-spacing: 3px; font-weight: 900; }
     .sets-label { font-size: 8px; color: #38bdf8; text-transform: uppercase; letter-spacing: 2px; font-weight: 900; }
 
-    /* Timeout / Auszeit Badge im VNL Style */
     .timeout-badge {
       display: none;
       background: #ef4444;
@@ -107,7 +105,7 @@
       100% { opacity: 1; transform: scale(1); }
     }
 
-    /* Auswechslungs-Popups unter dem Scoreboard */
+    /* Auswechslungs-Popups direkt unter dem Scoreboard */
     .sub-container {
       display: flex;
       flex-direction: column;
@@ -151,7 +149,7 @@
     .sub-out { color: #f87171; font-weight: 800; }
     .sub-icon { font-weight: bold; color: #fbbf24; }
 
-    /* Versions-Badge (unten rechts in der Ecke) */
+    /* Versions-Badge unten rechts */
     .version-badge {
       position: fixed;
       bottom: 20px;
@@ -170,13 +168,13 @@
       backdrop-filter: blur(4px);
     }
 
-    /* VNL FULLSCREEN SPIELFELD-OVERLAY */
+    /* VNL FULLSCREEN SPIELFELD-OVERLAY (Kompakter / kleiner skaliert) */
     .vnl-fullscreen {
       position: fixed;
-      top: 3%;
-      left: 3%;
-      width: 94vw;
-      height: 94vh;
+      top: 8%;
+      left: 8%;
+      width: 84vw;
+      height: 84vh;
       background: radial-gradient(circle at center, #0f172a 0%, #030712 100%);
       border: 2px solid #00f2fe;
       backdrop-filter: blur(16px);
@@ -184,7 +182,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 30px 40px;
+      padding: 25px 35px;
       color: white;
       opacity: 0;
       pointer-events: none;
@@ -204,25 +202,24 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 2px solid rgba(0, 242, 254, 0.3);
-      padding-bottom: 15px;
+      padding-bottom: 12px;
     }
     .vnl-event-title {
-      font-size: 26px;
+      font-size: 22px;
       font-weight: 900;
       text-transform: uppercase;
-      letter-spacing: 3px;
+      letter-spacing: 2.5px;
       color: #ffffff;
       text-shadow: 0 0 15px rgba(0, 242, 254, 0.6);
     }
     .vnl-match-subtitle {
-      font-size: 14px;
+      font-size: 13px;
       color: #38bdf8;
-      letter-spacing: 1.5px;
+      letter-spacing: 1px;
       text-transform: uppercase;
       font-weight: 800;
     }
 
-    /* Das Volleyball-Spielfeld Layout (VNL Match Court Style) */
     .vnl-court-single {
       flex-grow: 1;
       display: flex;
@@ -231,30 +228,30 @@
       background: linear-gradient(180deg, rgba(15, 23, 42, 0.6) 0%, rgba(3, 7, 18, 0.8) 100%);
       border: 2px solid rgba(0, 242, 254, 0.2);
       border-radius: 8px;
-      margin: 20px 0;
-      padding: 40px;
+      margin: 15px 0;
+      padding: 30px;
       position: relative;
     }
 
     .vnl-court-header {
-      font-size: 24px;
+      font-size: 20px;
       font-weight: 900;
       text-transform: uppercase;
       color: #00f2fe;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
       text-align: center;
       letter-spacing: 2px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 15px;
+      gap: 12px;
     }
 
     .vnl-grid-6 {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      max-width: 1050px;
+      gap: 15px;
+      max-width: 950px;
       margin: 0 auto;
       width: 100%;
     }
@@ -265,19 +262,19 @@
       border-radius: 6px;
       display: flex;
       align-items: center;
-      padding: 18px 22px;
-      gap: 18px;
+      padding: 14px 18px;
+      gap: 14px;
       position: relative;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.5);
     }
 
     .vnl-p-number {
-      font-size: 30px;
+      font-size: 26px;
       font-weight: 900;
       color: #030712;
       background: #00f2fe;
-      min-width: 50px;
-      height: 50px;
+      min-width: 42px;
+      height: 42px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -291,7 +288,7 @@
     }
 
     .vnl-p-name {
-      font-size: 17px;
+      font-size: 15px;
       font-weight: 800;
       white-space: nowrap;
       overflow: hidden;
@@ -300,19 +297,19 @@
     }
 
     .vnl-p-pos {
-      font-size: 11px;
+      font-size: 10px;
       color: #38bdf8;
       text-transform: uppercase;
       letter-spacing: 1px;
       font-weight: 700;
-      margin-top: 3px;
+      margin-top: 2px;
     }
 
     .vnl-zone-label {
       position: absolute;
-      top: 6px;
-      right: 10px;
-      font-size: 9px;
+      top: 5px;
+      right: 8px;
+      font-size: 8px;
       color: rgba(255,255,255,0.4);
       font-weight: 900;
       letter-spacing: 1px;
@@ -321,13 +318,11 @@
 </head>
 <body>
 
-  <!-- Permanentes Versions-Badge unten rechts -->
-  <div class="version-badge">v1.1</div>
+  <!-- Versions-Badge unten rechts -->
+  <div class="version-badge">v1.2</div>
 
   <!-- Scoreboard & Sub-Popups oben links -->
   <div class="scoreboard-wrapper">
-    <div id="sub-container" class="sub-container"></div>
-
     <div class="scoreboard" id="main-scoreboard">
       <div class="team home">
         <img id="team1-logo" class="team-logo" src="" style="display:none;" alt="">
@@ -348,9 +343,12 @@
         <span id="team2-to" class="timeout-badge">AUSZEIT</span>
       </div>
     </div>
+
+    <!-- Sub-Popups jetzt sauber direkt UNTER dem Scoreboard -->
+    <div id="sub-container" class="sub-container"></div>
   </div>
 
-  <!-- VNL Fullscreen Spielfeld-Overlay (Einzelnes Team nacheinander) -->
+  <!-- VNL Fullscreen Spielfeld-Overlay (Kompakter) -->
   <div id="vnl-overlay" class="vnl-fullscreen">
     <div class="vnl-top-bar">
       <div id="vnl-title" class="vnl-event-title">Satz 1 – Startaufstellung</div>
@@ -359,7 +357,7 @@
 
     <div class="vnl-court-single">
       <div class="vnl-court-header">
-        <img id="vnl-team-logo" class="team-logo" style="width:40px; height:40px; display:none;" alt="">
+        <img id="vnl-team-logo" class="team-logo" style="width:34px; height:34px; display:none;" alt="">
         <span id="vnl-single-team-name">SC Halle</span>
       </div>
       <div class="vnl-grid-6" id="vnl-single-grid"></div>
