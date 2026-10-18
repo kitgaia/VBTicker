@@ -446,3 +446,89 @@
       subs.forEach(sub => {
         const popup = document.createElement('div');
         popup.className = 'sub-popup';
+        popup.innerHTML = `
+          <span class="sub-tag">${sub.team}</span>
+          <span>
+            <span class="sub-out">OUT #${sub.outNum} ${sub.outName}</span> 
+            <span class="sub-icon"> ⇄ </span> 
+            <span class="sub-in">IN #${sub.inNum} ${sub.inName}</span>
+          </span>
+        `;
+        
+        container.appendChild(popup);
+
+        // Einblenden
+        setTimeout(() => popup.classList.add('show'), 50);
+
+        // Nach 5 Sekunden wieder entfernen
+        setTimeout(() => {
+          popup.classList.remove('show');
+          setTimeout(() => popup.remove(), 300);
+        }, 5000);
+      });
+    }
+
+    // Testsimulation für den Test-Modus (?match=test)
+    function runTestSimulation() {
+      const hTeam = "SC Halle";
+      const gTeam = "TV Hörde";
+
+      const lineUp1 = [
+        { number: 4, name: "Filiniuk", pos: "Annahme" },
+        { number: 6, name: "Fomin", pos: "Mitte" },
+        { number: 2, name: "Maistrak", pos: "Diagonal" },
+        { number: 8, name: "Wasiljew", pos: "Annahme" },
+        { number: 7, name: "Voth", pos: "Zuspiel" },
+        { number: 3, name: "Pohl", pos: "Libero" }
+      ];
+
+      const lineUp2 = [
+        { number: 11, name: "Reutter", pos: "Annahme" },
+        { number: 6, name: "Frenz", pos: "Mitte" },
+        { number: 18, name: "Pieper", pos: "Diagonal" },
+        { number: 3, name: "Köster", pos: "Mitte" },
+        { number: 22, name: "Schulenburg", pos: "Zuspiel" },
+        { number: 7, name: "Herbort", pos: "Libero" }
+      ];
+
+      // 1. Startaufstellung Satz 1 (Spielfeld-Ansicht)
+      updateUI({ team1: hTeam, team2: gTeam, p1: 0, p2: 0, s1: 0, s2: 0 });
+      showVnlLineup("Satz 1 – Startaufstellung", hTeam, gTeam, lineUp1, lineUp2);
+
+      setTimeout(() => hideVnlLineup(), 6000);
+
+      // 2. Punkte laufen lassen
+      setTimeout(() => {
+        updateUI({ team1: hTeam, team2: gTeam, p1: 8, p2: 6, s1: 0, s2: 0 });
+      }, 8000);
+
+      // 3. Einzelner Wechsel bei SC Halle (Test unter Scoreboard)
+      setTimeout(() => {
+        showSubPopup({ team: "SC Halle", outNum: 7, outName: "Voth", inNum: 10, inName: "Havryliuk" });
+      }, 11000);
+
+      setTimeout(() => {
+        updateUI({ team1: hTeam, team2: gTeam, p1: 18, p2: 15, s1: 0, s2: 0 });
+      }, 14000);
+
+      // 4. Doppelwechsel / Wechsel aus beiden Teams gleichzeitig!
+      setTimeout(() => {
+        showSubPopup([
+          { team: "SC Halle", outNum: 2, outName: "Maistrak", inNum: 12, inName: "Schmidt" },
+          { team: "TV Hörde", outNum: 18, outName: "Pieper", inNum: 9, inName: "Müller" }
+        ]);
+      }, 17000);
+
+      // 5. Satzende / Startaufstellung Satz 2
+      setTimeout(() => {
+        showVnlLineup("Satz 2 – Startaufstellung", hTeam, gTeam, lineUp1, lineUp2);
+      }, 21000);
+
+      setTimeout(() => {
+        hideVnlLineup();
+        updateUI({ team1: hTeam, team2: gTeam, p1: 0, p2: 0, s1: 1, s2: 0 });
+      }, 27000);
+    }
+  </script>
+</body>
+</html>
