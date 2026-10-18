@@ -145,13 +145,15 @@
       document.getElementById('team2-name').innerText = ' ?match=...';
     }
 
- // Echtes SAMS Abrufen
+ // Echtes SAMS Abrufen über deinen EIGENEN Proxy
     async function fetchScore() {
       try {
-        // Cache-Buster: Hängt die aktuelle Millisekunde an, damit die Firewall es für eine neue Anfrage hält
-        const timestamp = new Date().getTime();
-        const targetUrl = encodeURIComponent(`https://dvv.sams-ticker.de/api/v1/matches/${matchId}?_=${timestamp}`);
-        const response = await fetch(`https://api.allorigins.win/raw?url=${targetUrl}`);
+        const dvvUrl = encodeURIComponent(`https://dvv.sams-ticker.de/api/v1/matches/${matchId}`);
+        
+        // FÜGE HIER DEINE KOPIERTE CLOUDFLARE URL EIN:
+        const myProxy = "https://vbticker-proxy.DEIN-NAME.workers.dev"; 
+        
+        const response = await fetch(`${myProxy}?url=${dvvUrl}`);
         
         if (!response.ok) return;
 
