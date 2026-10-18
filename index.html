@@ -3,139 +3,257 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Volleyball Scoreboard Overlay</title>
+  <title>Volleyball Scoreboard Overlay - VNL Style</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: transparent;
-      font-family: 'Segoe UI', Roboto, -apple-system, sans-serif;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
       overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
     }
 
-    /* Haupt-Scoreboard */
+    /* Standard Klein-Scoreboard (Unten/Links oder Standardposition) */
     .scoreboard {
-      position: relative;
+      position: absolute;
+      bottom: 40px;
+      left: 40px;
       display: inline-flex;
       align-items: center;
-      background: rgba(15, 23, 42, 0.92);
-      border-radius: 12px;
-      padding: 10px 18px;
+      background: linear-gradient(135deg, #0b0f19 0%, #1e293b 100%);
+      border-radius: 8px;
+      padding: 12px 24px;
       color: #ffffff;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      border-bottom: 4px solid #3b82f6;
       font-weight: 700;
-      margin: 20px;
-      gap: 16px;
-      transition: all 0.3s ease;
+      gap: 20px;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 10;
     }
 
-    .team { display: flex; align-items: center; gap: 12px; }
+    .team { display: flex; align-items: center; gap: 14px; }
     .team-name {
-      font-size: 18px;
-      letter-spacing: 0.5px;
-      max-width: 170px;
+      font-size: 22px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      max-width: 200px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .points {
-      background: #2563eb;
-      color: #ffffff;
-      font-size: 26px;
-      padding: 4px 14px;
-      border-radius: 8px;
-      min-width: 48px;
+      background: #ffffff;
+      color: #0f172a;
+      font-size: 32px;
+      font-weight: 900;
+      padding: 4px 16px;
+      border-radius: 6px;
+      min-width: 60px;
       text-align: center;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
     }
-    .guest .points { background: #d97706; }
+    .guest .points { background: #f59e0b; color: #ffffff; }
 
     .sets-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 0 8px;
+      padding: 0 12px;
+      border-left: 2px solid rgba(255,255,255,0.1);
+      border-right: 2px solid rgba(255,255,255,0.1);
     }
-    .sets-score { font-size: 22px; color: #f8fafc; letter-spacing: 2px; }
-    .sets-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; }
+    .sets-score { font-size: 24px; color: #f8fafc; letter-spacing: 3px; font-weight: 900; }
+    .sets-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px; }
 
     /* Timeout Indicator */
     .timeout-badge {
       display: none;
-      background: #f59e0b;
-      color: #0f172a;
-      font-size: 10px;
-      padding: 2px 6px;
+      background: #ef4444;
+      color: #ffffff;
+      font-size: 11px;
+      padding: 3px 8px;
       border-radius: 4px;
-      font-weight: 800;
-      animation: pulse 1.2s infinite;
+      font-weight: 900;
+      animation: pulse 1s infinite;
     }
     .timeout-active { display: inline-block; }
 
     @keyframes pulse {
       0% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(0.95); }
+      50% { opacity: 0.5; transform: scale(0.95); }
       100% { opacity: 1; transform: scale(1); }
     }
 
-    /* Automatisches Event-/Satzende-Banner */
-    .banner {
-      display: none;
-      position: absolute;
-      top: 80px;
-      left: 20px;
-      background: #1e293b;
-      border: 2px solid #3b82f6;
-      border-radius: 10px;
-      padding: 12px 20px;
+    /* VNL FULLSCREEN AUFSTELLUNGS- UND EVENT-OVERLAY (1080x1920 angelehnt) */
+    .vnl-fullscreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(5, 8, 22, 0.95);
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
       color: white;
-      font-size: 15px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
-      animation: slideDown 0.4s ease-out forwards;
-      max-width: 350px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease-in-out, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: scale(0.95);
+      z-index: 100;
     }
-    .banner-show { display: block; }
 
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
+    .vnl-active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
+    }
+
+    .vnl-header {
+      font-size: 14px;
+      letter-spacing: 4px;
+      color: #38bdf8;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      font-weight: 800;
+    }
+
+    .vnl-title {
+      font-size: 42px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 40px;
+      text-align: center;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .vnl-teams-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      width: 80%;
+      max-width: 1400px;
+    }
+
+    .vnl-team-box {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    .vnl-team-title {
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #38bdf8;
+      padding-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .vnl-player-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .vnl-player-item {
+      display: flex;
+      justify-content: space-between;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 600;
+      border-left: 4px solid #38bdf8;
+    }
+
+    .vnl-player-pos {
+      color: #94a3b8;
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+
+    .vnl-sub-info {
+      margin-top: 30px;
+      font-size: 20px;
+      color: #facc15;
+      font-weight: 700;
+      text-align: center;
+      background: rgba(250, 204, 21, 0.1);
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px dashed #facc15;
     }
   </style>
 </head>
 <body>
 
-  <div class="scoreboard">
-    <!-- Heimteam -->
+  <!-- Standard Scoreboard (Unten Links) -->
+  <div class="scoreboard" id="main-scoreboard">
     <div class="team home">
-      <span id="team1-to" class="timeout-badge">TIMEOUT</span>
+      <span id="team1-to" class="timeout-badge">TO</span>
       <span id="team1-name" class="team-name">HEIM</span>
       <span id="team1-points" class="points">0</span>
     </div>
 
-    <!-- Sätze -->
     <div class="sets-container">
       <span class="sets-label">SÄTZE</span>
       <span id="sets-score" class="sets-score">0 : 0</span>
     </div>
 
-    <!-- Gastteam -->
     <div class="team guest">
       <span id="team2-points" class="points">0</span>
       <span id="team2-name" class="team-name">GAST</span>
-      <span id="team2-to" class="timeout-badge">TIMEOUT</span>
+      <span id="team2-to" class="timeout-badge">TO</span>
     </div>
   </div>
 
-  <!-- Event- & Satzende-Benachrichtigung -->
-  <div id="set-banner" class="banner">
-    <span id="banner-text">Event</span>
+  <!-- VNL Fullscreen Layout für Aufstellungen / Events -->
+  <div id="vnl-overlay" class="vnl-fullscreen">
+    <div class="vnl-header">Offizielle Aufstellung / Spiel-Event</div>
+    <div id="vnl-main-title" class="vnl-title">Satz 1 – Startaufstellung</div>
+    
+    <div class="vnl-teams-grid">
+      <!-- Team 1 -->
+      <div class="vnl-team-box">
+        <div class="vnl-team-title" id="vnl-t1-name">Heimteam</div>
+        <ul class="vnl-player-list" id="vnl-t1-players">
+          <!-- Dynamisch gefüllt -->
+        </ul>
+      </div>
+
+      <!-- Team 2 -->
+      <div class="vnl-team-box">
+        <div class="vnl-team-title" id="vnl-t2-name">Gastteam</div>
+        <ul class="vnl-player-list" id="vnl-t2-players">
+          <!-- Dynamisch gefüllt -->
+        </ul>
+      </div>
+    </div>
+
+    <div id="vnl-sub-container" class="vnl-sub-info" style="display: none;">
+      Spielerwechsel: <span id="vnl-sub-text"></span>
+    </div>
   </div>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     let matchId = urlParams.get('match') || 'a27bea5a-1330-4f40-b567-64c138dbd7ba';
 
-    // KLARE TRENNUNG: Wenn match=test übergeben wird, starte sofort die Simulation und brich ab
     if (matchId === 'test') {
       runTestSimulation();
     } else {
@@ -147,7 +265,6 @@
       try {
         const myWorker = "https://withered-sea-3b06.nick-valbert2006.workers.dev"; 
         const response = await fetch(`${myWorker}/?match=${matchId}`);
-        
         if (!response.ok) return;
 
         const data = await response.json();
@@ -157,32 +274,17 @@
         let currentSetScore = { team1: 0, team2: 0 };
         if (stateInfo.matchSets && stateInfo.matchSets.length > 0) {
           const latestSet = stateInfo.matchSets[stateInfo.matchSets.length - 1];
-          if (latestSet && latestSet.setScore) {
-            currentSetScore = latestSet.setScore;
-          }
-        }
-
-        let latestEventText = "";
-        if (stateInfo.eventHistory && stateInfo.eventHistory.length > 0) {
-          const ev = stateInfo.eventHistory[stateInfo.eventHistory.length - 1];
-          if (ev.type === "START_SET") {
-            latestEventText = `Satz ${ev.setNumber} gestartet (Startaufstellung aktiv)`;
-          } else if (ev.type === "SUBSTITUTION") {
-            latestEventText = `Auswechslung (${ev.teamCode === 'team1' ? 'Heim' : 'Gast'})`;
-          }
+          if (latestSet && latestSet.setScore) currentSetScore = latestSet.setScore;
         }
 
         updateUI({
-          team1: matchInfo.teamDescription1 || 'Team 1',
-          team2: matchInfo.teamDescription2 || 'Team 2',
+          team1: matchInfo.teamDescription1 || 'Heim',
+          team2: matchInfo.teamDescription2 || 'Gast',
           p1: currentSetScore.team1 ?? 0,
           p2: currentSetScore.team2 ?? 0,
           s1: stateInfo.setPoints?.team1 ?? 0,
           s2: stateInfo.setPoints?.team2 ?? 0,
-          to1: false, 
-          to2: false,
-          isSetFinished: stateInfo.finished || false,
-          eventMessage: latestEventText
+          isSetFinished: stateInfo.finished || false
         });
       } catch (err) {
         console.error('Ticker-Fehler:', err);
@@ -195,53 +297,40 @@
       document.getElementById('team1-points').innerText = d.p1;
       document.getElementById('team2-points').innerText = d.p2;
       document.getElementById('sets-score').innerText = `${d.s1} : ${d.s2}`;
+    }
 
-      const banner = document.getElementById('set-banner');
-      const bannerText = document.getElementById('banner-text');
+    // VNL Fullscreen Ansicht steuern
+    function showVnlOverlay(title, team1Name, team2Name, players1, players2, subText = null) {
+      const overlay = document.getElementById('vnl-overlay');
+      document.getElementById('vnl-main-title').innerText = title;
+      document.getElementById('vnl-t1-name').innerText = team1Name;
+      document.getElementById('vnl-t2-name').innerText = team2Name;
 
-      if (d.isSetFinished) {
-        bannerText.innerText = `Spiel beendet! Endstand Sätze: ${d.s1}:${d.s2}`;
-        banner.classList.add('banner-show');
-      } else if (d.eventMessage) {
-        bannerText.innerText = d.eventMessage;
-        banner.classList.add('banner-show');
+      // Spieler Team 1 rendern
+      const t1List = document.getElementById('vnl-t1-players');
+      t1List.innerHTML = players1.map(p => `<li class="vnl-player-item"><span>${p.number}. ${p.name}</span> <span class="vnl-player-pos">${p.pos}</span></li>`).join('');
+
+      // Spieler Team 2 rendern
+      const t2List = document.getElementById('vnl-t2-players');
+      t2List.innerHTML = players2.map(p => `<li class="vnl-player-item"><span>${p.number}. ${p.name}</span> <span class="vnl-player-pos">${p.pos}</span></li>`).join('');
+
+      // Wechsel-Hinweis falls vorhanden
+      const subContainer = document.getElementById('vnl-sub-container');
+      if (subText) {
+        document.getElementById('vnl-sub-text').innerText = subText;
+        subContainer.style.display = 'block';
       } else {
-        banner.classList.remove('banner-show');
+        subContainer.style.display = 'none';
       }
+
+      overlay.classList.add('vnl-active');
     }
 
-    // Testsimulation im Zeitraffer (Aufruf via ?match=test)
+    function hideVnlOverlay() {
+      document.getElementById('vnl-overlay').classList.remove('vnl-active');
+    }
+
+    // Testsimulation im VNL-Style (Aufruf via ?match=test)
     function runTestSimulation() {
-      const steps = [
-        { team1: 'SC Halle', team2: 'TV Hörde', p1: 0, p2: 0, s1: 0, s2: 0, msg: 'Satz 1 gestartet – Startaufstellungen aktiv' },
-        { team1: 'SC Halle', team2: 'TV Hörde', p1: 1, p2: 0, s1: 0, s2: 0, msg: 'Punkt für SC Halle (1:0)' },
-        { team1: 'SC Halle', team2: 'TV Hörde', p1: 5, p2: 5, s1: 0, s2: 0, msg: 'Spielstand ausgeglichen 5:5' },
-        { team1: 'SC Halle', team2: 'TV Hörde', p1: 8, p2: 6, s1: 0, s2: 0, msg: 'Spielerwechsel bei SC Halle (Ein-/Auswechslung)' },
-        { team1: 'SC Halle', team2: 'TV Hörde', p1: 25, p2: 20, s1: 1, s2: 0, msg: 'Satz 1 beendet! Satzgewinn für SC Halle' },
-        { team1: 'SC Halle', team2: 'TV Hörde', p1: 0, p2: 0, s1: 1, s2: 0, msg: 'Satz 2 gestartet – Neue Startaufstellungen' },
-        { team1: 'SC Halle', team2: 'TV Hörde', p1: 20, p2: 25, s1: 1, s2: 1, msg: 'Satz 2 beendet! Satzgewinn für TV Hörde' },
-        { team1: 'SC Halle', team2: 'TV Hörde', p1: 0, p2: 0, s1: 1, s2: 1, msg: 'Satz 3 gestartet' },
-        { team1: 'SC Halle', team2: 'TV Hörde', p1: 21, p2: 25, s1: 1, s2: 3, isSetFinished: true, msg: 'Spiel beendet!' }
-      ];
-
-      let currentStep = 0;
-      updateUI({ ...steps[0], to1: false, to2: false, isSetFinished: false, eventMessage: steps[0].msg });
-
-      const interval = setInterval(() => {
-        currentStep++;
-        if (currentStep < steps.length) {
-          updateUI({ 
-            ...steps[currentStep], 
-            to1: false, 
-            to2: false, 
-            isSetFinished: steps[currentStep].isSetFinished || false, 
-            eventMessage: steps[currentStep].msg 
-          });
-        } else {
-          clearInterval(interval);
-        }
-      }, 3000);
-    }
-  </script>
-</body>
-</html>
+      const hTeam = "SC Halle";
+      const gTeam = "TV Hör
