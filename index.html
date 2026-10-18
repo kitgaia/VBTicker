@@ -203,3 +203,29 @@
 
       // Satzende Banner
       const banner = document.getElementById('set-banner');
+      if (d.isSetFinished) {
+        document.getElementById('banner-text').innerText = `Spiel beendet! Endstand: ${d.s1}:${d.s2}`;
+        banner.classList.add('banner-show');
+      } else {
+        banner.classList.remove('banner-show');
+      }
+    }
+
+    // Simuliert ein volles Spiel im Zeitraffer zum Testen
+    function runTestSimulation() {
+      let state = { team1: 'VV Schwerte', team2: 'TuS Herten', p1: 18, p2: 21, s1: 2, s2: 2, to1: false, to2: false, isSetFinished: false };
+      updateUI(state);
+
+      setInterval(() => {
+        if (state.p2 < 15) {
+          state.p2++;
+        } else if (!state.isSetFinished) {
+          state.isSetFinished = true;
+          state.s2 = 3;
+        }
+        updateUI(state);
+      }, 1500);
+    }
+  </script>
+</body>
+</html>
