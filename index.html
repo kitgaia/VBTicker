@@ -148,7 +148,7 @@
     // Echtes SAMS Abrufen
     async function fetchScore() {
       try {
-        const response = await fetch(`https://dvv.sams-ticker.de/api/v1/matches/${matchId}`);
+        const response = await fetch(`https://api.allorigins.win/raw?url=https://dvv.sams-ticker.de/api/v1/matches/${matchId}`);
         if (!response.ok) return;
 
         const data = await response.json();
