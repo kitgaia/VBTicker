@@ -20,15 +20,19 @@
       --color-guest: #f59e0b;
     }
 
-    /* Container für Scoreboard + Sub-Popups oben links */
+    /* Container für Scoreboard + Sub-Popups oben mittig */
     .scoreboard-wrapper {
       position: absolute;
       top: 30px;
-      left: 30px;
+      left: 50%;
+      transform: translateX(-50%);
       display: flex;
       flex-direction: column;
+      align-items: center;
       gap: 10px;
       z-index: 10;
+      width: fit-content;
+      max-width: 90vw;
     }
 
     /* VNL Haupt-Scoreboard (Clean & Minimalistisch) */
@@ -61,11 +65,13 @@
       font-size: 21px;
       letter-spacing: 1.5px;
       text-transform: uppercase;
-      max-width: 170px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
       font-weight: 900;
+      max-width: 220px;
+      text-align: center;
+      word-break: break-word;
     }
 
     .points {
@@ -96,7 +102,9 @@
     .sub-container {
       display: flex;
       flex-direction: column;
+      align-items: center;
       gap: 6px;
+      width: 100%;
     }
 
     .sub-popup {
@@ -268,7 +276,7 @@
       z-index: 2;
     }
 
-    /* Cleanere Spieler-Karten (Angelehnt an dein Design mit dunklem Farbverlauf) */
+    /* Cleanere Spieler-Karten */
     .vnl-player-card {
       background: linear-gradient(135deg, #090d16 0%, #1e293b 100%);
       border: 1px solid rgba(255, 255, 255, 0.15);
@@ -308,7 +316,7 @@
   <!-- Versions-Badge -->
   <div class="version-badge">v1.3.4</div>
 
-  <!-- Scoreboard & Sub-Popups -->
+  <!-- Scoreboard & Sub-Popups (Jetzt zentriert oben) -->
   <div class="scoreboard-wrapper">
     <div class="scoreboard" id="main-scoreboard">
       <div class="team home">
@@ -334,19 +342,16 @@
 
   <!-- VNL Popup-Overlay -->
   <div id="vnl-overlay" class="vnl-fullscreen">
-    <!-- Flache Kopfleiste (Satz-Anzeige & Subtitel) -->
     <div class="vnl-top-bar">
       <div id="vnl-title" class="vnl-event-title">Satz 1 – Startaufstellung</div>
       <div id="vnl-subtitle" class="vnl-match-subtitle">SC Halle vs. TV Hörde</div>
     </div>
 
-    <!-- Zentrierter Team-Name und Logo (Nicht perspektivisch, direkt über dem Court) -->
     <div class="vnl-team-header">
       <img id="vnl-team-logo" class="team-logo" style="width:28px; height:28px; display:none;" alt="">
       <span id="vnl-single-team-name" class="vnl-team-title-text">SC Halle</span>
     </div>
 
-    <!-- Perspektivischer Container nur für das Spielfeld und die Spieler -->
     <div class="vnl-court-container">
       <div class="vnl-court-diagram">
         <div class="court-net-line"></div>
@@ -483,8 +488,8 @@
     }
 
     function runTestSimulation() {
-      const hTeam = "SC Halle";
-      const gTeam = "TV Hörde";
+      const hTeam = "TuS Meinerzhagen II";
+      const gTeam = "TV F.A. Dresselndorf II";
       const matchSub = `${hTeam} vs. ${gTeam}`;
 
       const lineUp1 = [
@@ -523,8 +528,8 @@
 
       setTimeout(() => {
         showSubPopup([
-          { team: "SC Halle", outNum: 1, outName: "Lüttel", inNum: 10, inName: "Dunkel" },
-          { team: "TV Hörde", outNum: 18, outName: "Pieper", inNum: 9, inName: "Müller" }
+          { team: hTeam, outNum: 1, outName: "Lüttel", inNum: 10, inName: "Dunkel" },
+          { team: gTeam, outNum: 18, outName: "Pieper", inNum: 9, inName: "Müller" }
         ], false);
       }, 14000);
 
