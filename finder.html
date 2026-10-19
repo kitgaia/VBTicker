@@ -1,124 +1,198 @@
 <!DOCTYPE html>
+
 <html lang="de">
+
 <head>
+
     <meta charset="UTF-8">
+
     <title>TuS Meinerzhagen Ticker Filter</title>
+
     <style>
-        body { font-family: Arial, sans-serif; background-color: #121212; color: #e0e0e0; padding: 20px; max-width: 800px; margin: auto; }
+
+        body { font-family: Arial, sans-serif; background-color: #121212; color: #e0e0e0; padding: 20px; }
+
         h2 { color: #ff690a; }
+
         button { background-color: #ff690a; color: white; border: none; padding: 10px 20px; font-size: 16px; cursor: pointer; border-radius: 5px; }
-        button:hover { background-color: #e55b00; }
-        .match-box { background-color: #1e1e1e; border: 1px solid #333; padding: 15px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; gap: 15px; }
-        .match-info { flex-grow: 1; }
+
+        button:hover { background-color: #e05b00; }
+
+        .match-box { background-color: #1e1e1e; border: 1px solid #333; padding: 15px; margin-bottom: 10px; border-radius: 5px; }
+
         .match-teams { font-weight: bold; font-size: 18px; color: #fff; }
+
         .match-date { color: #bbb; margin: 5px 0; }
+
         .match-id { font-family: monospace; color: #888; font-size: 14px; }
-        .copy-btn { background-color: #333; color: #ff690a; border: 1px solid #ff690a; padding: 8px 12px; font-size: 14px; white-space: nowrap; }
-        .copy-btn:hover { background-color: #ff690a; color: #fff; }
+
     </style>
+
 </head>
+
 <body>
 
+
+
     <h2>TuS Meinerzhagen Match-Finder</h2>
-    <p>Klicke auf den Button, um die aktuellen Spiele zu laden:</p>
+
+    <p>Klicke auf den Button, um die aktuellen Spiele über den Cloudflare Worker zu laden:</p>
+
     <button onclick="fuelleSpiele()">Spiele abrufen</button>
+
     
+
     <div id="ergebnis" style="margin-top: 20px;"></div>
 
+
+
     <script>
+
         async function fuelleSpiele() {
+
             const container = document.getElementById('ergebnis');
+
             container.innerHTML = "Lade Daten...";
 
-            // Wir nutzen AllOrigins als Proxy, um die IP-Sperre von SAMS zu umgehen
-            const targetUrl = 'https://backend.sams-ticker.de/live/indoor/tickers/wvv';
-            const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl);
+
+
+            const workerUrl = 'https://curly-mode-4eaa.nick-valbert2006.workers.dev/';
+
+
 
             try {
-                const response = await fetch(proxyUrl);
+
+                const response = await fetch(workerUrl);
+
                 const data = await response.json();
+
                 
+
                 let matches = [];
 
+
+
                 // 1. Prüfen, ob matchDays existiert und durchgehen
+
                 if (data.matchDays && Array.isArray(data.matchDays)) {
+
                     data.matchDays.forEach(day => {
+
+                        // Manchmal heißen die Spiele innerhalb der Spieltage 'matches', 'games' oder liegen als Array direkt vor
+
                         const dayMatches = day.matches || day.games || (Array.isArray(day) ? day : Object.values(day).find(v => Array.isArray(v)));
+
                         if (Array.isArray(dayMatches)) {
+
                             matches.push(...dayMatches);
+
                         }
+
                     });
+
                 } 
+
                 
+
                 // Fallbacks falls data selbst ein Array ist
+
                 if (matches.length === 0) {
+
                     if (Array.isArray(data)) {
+
                         matches = data;
+
                     } else if (data.matches && Array.isArray(data.matches)) {
+
                         matches = data.matches;
+
                     } else {
+
+                        // Alle Arrays im Objekt einsammeln
+
                         Object.values(data).forEach(val => {
+
                             if (Array.isArray(val)) matches.push(...val);
+
                         });
+
                     }
+
                 }
+
                 
+
                 const meinerzhagenSpiele = matches.filter(m => {
+
                     const t1 = m.teamDescription1 || '';
+
                     const t2 = m.teamDescription2 || '';
+
                     return t1.toLowerCase().includes('meinerzhagen') || t2.toLowerCase().includes('meinerzhagen');
+
                 });
+
+
 
                 if (meinerzhagenSpiele.length === 0) {
+
                     container.innerHTML = `<p>Keine Spiele für Meinerzhagen gefunden. (Insgesamt ${matches.length} Einzelspiele aus den matchDays extrahiert)</p>`;
+
                     return;
+
                 }
 
+
+
                 container.innerHTML = "";
+
                 meinerzhagenSpiele.forEach(m => {
+
                     const datumFormatiert = m.date ? new Date(m.date).toLocaleString('de-DE', {
+
                         dateStyle: 'full',
+
                         timeStyle: 'short'
+
                     }) : 'Datum unbekannt';
 
-                    const scoreboardLink = `https://kitgaia.github.io/VBTicker/?match=${m.id}`;
+
 
                     const div = document.createElement('div');
+
                     div.className = 'match-box';
+
                     div.innerHTML = `
-                        <div class="match-info">
-                            <div class="match-teams">${m.teamDescription1 || 'Unbekannt'} vs ${m.teamDescription2 || 'Unbekannt'}</div>
-                            <div class="match-date">📅 ${datumFormatiert}</div>
-                            <div class="match-id">ID: ${m.id || 'Keine ID'}</div>
-                        </div>
-                        <button class="copy-btn" onclick="kopiereLink('${scoreboardLink}', this)">Link kopieren</button>
+
+                        <div class="match-teams">${m.teamDescription1 || 'Unbekannt'} vs ${m.teamDescription2 || 'Unbekannt'}</div>
+
+                        <div class="match-date">📅 ${datumFormatiert}</div>
+
+                        <div class="match-id">ID: ${m.id || 'Keine ID'}</div>
+
                     `;
+
                     container.appendChild(div);
+
                 });
 
+
+
             } catch (error) {
-                container.innerHTML = "<p style='color: red;'>Fehler beim Laden der Daten.</p>";
+
+                container.innerHTML = "<p style='color: red;'>Fehler beim Laden der Daten über den Worker.</p>";
+
                 console.error(error);
+
             }
+
         }
 
-        function kopiereLink(link, buttonElement) {
-            navigator.clipboard.writeText(link).then(() => {
-                const originalText = buttonElement.textContent;
-                buttonElement.textContent = "Kopiert! ✓";
-                buttonElement.style.backgroundColor = "#4CAF50";
-                buttonElement.style.color = "#fff";
-                setTimeout(() => {
-                    buttonElement.textContent = originalText;
-                    buttonElement.style.backgroundColor = "#333";
-                    buttonElement.style.color = "#ff690a";
-                    buttonElement.style.borderColor = "#ff690a";
-                }, 2000);
-            }).catch(err => {
-                console.error("Fehler beim Kopieren: ", err);
-            });
-        }
     </script>
 
+
+
 </body>
+
 </html>
+
