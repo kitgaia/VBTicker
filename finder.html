@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <title>TuS Meinerzhagen Ticker Filter</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #121212; color: #e0e0e0; padding: 20px; }
+        body { font-family: Arial, sans-serif; background-color: #121212; color: #e0e0e0; padding: 20px; max-width: 800px; margin: auto; }
         h2 { color: #ff690a; }
-        button { background-color: #ff690a; color: white; border: none; padding: 10px 20px; font-size: 16px; cursor: pointer; border-radius: 5px; }
-        button:hover { background-color: #e05b00; }
+        .controls { background-color: #1e1e1e; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #333; display: flex; flex-direction: column; gap: 10px; }
+        select, button { padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #444; background-color: #2a2a2a; color: #fff; cursor: pointer; }
+        button { background-color: #ff690a; border: none; }
+        button:hover { background-color: #e55b00; }
         .match-box { background-color: #1e1e1e; border: 1px solid #333; padding: 15px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; gap: 15px; }
         .match-info { flex-grow: 1; }
         .match-teams { font-weight: bold; font-size: 18px; color: #fff; }
@@ -15,19 +17,34 @@
         .match-id { font-family: monospace; color: #888; font-size: 14px; }
         .copy-btn { background-color: #333; color: #ff690a; border: 1px solid #ff690a; padding: 8px 12px; font-size: 14px; white-space: nowrap; }
         .copy-btn:hover { background-color: #ff690a; color: #fff; }
+        label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #ccc; }
     </style>
 </head>
 <body>
 
     <h2>TuS Meinerzhagen Match-Finder</h2>
-    <p>Klicke auf den Button, um die aktuellen Spiele über den Cloudflare Worker zu laden:</p>
-    <button onclick="fuelleSpiele()">Spiele abrufen</button>
+    
+    <div class="controls">
+        <label for="teamSelect"><strong>Team auswählen:</strong></label>
+        <select id="teamSelect" onchange="filtriereUndZeigeSpiele()">
+            <option value="">-- Lade Teams... --</option>
+        </select>
+
+        <label>
+            <input type="checkbox" id="hidePast" checked onchange="filtriereUndZeigeSpiele()"> Vergangene Spiele & 17. Okt ausblenden
+        </label>
+
+        <button onclick="ladeDaten()">Daten vom Ticker aktualisieren</button>
+    </div>
     
     <div id="ergebnis" style="margin-top: 20px;"></div>
 
     <script>
-        async function fuelleSpiele() {
+        let alleSpiele = [];
+
+        async function ladeDaten() {
             const container = document.getElementById('ergebnis');
+            const select = document.getElementById('teamSelect');
             container.innerHTML = "Lade Daten...";
 
             const workerUrl = 'https://curly-mode-4eaa.nick-valbert2006.workers.dev/';
@@ -36,68 +53,118 @@
                 const response = await fetch(workerUrl);
                 const data = await response.json();
                 
-                let matches = [];
+                alleSpiele = [];
 
                 // 1. Prüfen, ob matchDays existiert und durchgehen
                 if (data.matchDays && Array.isArray(data.matchDays)) {
                     data.matchDays.forEach(day => {
                         const dayMatches = day.matches || day.games || (Array.isArray(day) ? day : Object.values(day).find(v => Array.isArray(v)));
                         if (Array.isArray(dayMatches)) {
-                            matches.push(...dayMatches);
+                            alleSpiele.push(...dayMatches);
                         }
                     });
                 } 
                 
                 // Fallbacks falls data selbst ein Array ist
-                if (matches.length === 0) {
+                if (alleSpiele.length === 0) {
                     if (Array.isArray(data)) {
-                        matches = data;
+                        alleSpiele = data;
                     } else if (data.matches && Array.isArray(data.matches)) {
-                        matches = data.matches;
+                        alleSpiele = data.matches;
                     } else {
                         Object.values(data).forEach(val => {
-                            if (Array.isArray(val)) matches.push(...val);
+                            if (Array.isArray(val)) alleSpiele.push(...val);
                         });
                     }
                 }
-                
-                const meinerzhagenSpiele = matches.filter(m => {
-                    const t1 = m.teamDescription1 || '';
-                    const t2 = m.teamDescription2 || '';
-                    return t1.toLowerCase().includes('meinerzhagen') || t2.toLowerCase().includes('meinerzhagen');
+
+                // Alle einzigartigen Teams einsammeln und alphabetisch sortieren
+                const teamsSet = new Set();
+                alleSpiele.forEach(m => {
+                    if (m.teamDescription1) teamsSet.add(m.teamDescription1);
+                    if (m.teamDescription2) teamsSet.add(m.teamDescription2);
                 });
 
-                if (meinerzhagenSpiele.length === 0) {
-                    container.innerHTML = `<p>Keine Spiele für Meinerzhagen gefunden. (Insgesamt ${matches.length} Einzelspiele aus den matchDays extrahiert)</p>`;
-                    return;
+                const sortierteTeams = Array.from(teamsSet).sort();
+
+                select.innerHTML = '<option value="">-- Bitte Team wählen --</option>';
+                sortierteTeams.forEach(team => {
+                    const opt = document.createElement('option');
+                    opt.value = team;
+                    opt.textContent = team;
+                    // Meinerzhagen vorauswählen, falls in der Liste
+                    if (team.toLowerCase().includes('meinerzhagen')) {
+                        opt.selected = true;
+                    }
+                    select.appendChild(opt);
+                });
+
+                if (select.value) {
+                    filtriereUndZeigeSpiele();
+                } else {
+                    container.innerHTML = `<p style="color: #4CAF50;">Erfolgreich ${alleSpiele.length} Spiele geladen. Bitte wähle ein Team aus.</p>`;
                 }
-
-                container.innerHTML = "";
-                meinerzhagenSpiele.forEach(m => {
-                    const datumFormatiert = m.date ? new Date(m.date).toLocaleString('de-DE', {
-                        dateStyle: 'full',
-                        timeStyle: 'short'
-                    }) : 'Datum unbekannt';
-
-                    const scoreboardLink = `https://kitgaia.github.io/VBTicker/?match=${m.id}`;
-
-                    const div = document.createElement('div');
-                    div.className = 'match-box';
-                    div.innerHTML = `
-                        <div class="match-info">
-                            <div class="match-teams">${m.teamDescription1 || 'Unbekannt'} vs ${m.teamDescription2 || 'Unbekannt'}</div>
-                            <div class="match-date">📅 ${datumFormatiert}</div>
-                            <div class="match-id">ID: ${m.id || 'Keine ID'}</div>
-                        </div>
-                        <button class="copy-btn" onclick="kopiereLink('${scoreboardLink}', this)">Link kopieren</button>
-                    `;
-                    container.appendChild(div);
-                });
 
             } catch (error) {
                 container.innerHTML = "<p style='color: red;'>Fehler beim Laden der Daten über den Worker.</p>";
                 console.error(error);
             }
+        }
+
+        function filtriereUndZeigeSpiele() {
+            const container = document.getElementById('ergebnis');
+            const ausgewaehltesTeam = document.getElementById('teamSelect').value;
+            const hidePast = document.getElementById('hidePast').checked;
+
+            if (!ausgewaehltesTeam) {
+                container.innerHTML = "<p>Bitte wähle oben ein Team aus.</p>";
+                return;
+            }
+
+            let gefiltert = alleSpiele.filter(m => {
+                const t1 = m.teamDescription1 || '';
+                const t2 = m.teamDescription2 || '';
+                return t1 === ausgewaehltesTeam || t2 === ausgewaehltesTeam;
+            });
+
+            // Filter für vergangene Spiele und den 17. Oktober
+            if (hidePast) {
+                gefiltert = gefiltert.filter(m => {
+                    if (!m.date) return false;
+                    const datumObj = new Date(m.date);
+                    const ist17Oktober = datumObj.getDate() === 17 && datumObj.getMonth() === 9;
+                    const istVergangenheit = m.date < Date.now();
+
+                    return !istVergangenheit && !ist17Oktober;
+                });
+            }
+
+            if (gefiltert.length === 0) {
+                container.innerHTML = "<p>Keine passenden Spiele für dieses Team gefunden.</p>";
+                return;
+            }
+
+            container.innerHTML = "";
+            gefiltert.forEach(m => {
+                const datumFormatiert = m.date ? new Date(m.date).toLocaleString('de-DE', {
+                    dateStyle: 'full',
+                    timeStyle: 'short'
+                }) : 'Datum unbekannt';
+
+                const scoreboardLink = `https://kitgaia.github.io/VBTicker/?match=${m.id}`;
+
+                const div = document.createElement('div');
+                div.className = 'match-box';
+                div.innerHTML = `
+                    <div class="match-info">
+                        <div class="match-teams">${m.teamDescription1 || 'Unbekannt'} vs ${m.teamDescription2 || 'Unbekannt'}</div>
+                        <div class="match-date">📅 ${datumFormatiert}</div>
+                        <div class="match-id">ID: ${m.id || 'Keine ID'}</div>
+                    </div>
+                    <button class="copy-btn" onclick="kopiereLink('${scoreboardLink}', this)">Link kopieren</button>
+                `;
+                container.appendChild(div);
+            });
         }
 
         function kopiereLink(link, buttonElement) {
@@ -116,6 +183,9 @@
                 console.error("Fehler beim Kopieren: ", err);
             });
         }
+
+        // Direkt beim Laden der Seite die Daten abrufen
+        window.onload = ladeDaten;
     </script>
 
 </body>
