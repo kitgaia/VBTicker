@@ -27,11 +27,12 @@
     <div class="controls">
         <label for="teamSelect"><strong>Team auswählen:</strong></label>
         <select id="teamSelect" onchange="filtriereUndZeigeSpiele()">
+            <-- Wird dynamisch gefüllt -->
             <option value="">-- Erst Spiele laden --</option>
         </select>
 
         <label>
-            <input type="checkbox" id="hidePast" checked onchange="filtriereUndZeigeSpiele()"> Vergangene Spiele & 17. Okt ausblenden
+            <input type="checkbox" id="hidePast" onchange="filtriereUndZeigeSpiele()"> Vergangene Spiele ausblenden
         </label>
 
         <button onclick="ladeDaten()">Daten vom Ticker aktualisieren</button>
@@ -47,16 +48,15 @@
             const select = document.getElementById('teamSelect');
             container.innerHTML = "Lade Daten vom Ticker...";
 
-            // Wir nutzen einen stabilen CORS-Proxy, um die 403-Sperre zu umgehen
-            const targetUrl = 'https://backend.sams-ticker.de/live/indoor/tickers/wvv';
-            const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
+            const workerUrl = 'https://curly-mode-4eaa.nick-valbert2006.workers.dev/';
 
             try {
-                const response = await fetch(proxyUrl);
+                const response = await fetch(workerUrl);
                 const data = await response.json();
                 
                 alleSpiele = [];
 
+                // Spiele aus matchDays extrahieren
                 if (data.matchDays && Array.isArray(data.matchDays)) {
                     data.matchDays.forEach(day => {
                         const dayMatches = day.matches || day.games || (Array.isArray(day) ? day : Object.values(day).find(v => Array.isArray(v)));
@@ -66,6 +66,7 @@
                     });
                 } 
                 
+                // Fallbacks falls data direkt Array ist
                 if (alleSpiele.length === 0) {
                     if (Array.isArray(data)) {
                         alleSpiele = data;
@@ -76,6 +77,7 @@
                     }
                 }
 
+                // Alle einzigartigen Teams sammeln und alphabetisch sortieren
                 const teamsSet = new Set();
                 alleSpiele.forEach(m => {
                     if (m.teamDescription1) teamsSet.add(m.teamDescription1);
@@ -89,6 +91,7 @@
                     const opt = document.createElement('option');
                     opt.value = team;
                     opt.textContent = team;
+                    // Standardmäßig Meinerzhagen II vorauswählen, falls vorhanden
                     if (team.toLowerCase().includes('meinerzhagen ii')) {
                         opt.selected = true;
                     }
@@ -102,7 +105,7 @@
                 }
 
             } catch (error) {
-                container.innerHTML = "<p style='color: red;'>Fehler beim Laden der Daten. (Blockade durch Proxy/API?)</p>";
+                container.innerHTML = "<p style='color: red;'>Fehler beim Laden der Daten über den Worker.</p>";
                 console.error(error);
             }
         }
@@ -111,6 +114,7 @@
             const container = document.getElementById('ergebnis');
             const ausgewaehltesTeam = document.getElementById('teamSelect').value;
             const hidePast = document.getElementById('hidePast').checked;
+            const jetztMs = Date.now();
 
             if (!ausgewaehltesTeam) {
                 container.innerHTML = "<p>Bitte wähle oben ein Team aus.</p>";
@@ -123,19 +127,13 @@
                 return t1 === ausgewaehltesTeam || t2 === ausgewaehltesTeam;
             });
 
+            // Wenn Checkbox aktiv, vergangene Spiele (Datum kleiner als jetzt) ausblenden
             if (hidePast) {
-                gefiltert = gefiltert.filter(m => {
-                    if (!m.date) return false;
-                    const datumObj = new Date(m.date);
-                    const ist17Oktober = datumObj.getDate() === 17 && datumObj.getMonth() === 9;
-                    const istVergangenheit = m.date < Date.now();
-
-                    return !istVergangenheit && !ist17Oktober;
-                });
+                gefiltert = gefiltert.filter(m => m.date && m.date >= jetztMs);
             }
 
             if (gefiltert.length === 0) {
-                container.innerHTML = "<p>Keine kommenden Spiele für dieses Team gefunden.</p>";
+                container.innerHTML = "<p>Keine Spiele für dieses Team gefunden.</p>";
                 return;
             }
 
@@ -179,6 +177,7 @@
             });
         }
 
+        // Beim Laden der Seite direkt Daten abrufen
         window.onload = ladeDaten;
     </script>
 
