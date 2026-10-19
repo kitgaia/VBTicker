@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Volleyball Scoreboard Overlay - VNL Edition v1.3.6</title>
+  <title>Volleyball Scoreboard Overlay - VNL Edition v1.4.0</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -59,6 +59,7 @@
       white-space: nowrap;
     }
 
+    /* Exakt gleich lange Hälften für Heim und Gast */
     .team { 
       display: flex; 
       align-items: center; 
@@ -87,7 +88,7 @@
       flex-grow: 1;
     }
 
-    /* Punkte-Anzeige mit Animation */
+    /* Punkte-Anzeige mit Pulse-Animation */
     .points {
       background: var(--color-home);
       color: #030712;
@@ -350,7 +351,7 @@
 <body>
 
   <!-- Klickbares Badge für manuellen Simulationstart -->
-  <div class="version-badge" onclick="runTestSimulation()" title="Klicken um Test-Simulation zu starten">v1.3.6 (Test)</div>
+  <div class="version-badge" onclick="runTestSimulation()" title="Klicken um Test-Simulation zu starten">v1.4.0 (Live & Test)</div>
 
   <!-- Scoreboard & Sub-Popups -->
   <div class="scoreboard-wrapper">
@@ -380,7 +381,7 @@
   <div id="vnl-overlay" class="vnl-fullscreen">
     <div class="vnl-top-bar">
       <div id="vnl-title" class="vnl-event-title">Satz 1 – Startaufstellung</div>
-      <div id="vnl-subtitle" class="vnl-match-subtitle">SC Halle vs. TV Hörde</div>
+      <div id="vnl-subtitle" class="vnl-match-subtitle">HEIM vs. GAST</div>
     </div>
 
     <div class="vnl-team-header">
@@ -404,6 +405,11 @@
     let prevP2 = null;
     let prevS1 = null;
     let prevS2 = null;
+    let currentMatchData = null;
+
+    // Speicher für bereits verarbeitete Auswechslungs-IDs (verhindert Mehrfachanzeige)
+    const handledSubIds = new Set();
+    let lastHandledSetCount = -1;
 
     document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -416,6 +422,25 @@
         fetchScore(matchId);
         fetchInterval = setInterval(() => fetchScore(matchId), 3000);
       }
+
+      // Tastatur-Hotkeys für OBS / Regie
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'h' || e.key === 'H') triggerLiveLineup('home');
+        if (e.key === 'g' || e.key === 'G') triggerLiveLineup('guest');
+        if (e.key === 'Escape') hideVnlLineup();
+      });
+
+      // Schnittstelle für OBS Docks / External Control / Web Messaging
+      window.addEventListener('message', (event) => {
+        if (!event.data) return;
+        if (event.data.type === 'SHOW_LINEUP') {
+          triggerLiveLineup(event.data.team || 'home');
+        } else if (event.data.type === 'SHOW_SUB') {
+          showSubPopup(event.data.sub, event.data.isGuest);
+        } else if (event.data.type === 'HIDE_LINEUP') {
+          hideVnlLineup();
+        }
+      });
     });
 
     async function fetchScore(matchId) {
@@ -425,6 +450,7 @@
         if (!response.ok) return;
 
         const data = await response.json();
+        currentMatchData = data;
         const matchInfo = data.match || {};
         const stateInfo = data.state || {};
 
@@ -434,7 +460,7 @@
           if (latestSet && latestSet.setScore) currentSetScore = latestSet.setScore;
         }
 
-        updateUI({
+        const uiData = {
           team1: matchInfo.teamDescription1 || 'Heim',
           team2: matchInfo.teamDescription2 || 'Gast',
           logo1: matchInfo.teamLogo1 || matchInfo.logo1 || null,
@@ -443,9 +469,96 @@
           p2: currentSetScore.team2 ?? 0,
           s1: stateInfo.setPoints?.team1 ?? 0,
           s2: stateInfo.setPoints?.team2 ?? 0
-        });
+        };
+
+        updateUI(uiData);
+
+        // 1. ECHTE LIVE-AUSWECHSLUNGEN AUS DEM SAMS-TICKER VERARBEITEN
+        processLiveSubstitutions(stateInfo, uiData);
+
+        // 2. ECHTE LIVE-STARTAUFSTELLUNGEN BEI SATZWECHSEL VERARBEITEN
+        processLiveLineups(stateInfo, uiData);
+
       } catch (err) {
         console.error('Ticker-Fehler:', err);
+      }
+    }
+
+    function processLiveSubstitutions(stateInfo, uiData) {
+      const subs = stateInfo.substitutions || stateInfo.subs || [];
+      if (Array.isArray(subs)) {
+        subs.forEach(sub => {
+          const subKey = sub.id || `${sub.outNum}-${sub.inNum}-${sub.team || sub.isGuest}`;
+          if (!handledSubIds.has(subKey)) {
+            handledSubIds.add(subKey);
+            showSubPopup({
+              team: sub.team || (sub.isGuest ? uiData.team2 : uiData.team1),
+              outNum: sub.outNum || sub.playerOutNumber,
+              outName: sub.outName || sub.playerOutName || '',
+              inNum: sub.inNum || sub.playerInNumber,
+              inName: sub.inName || sub.playerInName || ''
+            }, sub.isGuest || false);
+          }
+        });
+      }
+    }
+
+    function processLiveLineups(stateInfo, uiData) {
+      const totalSetsPlayed = uiData.s1 + uiData.s2;
+      
+      // Wenn ein neuer Satz gestartet wurde und Aufstellungsdaten vorhanden sind
+      if (totalSetsPlayed !== lastHandledSetCount) {
+        lastHandledSetCount = totalSetsPlayed;
+        const currentSetNum = totalSetsPlayed + 1;
+        const matchSub = `${uiData.team1} vs. ${uiData.team2}`;
+
+        if (stateInfo.lineup1 || stateInfo.startingLineup1) {
+          const p1 = parseLineupPlayers(stateInfo.lineup1 || stateInfo.startingLineup1);
+          if (p1.length === 6) {
+            showTeamLineup(`Satz ${currentSetNum} – Startaufstellung`, matchSub, uiData.team1, p1, uiData.logo1, false);
+            setTimeout(() => hideVnlLineup(), 4000);
+          }
+        }
+
+        if (stateInfo.lineup2 || stateInfo.startingLineup2) {
+          const p2 = parseLineupPlayers(stateInfo.lineup2 || stateInfo.startingLineup2);
+          if (p2.length === 6) {
+            setTimeout(() => {
+              showTeamLineup(`Satz ${currentSetNum} – Startaufstellung`, matchSub, uiData.team2, p2, uiData.logo2, true);
+            }, 4800);
+            setTimeout(() => hideVnlLineup(), 8800);
+          }
+        }
+      }
+    }
+
+    function parseLineupPlayers(rawLineup) {
+      if (Array.isArray(rawLineup)) return rawLineup;
+      return [];
+    }
+
+    // Manuelles Auslösen einer Aufstellung (Hotkey / Broadcast)
+    function triggerLiveLineup(teamType = 'home') {
+      if (!currentMatchData) return;
+      const matchInfo = currentMatchData.match || {};
+      const stateInfo = currentMatchData.state || {};
+      const hTeam = matchInfo.teamDescription1 || 'Heim';
+      const gTeam = matchInfo.teamDescription2 || 'Gast';
+      const matchSub = `${hTeam} vs. ${gTeam}`;
+      const isGuest = (teamType === 'guest');
+
+      const rawLineup = isGuest 
+        ? (stateInfo.lineup2 || stateInfo.startingLineup2) 
+        : (stateInfo.lineup1 || stateInfo.startingLineup1);
+
+      const players = parseLineupPlayers(rawLineup);
+      const teamName = isGuest ? gTeam : hTeam;
+      const logo = isGuest ? (matchInfo.teamLogo2 || matchInfo.logo2) : (matchInfo.teamLogo1 || matchInfo.logo1);
+
+      if (players.length === 6) {
+        showTeamLineup("Startaufstellung", matchSub, teamName, players, logo, isGuest);
+      } else {
+        console.warn("Keine vollständigen Aufstellungsdaten im Live-State vorhanden.");
       }
     }
 
@@ -513,15 +626,15 @@
 
       document.getElementById('vnl-front-row').innerHTML = frontPlayers.map(p => `
         <div class="vnl-player-card">
-          <div class="vnl-p-content">${p.number} ${p.name}</div>
-          <div class="vnl-zone-tag">${p.pos}</div>
+          <div class="vnl-p-content">${p.number || ''} ${p.name || p.lastName || ''}</div>
+          <div class="vnl-zone-tag">${p.pos || p.position || ''}</div>
         </div>
       `).join('');
 
       document.getElementById('vnl-back-row').innerHTML = backPlayers.map(p => `
         <div class="vnl-player-card">
-          <div class="vnl-p-content">${p.number} ${p.name}</div>
-          <div class="vnl-zone-tag">${p.pos}</div>
+          <div class="vnl-p-content">${p.number || ''} ${p.name || p.lastName || ''}</div>
+          <div class="vnl-zone-tag">${p.pos || p.position || ''}</div>
         </div>
       `).join('');
 
@@ -587,17 +700,14 @@
       let p1 = 0, p2 = 0, s1 = 0, s2 = 0;
       updateUI({ team1: hTeam, team2: gTeam, p1: p1, p2: p2, s1: s1, s2: s2 });
 
-      // 1. Aufstellung Heim direkt zeigen
       showTeamLineup("Satz 1 – Startaufstellung", matchSub, hTeam, lineUp1, null, false);
       setTimeout(() => hideVnlLineup(), 3000);
 
-      // 2. Aufstellung Gast zeigen
       setTimeout(() => {
         showTeamLineup("Satz 1 – Startaufstellung", matchSub, gTeam, lineUp2, null, true);
       }, 3800);
       setTimeout(() => hideVnlLineup(), 6800);
 
-      // 3. Fortlaufende Punktewertung (alle 2 Sekunden)
       setTimeout(() => {
         simInterval = setInterval(() => {
           if (Math.random() > 0.45) {
@@ -606,14 +716,12 @@
             p2++;
           }
 
-          // Auswechslungs-Popups einstreuen
           if (p1 === 3 && p2 === 2) {
             showSubPopup([{ team: hTeam, outNum: 1, outName: "Lüttel", inNum: 10, inName: "Dunkel" }], false);
           } else if (p2 === 6 && p1 < 8) {
             showSubPopup([{ team: gTeam, outNum: 18, outName: "Pieper", inNum: 9, inName: "Müller" }], true);
           }
 
-          // Satzgewinn-Simulation
           if (p1 >= 15 || p2 >= 15) {
             if (p1 > p2) s1++; else s2++;
             p1 = 0;
