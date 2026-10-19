@@ -50,10 +50,19 @@
       border-bottom: 2px solid rgba(255, 255, 255, 0.1);
       font-weight: 800;
       gap: 18px;
-      white-space: nowrap; /* Verhindert jeglichen erzwungenen Umbruch im gesamten Scoreboard */
+      white-space: nowrap;
     }
 
-    .team { display: flex; align-items: center; gap: 14px; }
+    /* Jede Seite bekommt exakt denselben Platz, damit beide Hälften gleich lang sind */
+    .team { 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      min-width: 300px; 
+      gap: 14px; 
+    }
+    .team.home { flex-direction: row; }
+    .team.guest { flex-direction: row-reverse; }
     
     .team-logo {
       width: 32px;
@@ -66,10 +75,11 @@
       font-size: 21px;
       letter-spacing: 1.5px;
       text-transform: uppercase;
-      white-space: nowrap; /* Hält den Text fest in einer Zeile */
-      overflow: visible;   /* Schneidet nichts ab */
+      white-space: nowrap;
+      overflow: visible;
       font-weight: 900;
       text-align: center;
+      flex-grow: 1;
     }
 
     .points {
@@ -89,7 +99,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 0 12px;
+      padding: 0 16px;
       border-left: 2px solid rgba(255,255,255,0.1);
       border-right: 2px solid rgba(255,255,255,0.1);
     }
@@ -309,7 +319,7 @@
   <!-- Versions-Badge -->
   <div class="version-badge">v1.3.4</div>
 
-  <!-- Scoreboard & Sub-Popups (Zentriert oben, zieht sich in die Länge statt Umbruch) -->
+  <!-- Scoreboard & Sub-Popups (Zentriert oben, gleich lange Hälften) -->
   <div class="scoreboard-wrapper">
     <div class="scoreboard" id="main-scoreboard">
       <div class="team home">
@@ -324,9 +334,9 @@
       </div>
 
       <div class="team guest">
-        <span id="team2-points" class="points">0</span>
-        <span id="team2-name" class="team-name">GAST</span>
         <img id="team2-logo" class="team-logo" src="" style="display:none;" alt="">
+        <span id="team2-name" class="team-name">GAST</span>
+        <span id="team2-points" class="points">0</span>
       </div>
     </div>
 
