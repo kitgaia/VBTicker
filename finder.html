@@ -17,7 +17,7 @@
 <body>
 
     <h2>TuS Meinerzhagen Match-Finder</h2>
-    <p>Klicke auf den Button, um die aktuellen Spiele aus dem WVV-Ticker zu laden und nach Meinerzhagen zu filtern:</p>
+    <p>Klicke auf den Button, um die aktuellen Spiele über den Cloudflare Worker zu laden:</p>
     <button onclick="fuelleSpiele()">Spiele abrufen</button>
     
     <div id="ergebnis" style="margin-top: 20px;"></div>
@@ -27,8 +27,11 @@
             const container = document.getElementById('ergebnis');
             container.innerHTML = "Lade Daten...";
 
+            // Deine Cloudflare Worker URL
+            const workerUrl = 'https://curly-mode-4eaa.nick-valbert2006.workers.dev/';
+
             try {
-                const response = await fetch('https://backend.sams-ticker.de/live/indoor/tickers/wvv');
+                const response = await fetch(workerUrl);
                 const data = await response.json();
                 
                 const matches = Array.isArray(data) ? data : (data.matches || data.content || data.elements || []);
@@ -61,7 +64,7 @@
                 });
 
             } catch (error) {
-                container.innerHTML = "<p style='color: red;'>Fehler beim Laden der Daten (CORS-Blockade?). Tipp: Nutze zur Not die Browser-Konsole oder einen lokalen Live-Server.</p>";
+                container.innerHTML = "<p style='color: red;'>Fehler beim Laden der Daten über den Worker.</p>";
                 console.error(error);
             }
         }
