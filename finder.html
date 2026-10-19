@@ -47,10 +47,12 @@
             const select = document.getElementById('teamSelect');
             container.innerHTML = "Lade Daten vom Ticker...";
 
-            const workerUrl = 'https://curly-mode-4eaa.nick-valbert2006.workers.dev/';
+            // Wir nutzen einen stabilen CORS-Proxy, um die 403-Sperre zu umgehen
+            const targetUrl = 'https://backend.sams-ticker.de/live/indoor/tickers/wvv';
+            const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
 
             try {
-                const response = await fetch(workerUrl);
+                const response = await fetch(proxyUrl);
                 const data = await response.json();
                 
                 alleSpiele = [];
@@ -100,7 +102,7 @@
                 }
 
             } catch (error) {
-                container.innerHTML = "<p style='color: red;'>Fehler beim Laden der Daten über den Worker.</p>";
+                container.innerHTML = "<p style='color: red;'>Fehler beim Laden der Daten. (Blockade durch Proxy/API?)</p>";
                 console.error(error);
             }
         }
@@ -121,17 +123,11 @@
                 return t1 === ausgewaehltesTeam || t2 === ausgewaehltesTeam;
             });
 
-            // Wenn Checkbox aktiv, filtern wir Spiele heraus, die am 17. Oktober stattgefunden haben 
-            // oder deren Datum in der Vergangenheit liegt.
             if (hidePast) {
                 gefiltert = gefiltert.filter(m => {
                     if (!m.date) return false;
                     const datumObj = new Date(m.date);
-                    
-                    // Prüfen ob es der 17. Oktober ist (Monat 9 = Oktober, da Monate 0-basiert sind)
                     const ist17Oktober = datumObj.getDate() === 17 && datumObj.getMonth() === 9;
-                    
-                    // Spiel liegt in der Vergangenheit ODER ist der 17. Oktober
                     const istVergangenheit = m.date < Date.now();
 
                     return !istVergangenheit && !ist17Oktober;
