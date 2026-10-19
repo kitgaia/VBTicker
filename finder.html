@@ -1,48 +1,35 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <title>TuS Meinerzhagen Ticker Filter</title>
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #121212; color: #e0e0e0; padding: 20px; }
-        h2 { color: #ff690a; }
-        button { background-color: #ff690a; color: white; border: none; padding: 10px 20px; font-size: 16px; cursor: pointer; border-radius: 5px; }
-        button:hover { background-color: #e05b00; }
-        .match-box { background-color: #1e1e1e; border: 1px solid #333; padding: 15px; margin-bottom: 10px; border-radius: 5px; }
-        .match-teams { font-weight: bold; font-size: 18px; color: #fff; }
-        .match-date { color: #bbb; margin: 5px 0; }
-        .match-id { font-family: monospace; color: #888; font-size: 14px; }
-    </style>
-</head>
-<body>
-
-    <h2>TuS Meinerzhagen Match-Finder</h2>
-    <p>Klicke auf den Button, um die aktuellen Spiele über den Cloudflare Worker zu laden:</p>
-    <button onclick="fuelleSpiele()">Spiele abrufen</button>
-    
-    <div id="ergebnis" style="margin-top: 20px;"></div>
-
-    <script>
+<script>
         async function fuelleSpiele() {
             const container = document.getElementById('ergebnis');
             container.innerHTML = "Lade Daten...";
 
-            // Deine Cloudflare Worker URL
             const workerUrl = 'https://curly-mode-4eaa.nick-valbert2006.workers.dev/';
 
             try {
                 const response = await fetch(workerUrl);
                 const data = await response.json();
                 
-                const matches = Array.isArray(data) ? data : (data.matches || data.content || data.elements || []);
+                // Wir prüfen, ob die Daten direkt ein Array sind, oder ob sie in properties/matches/content stecken
+                let matches = [];
+                if (Array.isArray(data)) {
+                    matches = data;
+                } else if (data.matches && Array.isArray(data.matches)) {
+                    matches = data.matches;
+                } else if (data.content && Array.isArray(data.content)) {
+                    matches = data.content;
+                } else {
+                    // Fallback: Falls es ein einzelnes Objekt oder ein verschachteltes Array ist, wandeln wir es in ein Array um
+                    matches = Object.values(data).find(val => Array.isArray(val)) || [data];
+                }
                 
-                const meinerzhagenSpiele = matches.filter(m => 
-                    m.teamDescription1?.toLowerCase().includes('meinerzhagen') || 
-                    m.teamDescription2?.toLowerCase().includes('meinerzhagen')
-                );
+                const meinerzhagenSpiele = matches.filter(m => {
+                    const t1 = m.teamDescription1 || '';
+                    const t2 = m.teamDescription2 || '';
+                    return t1.toLowerCase().includes('meinerzhagen') || t2.toLowerCase().includes('meinerzhagen');
+                });
 
                 if (meinerzhagenSpiele.length === 0) {
-                    container.innerHTML = "<p>Keine Spiele für Meinerzhagen gefunden.</p>";
+                    container.innerHTML = "<p>Keine Spiele für Meinerzhagen gefunden. (Geprüfte Datensätze: " + matches.length + ")</p>";
                     return;
                 }
 
@@ -69,6 +56,3 @@
             }
         }
     </script>
-
-</body>
-</html>
