@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Volleyball Scoreboard Overlay - VNL Edition v1.3.5</title>
+  <title>Volleyball Scoreboard Overlay - VNL Edition v1.3.6</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -59,7 +59,6 @@
       white-space: nowrap;
     }
 
-    /* Exakt gleich lange Hälften für Heim und Gast */
     .team { 
       display: flex; 
       align-items: center; 
@@ -169,7 +168,7 @@
     .sub-in { color: #4ade80; font-weight: 800; }
     .sub-icon { font-weight: bold; color: #fbbf24; margin: 0 4px; }
 
-    /* Versions-Badge unten rechts (Klickbar für Test-Modus) */
+    /* Versions-Badge unten rechts */
     .version-badge {
       position: fixed;
       bottom: 20px;
@@ -350,8 +349,8 @@
 </head>
 <body>
 
-  <!-- Klickbares Badge für Sofort-Test -->
-  <div class="version-badge" onclick="runTestSimulation()" title="Klicken um Test-Simulation zu starten">v1.3.5 (Test)</div>
+  <!-- Klickbares Badge für manuellen Simulationstart -->
+  <div class="version-badge" onclick="runTestSimulation()" title="Klicken um Test-Simulation zu starten">v1.3.6 (Test)</div>
 
   <!-- Scoreboard & Sub-Popups -->
   <div class="scoreboard-wrapper">
@@ -399,19 +398,27 @@
   </div>
 
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    let matchId = urlParams.get('match') || 'a27bea5a-1330-4f40-b567-64c138dbd7ba';
     let fetchInterval = null;
     let simInterval = null;
+    let prevP1 = null;
+    let prevP2 = null;
+    let prevS1 = null;
+    let prevS2 = null;
 
-    if (matchId === 'test') {
-      runTestSimulation();
-    } else {
-      fetchScore();
-      fetchInterval = setInterval(fetchScore, 3000);
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const matchId = urlParams.get('match') || 'a27bea5a-1330-4f40-b567-64c138dbd7ba';
 
-    async function fetchScore() {
+      if (matchId === 'test') {
+        console.log("Starte Test-Simulation...");
+        runTestSimulation();
+      } else {
+        fetchScore(matchId);
+        fetchInterval = setInterval(() => fetchScore(matchId), 3000);
+      }
+    });
+
+    async function fetchScore(matchId) {
       try {
         const myWorker = "https://withered-sea-3b06.nick-valbert2006.workers.dev"; 
         const response = await fetch(`${myWorker}/?match=${matchId}`);
@@ -442,30 +449,22 @@
       }
     }
 
-    let prevP1 = null;
-    let prevP2 = null;
-    let prevS1 = null;
-    let prevS2 = null;
-
     function updateUI(d) {
       document.getElementById('team1-name').innerText = d.team1;
       document.getElementById('team2-name').innerText = d.team2;
 
-      // Pulse-Animation bei Punkt-Änderung Heim
       if (prevP1 !== null && prevP1 !== d.p1) {
         triggerPulse('team1-points');
       }
       prevP1 = d.p1;
       document.getElementById('team1-points').innerText = d.p1;
 
-      // Pulse-Animation bei Punkt-Änderung Gast
       if (prevP2 !== null && prevP2 !== d.p2) {
         triggerPulse('team2-points');
       }
       prevP2 = d.p2;
       document.getElementById('team2-points').innerText = d.p2;
 
-      // Pulse-Animation bei Satz-Änderung
       if ((prevS1 !== null && prevS1 !== d.s1) || (prevS2 !== null && prevS2 !== d.s2)) {
         triggerPulse('sets-score');
       }
@@ -484,7 +483,7 @@
       const el = document.getElementById(elementId);
       if (!el) return;
       el.classList.remove('pulse');
-      void el.offsetWidth; // Reflow erzwingen
+      void el.offsetWidth;
       el.classList.add('pulse');
       setTimeout(() => el.classList.remove('pulse'), 450);
     }
@@ -560,7 +559,6 @@
     }
 
     function runTestSimulation() {
-      // Echte API-Abfrage & bestehende Test-Intervalle stoppen
       if (fetchInterval) { clearInterval(fetchInterval); fetchInterval = null; }
       if (simInterval) { clearInterval(simInterval); simInterval = null; }
 
@@ -587,20 +585,19 @@
       ];
 
       let p1 = 0, p2 = 0, s1 = 0, s2 = 0;
-
       updateUI({ team1: hTeam, team2: gTeam, p1: p1, p2: p2, s1: s1, s2: s2 });
 
-      // 1. Aufstellung Heim zeigen
+      // 1. Aufstellung Heim direkt zeigen
       showTeamLineup("Satz 1 – Startaufstellung", matchSub, hTeam, lineUp1, null, false);
-      setTimeout(() => hideVnlLineup(), 3500);
+      setTimeout(() => hideVnlLineup(), 3000);
 
       // 2. Aufstellung Gast zeigen
       setTimeout(() => {
         showTeamLineup("Satz 1 – Startaufstellung", matchSub, gTeam, lineUp2, null, true);
-      }, 4500);
-      setTimeout(() => hideVnlLineup(), 8000);
+      }, 3800);
+      setTimeout(() => hideVnlLineup(), 6800);
 
-      // 3. Fortlaufende Simulation (Punkte + Auswechslungen)
+      // 3. Fortlaufende Punktewertung (alle 2 Sekunden)
       setTimeout(() => {
         simInterval = setInterval(() => {
           if (Math.random() > 0.45) {
@@ -609,14 +606,14 @@
             p2++;
           }
 
-          // Beispiel-Auswechslungen bei bestimmten Punkteständen
-          if (p1 === 4 && p2 === 3) {
+          // Auswechslungs-Popups einstreuen
+          if (p1 === 3 && p2 === 2) {
             showSubPopup([{ team: hTeam, outNum: 1, outName: "Lüttel", inNum: 10, inName: "Dunkel" }], false);
-          } else if (p2 === 7 && p1 < 10) {
+          } else if (p2 === 6 && p1 < 8) {
             showSubPopup([{ team: gTeam, outNum: 18, outName: "Pieper", inNum: 9, inName: "Müller" }], true);
           }
 
-          // Satzgewinn-Logik
+          // Satzgewinn-Simulation
           if (p1 >= 15 || p2 >= 15) {
             if (p1 > p2) s1++; else s2++;
             p1 = 0;
@@ -624,8 +621,8 @@
           }
 
           updateUI({ team1: hTeam, team2: gTeam, p1: p1, p2: p2, s1: s1, s2: s2 });
-        }, 2200);
-      }, 9000);
+        }, 2000);
+      }, 7500);
     }
   </script>
 </body>
