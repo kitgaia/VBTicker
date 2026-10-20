@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAMS Ticker - Match Finder</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0b0f19;
+      color: #f8fafc;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+      color: #00f2fe;
+    }
+    p {
+      color: #94a3b8;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    .search-box {
+      width: 100%;
+      padding: 12px;
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      color: white;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    .match-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .match-card {
+      background: linear-gradient(135deg, #030712 0%, #0f172a 100%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-left: 4px solid #00f2fe;
+      border-radius: 6px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    .match-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #38bdf8;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .match-teams {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+    }
+    .match-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .match-id {
+      font-family: monospace;
+      font-size: 11px;
+      color: #64748b;
+    }
+    .copy-btn {
+      background: #00f2fe;
+      color: #030712;
+      border: none;
+      padding: 6px 14px;
+      font-weight: 900;
+      font-size: 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.2s ease;
+    }
+    .copy-btn:hover {
+      background: #38bdf8;
+      transform: scale(1.05);
+    }
+    .copy-btn.copied {
+      background: #4ade80;
+      color: #030712;
+    }
+    .loading {
+      text-align: center;
+      color: #94a3b8;
+      margin-top: 40px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>SAMS Match Finder</h1>
+    <p>Hier werden automatisch alle Spiele gefiltert. Nutze das Suchfeld, um nach bestimmten Teams zu filtern.</p>
+    
+    <input type="text" id="search-input" class="search-box" placeholder="Nach Team filtern (z.B. Meinerzhagen)..." value="Meinerzhagen">
+
+    <div id="status" class="loading">Lade Spieldaten vom Worker...</div>
+    <div id="match-list" class="match-list"></div>
+  </div>
+
+  <script>
+    const WORKER_URL = "https://rapid-bread-25a8.nick-valbert2006.workers.dev";
+    let allMatches = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadMatches();
+      document.getElementById('search-input').addEventListener('input', renderMatches);
+    });
+
+    async function loadMatches() {
+      const statusEl = document.getElementById('status');
+      try {
+        // Wir nutzen den Verband WVV
+        const response = await fetch(`${WORKER_URL}/?assoc=wvv`);
+        if (!response.ok) throw new Error("Fehler beim Abrufen der Daten");
+
+        // Da der Worker im Normalfall ein einzelnes Match sucht, fragen wir direkt den SAMS-Endpunkt über einen kleinen Trick ab 
+        // Alternativ holen wir uns die Rohdaten direkt vom SAMS Ticker Backend:
+        const samsResponse = await fetch('https://backend.sams-ticker.de/live/indoor/tickers/wvv');
+        const data = await samsResponse.json();
+
+        allMatches = [];
+
+        // Alle Spieltage durchsuchen und Spiele einsammeln
+        if (Array.isArray(data.matchDays)) {
+          data.matchDays.forEach(day => {
+            if (Array.isArray(day.matches)) {
+              day.matches.forEach(m => {
+                const team1 = m.team1?.name || m.teamDescription1 || '';
+                const team2 = m.team2?.name || m.teamDescription2 || '';
+                const matchId = m.id || m.matchId || m.uuid || '';
+                const date = m.date || day.date || 'Unbekanntes Datum';
+
+                if (matchId) {
+                  allMatches.push({
+                    id: matchId,
+                    team1: team1,
+                    team2: team2,
+                    date: date,
+                    league: m.leagueName || m.competitionName || 'WVV Liga'
+                  });
+                }
+              });
+            }
+          });
+        }
+
+        // Nach Datum sortieren (neueste/nächste zuerst)
+        allMatches.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        statusEl.style.display = 'none';
+        renderMatches();
+
+      } catch (err) {
+        statusEl.innerText = "Fehler beim Laden: " + err.message;
+      }
+    }
+
+    function renderMatches() {
+      const query = document.getElementById('search-input').value.toLowerCase();
+      const listEl = document.getElementById('match-list');
+
+      const filtered = allMatches.filter(m => 
+        m.team1.toLowerCase().includes(query) || 
+        m.team2.toLowerCase().includes(query) ||
+        m.league.toLowerCase().includes(query)
+      );
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = '<div class="loading">Keine Spiele gefunden.</div>';
+        return;
+      }
+
+      // Basis-URL deines Scoreboards (kannst du anpassen, wenn es auf GitHub Pages läuft)
+      const scoreboardBaseUrl = "https://kitgaia.github.io/VBTicker/scoreboardV1.html";
+
+      listEl.innerHTML = filtered.map(m => {
+        const fullLink = `${scoreboardBaseUrl}?match=${m.id}&assoc=wvv`;
+        return `
+          <div class="match-card">
+            <div class="match-header">
+              <span>📅 ${m.date}</span>
+              <span>${m.league}</span>
+            </div>
+            <div class="match-teams">${m.team1} vs. ${m.team2}</div>
+            <div class="match-footer">
+              <span class="match-id">ID: ${m.id}</span>
+              <button class="copy-btn" onclick="copyToClipboard('${fullLink}', this)">Link kopieren</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function copyToClipboard(text, btnElement) {
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btnElement.innerText;
+        btnElement.innerText = "Kopiert!";
+        btnElement.classList.add('copied');
+        setTimeout(() => {
+          btnElement.innerText = originalText;
+          btnElement.classList.remove('copied');
+        }, 2000);
+      }).catch(err => {
+        alert('Fehler beim Kopieren: ' + err);
+      });
+    }
+  </script>
+</body>
+</html>
