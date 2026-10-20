@@ -147,7 +147,7 @@
 <body>
 
   <!-- Version Badge -->
-  <div class="version-badge">v1.0 (Live)</div>
+  <div class="version-badge">v1.1 (Optimized)</div>
 
   <!-- Scoreboard -->
   <div class="scoreboard-wrapper">
@@ -179,27 +179,27 @@
     let prevP2 = null;
     let prevS1 = null;
     let prevS2 = null;
+    let isInitialized = false; // Merkert sich, ob Stammdaten bereits geladen wurden
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Liest die parameters direkt aus der Browser-URL ab
       const urlParams = new URLSearchParams(window.location.search);
       const matchId = urlParams.get('match') || '9f93d1e6-58df-4116-ac9c-62992ab9641b';
       const assoc = urlParams.get('assoc') || urlParams.get('verband') || 'wvv';
 
-      // Startet das Polling mit der angegebenen matchId
+      // Sofortiger erster Abruf (inkl. Namen & Logos)
       fetchScore(matchId, assoc);
+      
+      // Danach alle 3 Sekunden nur noch den Spielstand aktualisieren
       fetchInterval = setInterval(() => fetchScore(matchId, assoc), 3000);
     });
 
     async function fetchScore(matchId, assoc) {
       try {
-        // Richtet die Anfrage dynamisch an deinen Cloudflare Worker
         const response = await fetch(`${WORKER_URL}/?match=${matchId}&assoc=${assoc}`);
         if (!response.ok) return;
 
         const data = await response.json();
 
-        // Verarbeitet die sauberen V1-Felder
         const uiData = {
           team1: data.teams?.team1?.name || 'HEIM',
           team2: data.teams?.team2?.name || 'GAST',
@@ -211,40 +211,25 @@
           s2: data.score?.sets?.team2 ?? 0
         };
 
-        updateUI(uiData);
+        // Beim ersten Mal setzen wir alles (Namen, Logos & Punkte) und sperren die Initialisierung
+        if (!isInitialized) {
+          initializeStaticData(uiData);
+          isInitialized = true;
+        }
+
+        // Ab dem zweiten Mal werden nur noch die Punkte/Sätze aktualisiert
+        updateLiveScore(uiData);
 
       } catch (err) {
         console.error('Ticker-Fehler:', err);
       }
     }
 
-    function updateUI(d) {
+    // Wird exakt 1x beim Start ausgeführt (Namen und Logos)
+    function initializeStaticData(d) {
       document.getElementById('team1-name').innerText = d.team1;
       document.getElementById('team2-name').innerText = d.team2;
 
-      // Pulse-Animation bei Punkterhöhung Heim
-      if (prevP1 !== null && prevP1 !== d.p1) {
-        triggerPulse('team1-points');
-      }
-      prevP1 = d.p1;
-      document.getElementById('team1-points').innerText = d.p1;
-
-      // Pulse-Animation bei Punkterhöhung Gast
-      if (prevP2 !== null && prevP2 !== d.p2) {
-        triggerPulse('team2-points');
-      }
-      prevP2 = d.p2;
-      document.getElementById('team2-points').innerText = d.p2;
-
-      // Pulse-Animation bei Satzgewinn
-      if ((prevS1 !== null && prevS1 !== d.s1) || (prevS2 !== null && prevS2 !== d.s2)) {
-        triggerPulse('sets-score');
-      }
-      prevS1 = d.s1;
-      prevS2 = d.s2;
-      document.getElementById('sets-score').innerText = `${d.s1} : ${d.s2}`;
-
-      // Dynamische Anzeigensteuerung für Heim-Logo
       const logo1El = document.getElementById('team1-logo');
       if (d.logo1) { 
         logo1El.src = d.logo1; 
@@ -253,7 +238,6 @@
         logo1El.style.display = 'none'; 
       }
 
-      // Dynamische Anzeigensteuerung für Gast-Logo
       const logo2El = document.getElementById('team2-logo');
       if (d.logo2) { 
         logo2El.src = d.logo2; 
@@ -261,6 +245,40 @@
       } else { 
         logo2El.style.display = 'none'; 
       }
+
+      // Startwerte direkt setzen
+      prevP1 = d.p1;
+      prevP2 = d.p2;
+      prevS1 = d.s1;
+      prevS2 = d.s2;
+      document.getElementById('team1-points').innerText = d.p1;
+      document.getElementById('team2-points').innerText = d.p2;
+      document.getElementById('sets-score').innerText = `${d.s1} : ${d.s2}`;
+    }
+
+    // Läuft alle 3 Sekunden und aktualisiert nur den dynamischen Spielstand
+    function updateLiveScore(d) {
+      // Heim-Punkte & Animation
+      if (prevP1 !== null && prevP1 !== d.p1) {
+        triggerPulse('team1-points');
+      }
+      prevP1 = d.p1;
+      document.getElementById('team1-points').innerText = d.p1;
+
+      // Gast-Punkte & Animation
+      if (prevP2 !== null && prevP2 !== d.p2) {
+        triggerPulse('team2-points');
+      }
+      prevP2 = d.p2;
+      document.getElementById('team2-points').innerText = d.p2;
+
+      // Sätze & Animation
+      if ((prevS1 !== null && prevS1 !== d.s1) || (prevS2 !== null && prevS2 !== d.s2)) {
+        triggerPulse('sets-score');
+      }
+      prevS1 = d.s1;
+      prevS2 = d.s2;
+      document.getElementById('sets-score').innerText = `${d.s1} : ${d.s2}`;
     }
 
     function triggerPulse(elementId) {
