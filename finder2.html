@@ -130,15 +130,13 @@
     async function loadMatches() {
       const statusEl = document.getElementById('status');
       try {
-        // Wir nutzen den Verband WVV
+        // Wir fragen den Worker an (über ?action=all oder indem der Worker das Gesamt-JSON durchreicht)
+        // Hinweis: Da dein Worker standardmäßig ein einzelnes Match sucht (?match=...), 
+        // müssen wir sicherstellen, dass er das gesamte JSON ausgibt, wenn kein Match übergeben wird.
         const response = await fetch(`${WORKER_URL}/?assoc=wvv`);
-        if (!response.ok) throw new Error("Fehler beim Abrufen der Daten");
+        if (!response.ok) throw new Error("Fehler beim Abrufen der Daten vom Worker");
 
-        // Da der Worker im Normalfall ein einzelnes Match sucht, fragen wir direkt den SAMS-Endpunkt über einen kleinen Trick ab 
-        // Alternativ holen wir uns die Rohdaten direkt vom SAMS Ticker Backend:
-        const samsResponse = await fetch('https://backend.sams-ticker.de/live/indoor/tickers/wvv');
-        const data = await samsResponse.json();
-
+        const data = await response.json();
         allMatches = [];
 
         // Alle Spieltage durchsuchen und Spiele einsammeln
@@ -165,7 +163,7 @@
           });
         }
 
-        // Nach Datum sortieren (neueste/nächste zuerst)
+        // Nach Datum sortieren
         allMatches.sort((a, b) => new Date(a.date) - new Date(b.date));
 
         statusEl.style.display = 'none';
@@ -191,7 +189,6 @@
         return;
       }
 
-      // Basis-URL deines Scoreboards (kannst du anpassen, wenn es auf GitHub Pages läuft)
       const scoreboardBaseUrl = "https://kitgaia.github.io/VBTicker/scoreboardV1.html";
 
       listEl.innerHTML = filtered.map(m => {
