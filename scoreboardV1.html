@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="de" class="h-full bg-transparent">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBS Volleyball Scoreboard Overlay</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for Sports Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        score: ['Teko', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            gold: '#F59E0B',
+                            red: '#EF4444',
+                            blue: '#3B82F6',
+                            dark: '#0F172A'
+                        }
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%, 100%': { opacity: 1, transform: 'scale(1)', filter: 'drop-shadow(0 0 8px rgba(245, 158, 11, 0.8))' },
+                            '50%': { opacity: 0.7, transform: 'scale(1.15)', filter: 'drop-shadow(0 0 15px rgba(245, 158, 11, 1))' }
+                        },
+                        popScore: {
+                            '0%': { transform: 'scale(1)' },
+                            '50%': { transform: 'scale(1.25)', color: '#F59E0B' },
+                            '100%': { transform: 'scale(1)' }
+                        }
+                    },
+                    animation: {
+                        servePulse: 'pulseGlow 1.5s infinite ease-in-out',
+                        scorePop: 'popScore 0.4s ease-out'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar and glassmorphism styling */
+        body {
+            background-color: transparent !important;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-score-box {
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        .serve-glow {
+            filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.9));
+        }
+
+        /* Number transition pop effect */
+        .score-updated {
+            animation: scorePop 0.4s ease-out;
+        }
+    </style>
+</head>
+<body class="h-full w-full font-sans antialiased text-white flex flex-col justify-between p-4 md:p-8">
+
+    <!-- MAIN SCOREBOARD OVERLAY CONTAINER -->
+    <div id="scoreboard-container" class="w-full max-w-4xl mx-auto transition-all duration-500 transform translate-y-0 opacity-100">
+        <div class="glass-panel rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60">
+            
+            <!-- TOP MATCH HEADER / STATUS BAR -->
+            <div class="bg-slate-900/90 px-5 py-2 flex items-center justify-between text-xs font-bold tracking-wider uppercase border-b border-slate-800/80">
+                <!-- Association / League Tag -->
+                <div class="flex items-center gap-2">
+                    <span id="assoc-badge" class="bg-blue-600/30 text-blue-400 border border-blue-500/40 px-2 py-0.5 rounded text-[10px] font-extrabold tracking-widest">
+                        WVV
+                    </span>
+                    <span class="text-slate-400 font-semibold tracking-normal hidden sm:inline" id="match-id-display">
+                        VOLLEYBALL LIVE
+                    </span>
+                </div>
+
+                <!-- Match Status Badge -->
+                <div class="flex items-center gap-3">
+                    <div id="status-container" class="flex items-center gap-1.5 bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700">
+                        <span id="status-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+                        <span id="status-text" class="text-slate-300 font-bold text-[11px]">LÄDT...</span>
+                    </div>
+
+                    <!-- Current Set Display -->
+                    <div class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-md font-bold text-xs tracking-wider flex items-center gap-1">
+                        <span>SATZ</span>
+                        <span id="current-set-number" class="text-amber-400 font-extrabold">1</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MAIN SCOREBOARD BODY -->
+            <div class="grid grid-cols-12 gap-0 items-center p-3 sm:p-4 bg-gradient-to-b from-slate-900/40 to-slate-950/80">
+                
+                <!-- TEAM 1 (LEFT) -->
+                <div class="col-span-5 flex items-center justify-between pr-2 sm:pr-4">
+                    <!-- Serving Icon & Logo & Team Name -->
+                    <div class="flex items-center gap-2 sm:gap-3.5 min-w-0 flex-1">
+                        <!-- Serving Volleyball Indicator (Team 1) -->
+                        <div id="serving-team1" class="hidden opacity-0 transition-all duration-300 flex-shrink-0 animate-servePulse">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 serve-glow" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 2a8 8 0 017.75 6H15.8a10.02 10.02 0 00-5.8-5.8A7.96 7.96 0 0112 4zm-7.75 8c.2-1.42.78-2.73 1.63-3.8A10.03 10.03 0 0011.68 14H4.25A7.95 7.95 0 014.25 12zm1.63 5.8A7.96 7.96 0 014 12h7.68c-.1 1.98.53 3.96 1.82 5.5-2.02.73-4.22.84-6.28.30zM12 20a7.96 7.96 0 01-3.8-1c1.98-.53 3.78-1.7 5.05-3.32A9.98 9.98 0 0019.75 14a8 8 0 01-7.75 6zm2.25-8c.1-1.98-.53-3.96-1.82-5.5 2.02-.73 4.22-.84 6.28-.3A7.96 7.96 0 0120 12h-5.75z"/>
+                            </svg>
+                        </div>
+
+                        <!-- Team 1 Logo / Badge -->
+                        <div class="relative w-10 h-10 sm:w-14 sm:h-14 rounded-xl glass-score-box flex items-center justify-center p-1 overflow-hidden flex-shrink-0 border border-slate-700">
+                            <img id="team1-logo" src="" alt="Team 1 Logo" class="w-full h-full object-contain hidden" onerror="handleImageError(1)">
+                            <div id="team1-badge" class="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-800 rounded-lg flex items-center justify-center font-black text-sm sm:text-lg text-white tracking-wider shadow-inner">
+                                T1
+                            </div>
+                        </div>
+
+                        <!-- Team 1 Name -->
+                        <div class="min-w-0 flex-1">
+                            <h2 id="team1-name" class="font-extrabold text-sm sm:text-lg md:text-xl text-slate-100 truncate leading-tight uppercase tracking-tight">
+                                TEAM 1
+                            </h2>
+                            <p class="text-[10px] sm:text-xs text-slate-400 font-semibold tracking-wider uppercase">HEIM</p>
+                        </div>
+                    </div>
+
+                    <!-- Team 1 Set Wins Counter -->
+                    <div class="flex flex-col items-center justify-center ml-2">
+                        <span class="text-[9px] sm:text-[10px] text-slate-400 font-bold tracking-widest uppercase">SÄTZE</span>
+                        <div id="team1-sets" class="font-score text-2xl sm:text-4xl leading-none font-bold text-amber-400 drop-shadow">
+                            0
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CENTER MATCH DIVIDER & BALL SCORE BOXES -->
+                <div class="col-span-2 flex items-center justify-center px-1">
+                    <div class="flex items-center gap-1.5 sm:gap-2 bg-slate-950/90 p-1.5 sm:p-2 rounded-xl border border-slate-800 shadow-inner">
+                        <!-- Team 1 Points -->
+                        <div class="w-10 h-10 sm:w-14 sm:h-14 glass-score-box rounded-lg flex items-center justify-center">
+                            <span id="team1-score" class="font-score text-3xl sm:text-5xl font-extrabold text-white leading-none">
+                                00
+                            </span>
+                        </div>
+
+                        <span class="text-slate-600 font-bold text-lg sm:text-xl">:</span>
+
+                        <!-- Team 2 Points -->
+                        <div class="w-10 h-10 sm:w-14 sm:h-14 glass-score-box rounded-lg flex items-center justify-center">
+                            <span id="team2-score" class="font-score text-3xl sm:text-5xl font-extrabold text-white leading-none">
+                                00
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TEAM 2 (RIGHT) -->
+                <div class="col-span-5 flex items-center justify-between pl-2 sm:pl-4">
+                    <!-- Team 2 Set Wins Counter -->
+                    <div class="flex flex-col items-center justify-center mr-2">
+                        <span class="text-[9px] sm:text-[10px] text-slate-400 font-bold tracking-widest uppercase">SÄTZE</span>
+                        <div id="team2-sets" class="font-score text-2xl sm:text-4xl leading-none font-bold text-amber-400 drop-shadow">
+                            0
+                        </div>
+                    </div>
+
+                    <!-- Team 2 Name & Logo & Serving Icon -->
+                    <div class="flex items-center justify-end gap-2 sm:gap-3.5 min-w-0 flex-1 text-right">
+                        <!-- Team 2 Name -->
+                        <div class="min-w-0 flex-1">
+                            <h2 id="team2-name" class="font-extrabold text-sm sm:text-lg md:text-xl text-slate-100 truncate leading-tight uppercase tracking-tight">
+                                TEAM 2
+                            </h2>
+                            <p class="text-[10px] sm:text-xs text-slate-400 font-semibold tracking-wider uppercase">GAST</p>
+                        </div>
+
+                        <!-- Team 2 Logo / Badge -->
+                        <div class="relative w-10 h-10 sm:w-14 sm:h-14 rounded-xl glass-score-box flex items-center justify-center p-1 overflow-hidden flex-shrink-0 border border-slate-700">
+                            <img id="team2-logo" src="" alt="Team 2 Logo" class="w-full h-full object-contain hidden" onerror="handleImageError(2)">
+                            <div id="team2-badge" class="w-full h-full bg-gradient-to-br from-red-600 to-rose-800 rounded-lg flex items-center justify-center font-black text-sm sm:text-lg text-white tracking-wider shadow-inner">
+                                T2
+                            </div>
+                        </div>
+
+                        <!-- Serving Volleyball Indicator (Team 2) -->
+                        <div id="serving-team2" class="hidden opacity-0 transition-all duration-300 flex-shrink-0 animate-servePulse">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 serve-glow" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 2a8 8 0 017.75 6H15.8a10.02 10.02 0 00-5.8-5.8A7.96 7.96 0 0112 4zm-7.75 8c.2-1.42.78-2.73 1.63-3.8A10.03 10.03 0 0011.68 14H4.25A7.95 7.95 0 014.25 12zm1.63 5.8A7.96 7.96 0 014 12h7.68c-.1 1.98.53 3.96 1.82 5.5-2.02.73-4.22.84-6.28.30zM12 20a7.96 7.96 0 01-3.8-1c1.98-.53 3.78-1.7 5.05-3.32A9.98 9.98 0 0019.75 14a8 8 0 01-7.75 6zm2.25-8c.1-1.98-.53-3.96-1.82-5.5 2.02-.73 4.22-.84 6.28-.3A7.96 7.96 0 0120 12h-5.75z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTROL PANEL / SETTINGS (BOTTOM RIGHT FLOATING) -->
+    <div id="control-panel" class="fixed bottom-4 right-4 z-50 w-80 sm:w-96 transition-all duration-300 transform translate-y-0 opacity-100">
+        <div class="glass-panel p-4 rounded-xl border border-slate-700 shadow-2xl text-xs space-y-3">
+            
+            <!-- Header & Collapse Button -->
+            <div class="flex items-center justify-between border-b border-slate-700/80 pb-2">
+                <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span class="font-bold uppercase tracking-wider text-slate-200">OBS Overlay Steuerung</span>
+                </div>
+                <button onclick="toggleControlPanel()" class="text-slate-400 hover:text-white p-1 rounded transition-colors" title="Verbergen ('H' drücken)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- API Configuration Form -->
+            <div class="space-y-2">
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Match ID (UUID)</label>
+                    <input type="text" id="input-match-id" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white font-mono text-xs focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Match UUID eingeben...">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Verband (Assoc)</label>
+                        <select id="input-assoc" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="wvv">WVV (Westfalen)</option>
+                            <option value="dvv">DVV (Bundesliga)</option>
+                            <option value="nwvv">NWVV</option>
+                            <option value="hvv">HVV</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Interval (Sekunden)</label>
+                        <input type="number" id="input-interval" value="3" min="1" max="10" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+
+                <button onclick="applyMatchConfig()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded transition-colors shadow-lg flex items-center justify-center gap-1.5 uppercase text-[11px] tracking-wider">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Match Aktualisieren
+                </button>
+            </div>
+
+            <!-- Quick Preset Test IDs -->
+            <div class="pt-2 border-t border-slate-800">
+                <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Test-Matches Laden:</span>
+                <div class="flex gap-1.5">
+                    <button onclick="loadPreset('9f93d1e6-58df-4116-ac9c-62992ab9641b')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-1 px-2 rounded text-[10px] font-mono border border-slate-700 truncate">
+                        Match 1 (Meinerzhagen)
+                    </button>
+                    <button onclick="loadPreset('a27bea5a-1330-4f40-b567-64c138dbd7ba')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-1 px-2 rounded text-[10px] font-mono border border-slate-700 truncate">
+                        Match 2 (SC Halle)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Debug / Status Info -->
+            <div class="text-[10px] text-slate-400 flex justify-between items-center pt-1">
+                <span>Letztes Update: <strong id="last-update-time" class="text-slate-300">N/A</strong></span>
+                <span id="api-status-msg" class="text-emerald-400 font-semibold">Bereit</span>
+            </div>
+
+            <div class="text-[9px] text-slate-500 text-center italic">
+                Drücke <kbd class="px-1 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300">H</kbd> um dieses Menü für OBS zu verstecken.
+            </div>
+        </div>
+    </div>
+
+    <!-- TOGGLE BUTTON WHEN CONTROL PANEL IS HIDDEN -->
+    <button id="show-controls-btn" onclick="toggleControlPanel()" class="fixed bottom-4 right-4 z-40 bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-300 p-2.5 rounded-full shadow-2xl opacity-0 pointer-events-none transition-all duration-300">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+    </button>
+
+    <!-- LOGIC & POLLING SCRIPT -->
+    <script>
+        // CONFIGURATION & CONSTANTS
+        const WORKER_BASE_URL = "https://rapid-bread-25a8.nick-valbert2006.workers.dev/";
+        
+        // APP STATE
+        let state = {
+            matchId: "9f93d1e6-58df-4116-ac9c-62992ab9641b",
+            assoc: "wvv",
+            pollIntervalSec: 3,
+            controlVisible: true,
+            timer: null,
+            
+            // Cached data to avoid flickering / unnecessary DOM updates
+            cachedTeam1Name: "",
+            cachedTeam2Name: "",
+            cachedTeam1Logo: "",
+            cachedTeam2Logo: "",
+            cachedScore1: null,
+            cachedScore2: null,
+            cachedSets1: null,
+            cachedSets2: null,
+            cachedServing: null,
+            cachedStatus: ""
+        };
+
+        // INITIALIZATION
+        window.addEventListener('DOMContentLoaded', () => {
+            parseQueryParams();
+            initUI();
+            startPolling();
+
+            // Global Key Listener for 'H' to toggle controls overlay
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'h' || e.key === 'H') {
+                    // Ignore if typing inside input fields
+                    if (['INPUT', 'SELECT'].includes(document.activeElement.tagName)) return;
+                    toggleControlPanel();
+                }
+            });
+        });
+
+        // READ QUERY PARAMS (?match=...&assoc=...&control=false)
+        function parseQueryParams() {
+            const params = new URLSearchParams(window.location.search);
+            
+            if (params.has('match')) state.matchId = params.get('match');
+            if (params.has('assoc')) state.assoc = params.get('assoc');
+            if (params.has('interval')) state.pollIntervalSec = parseInt(params.get('interval')) || 3;
+            
+            if (params.get('control') === 'false' || params.get('control') === '0') {
+                state.controlVisible = false;
+            }
+        }
+
+        function initUI() {
+            document.getElementById('input-match-id').value = state.matchId;
+            document.getElementById('input-assoc').value = state.assoc;
+            document.getElementById('input-interval').value = state.pollIntervalSec;
+            document.getElementById('assoc-badge').textContent = state.assoc.toUpperCase();
+
+            updateControlPanelVisibility();
+        }
+
+        // CONTROL PANEL TOGGLE
+        function toggleControlPanel() {
+            state.controlVisible = !state.controlVisible;
+            updateControlPanelVisibility();
+        }
+
+        function updateControlPanelVisibility() {
+            const panel = document.getElementById('control-panel');
+            const toggleBtn = document.getElementById('show-controls-btn');
+
+            if (state.controlVisible) {
+                panel.classList.remove('translate-y-12', 'opacity-0', 'pointer-events-none');
+                toggleBtn.classList.add('opacity-0', 'pointer-events-none');
+            } else {
+                panel.classList.add('translate-y-12', 'opacity-0', 'pointer-events-none');
+                toggleBtn.classList.remove('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        // APPLY MATCH CONFIG FROM SETTINGS
+        function applyMatchConfig() {
+            const newMatchId = document.getElementById('input-match-id').value.trim();
+            const newAssoc = document.getElementById('input-assoc').value;
+            const newInterval = parseInt(document.getElementById('input-interval').value) || 3;
+
+            if (!newMatchId) {
+                showApiStatus("Bitte Match UUID angeben", false);
+                return;
+            }
+
+            state.matchId = newMatchId;
+            state.assoc = newAssoc;
+            state.pollIntervalSec = Math.max(1, newInterval);
+
+            document.getElementById('assoc-badge').textContent = state.assoc.toUpperCase();
+
+            // Reset cache to force clean re-render
+            resetCache();
+            
+            // Restart timer & fetch immediately
+            startPolling();
+        }
+
+        function loadPreset(presetMatchId) {
+            document.getElementById('input-match-id').value = presetMatchId;
+            applyMatchConfig();
+        }
+
+        function resetCache() {
+            state.cachedTeam1Name = "";
+            state.cachedTeam2Name = "";
+            state.cachedTeam1Logo = "";
+            state.cachedTeam2Logo = "";
+            state.cachedScore1 = null;
+            state.cachedScore2 = null;
+            state.cachedSets1 = null;
+            state.cachedSets2 = null;
+            state.cachedServing = null;
+            state.cachedStatus = "";
+        }
+
+        // DATA POLLING LOOP
+        function startPolling() {
+            if (state.timer) clearInterval(state.timer);
+            
+            fetchMatchData(); // Immediate initial call
+            state.timer = setInterval(fetchMatchData, state.pollIntervalSec * 1000);
+        }
+
+        // FETCH DATA FROM WORKER API
+        async function fetchMatchData() {
+            const apiUrl = `${WORKER_BASE_URL}?match=${encodeURIComponent(state.matchId)}&assoc=${encodeURIComponent(state.assoc)}`;
+            const statusMsgEl = document.getElementById('api-status-msg');
+
+            try {
+                const response = await fetch(apiUrl, { cache: "no-store" });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Render match data
+                updateScoreboardUI(data);
+
+                // Update control panel stats
+                const now = new Date();
+                document.getElementById('last-update-time').textContent = now.toLocaleTimeString();
+                showApiStatus("Aktiv (Live)", true);
+
+            } catch (err) {
+                console.warn("[Scoreboard API Error]", err.message);
+                showApiStatus(`Fehler: ${err.message}`, false);
+            }
+        }
+
+        function showApiStatus(msg, isSuccess) {
+            const statusMsgEl = document.getElementById('api-status-msg');
+            statusMsgEl.textContent = msg;
+            statusMsgEl.className = isSuccess ? "text-emerald-400 font-semibold" : "text-rose-400 font-semibold";
+        }
+
+        // RENDER SCOREBOARD DATA TO DOM
+        function updateScoreboardUI(data) {
+            const { matchId, status, teams, score } = data;
+
+            // 1. MATCH STATUS BADGE
+            if (status !== state.cachedStatus) {
+                state.cachedStatus = status;
+                const statusDot = document.getElementById('status-dot');
+                const statusText = document.getElementById('status-text');
+
+                if (status === "RUNNING") {
+                    statusDot.className = "w-2.5 h-2.5 rounded-full bg-red-500 animate-ping";
+                    statusText.textContent = "LIVE";
+                    statusText.className = "text-red-400 font-extrabold tracking-widest";
+                } else if (status === "FINISHED") {
+                    statusDot.className = "w-2 h-2 rounded-full bg-emerald-500";
+                    statusText.textContent = "BEENDET";
+                    statusText.className = "text-emerald-400 font-bold";
+                } else {
+                    statusDot.className = "w-2 h-2 rounded-full bg-amber-500";
+                    statusText.textContent = "GEPLANT";
+                    statusText.className = "text-amber-400 font-bold";
+                }
+            }
+
+            // 2. TEAM NAMES & INITIAL BADGES (Only update when changed to prevent layout thrashing)
+            if (teams?.team1?.name && teams.team1.name !== state.cachedTeam1Name) {
+                state.cachedTeam1Name = teams.team1.name;
+                document.getElementById('team1-name').textContent = teams.team1.name;
+                document.getElementById('team1-badge').textContent = getInitials(teams.team1.name);
+            }
+
+            if (teams?.team2?.name && teams.team2.name !== state.cachedTeam2Name) {
+                state.cachedTeam2Name = teams.team2.name;
+                document.getElementById('team2-name').textContent = teams.team2.name;
+                document.getElementById('team2-badge').textContent = getInitials(teams.team2.name);
+            }
+
+            // 3. LOGOS (FLICKER FREE PRESERVATION)
+            updateLogo('team1', teams?.team1?.logo);
+            updateLogo('team2', teams?.team2?.logo);
+
+            // 4. CURRENT SET NUMBER
+            const currentSet = score?.currentSet || 1;
+            document.getElementById('current-set-number').textContent = currentSet;
+
+            // 5. SET SCORES
+            const sets1 = score?.sets?.team1 ?? 0;
+            const sets2 = score?.sets?.team2 ?? 0;
+
+            if (sets1 !== state.cachedSets1) {
+                state.cachedSets1 = sets1;
+                document.getElementById('team1-sets').textContent = sets1;
+            }
+
+            if (sets2 !== state.cachedSets2) {
+                state.cachedSets2 = sets2;
+                document.getElementById('team2-sets').textContent = sets2;
+            }
+
+            // 6. CURRENT BALL POINTS (WITH ANIMATION POP)
+            const score1 = score?.currentSetScore?.team1 ?? 0;
+            const score2 = score?.currentSetScore?.team2 ?? 0;
+
+            updateBallScore('team1-score', score1, 'cachedScore1');
+            updateBallScore('team2-score', score2, 'cachedScore2');
+
+            // 7. SERVING INDICATOR
+            const servingTeam = score?.serving; // "team1" or "team2"
+            if (servingTeam !== state.cachedServing) {
+                state.cachedServing = servingTeam;
+                
+                const serveEl1 = document.getElementById('serving-team1');
+                const serveEl2 = document.getElementById('serving-team2');
+
+                if (servingTeam === "team1") {
+                    showElement(serveEl1);
+                    hideElement(serveEl2);
+                } else if (servingTeam === "team2") {
+                    hideElement(serveEl1);
+                    showElement(serveEl2);
+                } else {
+                    hideElement(serveEl1);
+                    hideElement(serveEl2);
+                }
+            }
+        }
+
+        // ANIMATED BALL SCORE UPDATE
+        function updateBallScore(elementId, newScore, cacheKey) {
+            if (newScore !== state[cacheKey]) {
+                state[cacheKey] = newScore;
+                const el = document.getElementById(elementId);
+                const formattedScore = String(newScore).padStart(2, '0');
+                
+                el.textContent = formattedScore;
+
+                // Trigger smooth Pop Animation
+                el.classList.remove('score-updated');
+                void el.offsetWidth; // Force reflow
+                el.classList.add('score-updated');
+            }
+        }
+
+        // LOGO LOADER WITH FLICKER PROTECTION
+        function updateLogo(teamKey, logoUrl) {
+            const cacheProp = teamKey === 'team1' ? 'cachedTeam1Logo' : 'cachedTeam2Logo';
+            
+            if (logoUrl !== state[cacheProp]) {
+                state[cacheProp] = logoUrl;
+                const imgEl = document.getElementById(`${teamKey}-logo`);
+                const badgeEl = document.getElementById(`${teamKey}-badge`);
+
+                if (logoUrl && typeof logoUrl === 'string' && logoUrl.startsWith('http')) {
+                    imgEl.src = logoUrl;
+                    imgEl.classList.remove('hidden');
+                    badgeEl.classList.add('hidden');
+                } else {
+                    imgEl.classList.add('hidden');
+                    badgeEl.classList.remove('hidden');
+                }
+            }
+        }
+
+        function handleImageError(teamNum) {
+            const imgEl = document.getElementById(`team${teamNum}-logo`);
+            const badgeEl = document.getElementById(`team${teamNum}-badge`);
+            imgEl.classList.add('hidden');
+            badgeEl.classList.remove('hidden');
+        }
+
+        // UTILITIES
+        function getInitials(name) {
+            if (!name) return "TV";
+            const parts = name.trim().split(/\s+/);
+            if (parts.length >= 2) {
+                return (parts[0][0] + parts[1][0]).toUpperCase();
+            }
+            return name.substring(0, 3).toUpperCase();
+        }
+
+        function showElement(el) {
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.remove('opacity-0'), 10);
+        }
+
+        function hideElement(el) {
+            el.classList.add('opacity-0');
+            setTimeout(() => el.classList.add('hidden'), 300);
+        }
+    </script>
+</body>
+</html>
