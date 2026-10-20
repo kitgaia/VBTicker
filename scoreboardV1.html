@@ -189,8 +189,8 @@
       // Sofortiger erster Abruf (inkl. Namen & Logos)
       fetchScore(matchId, assoc);
       
-      // Danach alle 3 Sekunden nur noch den Spielstand aktualisieren
-      fetchInterval = setInterval(() => fetchScore(matchId, assoc), 3000);
+      // Danach alle 5 Sekunden nur noch den Spielstand aktualisieren
+      fetchInterval = setInterval(() => fetchScore(matchId, assoc), 5000);
     });
 
     async function fetchScore(matchId, assoc) {
