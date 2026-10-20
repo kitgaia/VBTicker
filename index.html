@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Volleyball Scoreboard Overlay - VNL Edition v1.4.0</title>
+  <title>Volleyball Scoreboard Overlay - VNL Edition v1.4.1</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -146,14 +146,22 @@
       box-shadow: 0 8px 25px rgba(0,0,0,0.7);
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       opacity: 0;
       transform: translateY(-15px) scale(0.95);
       transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-      max-width: 400px;
+      max-width: 450px;
     }
     .sub-popup.guest-sub { border-left-color: var(--color-guest); }
     .sub-popup.show { opacity: 1; transform: translateY(0) scale(1); }
+    
+    .sub-logo {
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+      filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6));
+    }
+
     .sub-tag {
       background: var(--color-home);
       color: #030712;
@@ -350,8 +358,8 @@
 </head>
 <body>
 
-  <!-- Klickbares Badge für manuellen Simulationstart -->
-  <div class="version-badge" onclick="runTestSimulation()" title="Klicken um Test-Simulation zu starten">v1.4.0 (Live & Test)</div>
+  <!-- Version Badge -->
+  <div class="version-badge" onclick="runTestSimulation()" title="Klicken um Test-Simulation zu starten">v1.4.1 (Live & Test)</div>
 
   <!-- Scoreboard & Sub-Popups -->
   <div class="scoreboard-wrapper">
@@ -399,6 +407,19 @@
   </div>
 
   <script>
+    // Zuordnung der Bilddateien aus /data/teamlogos/
+    const LOCAL_LOGO_FILES = {
+      "cvjm siegen iii": "data/teamlogos/CVJM Siegen III.jpg",
+      "cvjm siegen iv": "data/teamlogos/CVJM Siegen IV.jpg",
+      "heiligenhauser sv": "data/teamlogos/Heiligenhauser SV.jpg",
+      "sg tsv oberfischbach vc": "data/teamlogos/SG TSV Oberfischbach VC.jpg",
+      "tb hückeswagen": "data/teamlogos/TB Hückeswagen.png",
+      "tv f.a. dresselndorf ii": "data/teamlogos/TV F.A. Dresselndorf II.jpg",
+      "tus linscheid-heedfeld": "data/teamlogos/TuS Linscheid-Heedfeld.jpg",
+      "tus meinerzhagen ii": "data/teamlogos/TuS Meinerzhagen II.png",
+      "tus waldbröl": "data/teamlogos/TuS Waldbröl.jpg"
+    };
+
     let fetchInterval = null;
     let simInterval = null;
     let prevP1 = null;
@@ -407,7 +428,6 @@
     let prevS2 = null;
     let currentMatchData = null;
 
-    // Speicher für bereits verarbeitete Auswechslungs-IDs (verhindert Mehrfachanzeige)
     const handledSubIds = new Set();
     let lastHandledSetCount = -1;
 
@@ -423,14 +443,14 @@
         fetchInterval = setInterval(() => fetchScore(matchId), 3000);
       }
 
-      // Tastatur-Hotkeys für OBS / Regie
+      // Hotkeys (H = Heim-Aufstellung, G = Gast-Aufstellung, Esc = Schließen)
       document.addEventListener('keydown', (e) => {
         if (e.key === 'h' || e.key === 'H') triggerLiveLineup('home');
         if (e.key === 'g' || e.key === 'G') triggerLiveLineup('guest');
         if (e.key === 'Escape') hideVnlLineup();
       });
 
-      // Schnittstelle für OBS Docks / External Control / Web Messaging
+      // Window-Message-API für externe OBS-Steuerung
       window.addEventListener('message', (event) => {
         if (!event.data) return;
         if (event.data.type === 'SHOW_LINEUP') {
@@ -442,6 +462,16 @@
         }
       });
     });
+
+    // Hilfsfunktion: Ermittelt das Logo (Priorität: Lokales Repository -> SAMS Fallback)
+    function resolveTeamLogo(teamName, fallbackUrl = null) {
+      if (!teamName) return fallbackUrl;
+      const cleanName = teamName.trim().toLowerCase();
+      if (LOCAL_LOGO_FILES[cleanName]) {
+        return LOCAL_LOGO_FILES[cleanName];
+      }
+      return fallbackUrl;
+    }
 
     async function fetchScore(matchId) {
       try {
@@ -460,11 +490,14 @@
           if (latestSet && latestSet.setScore) currentSetScore = latestSet.setScore;
         }
 
+        const rawTeam1 = matchInfo.teamDescription1 || 'Heim';
+        const rawTeam2 = matchInfo.teamDescription2 || 'Gast';
+
         const uiData = {
-          team1: matchInfo.teamDescription1 || 'Heim',
-          team2: matchInfo.teamDescription2 || 'Gast',
-          logo1: matchInfo.teamLogo1 || matchInfo.logo1 || null,
-          logo2: matchInfo.teamLogo2 || matchInfo.logo2 || null,
+          team1: rawTeam1,
+          team2: rawTeam2,
+          logo1: resolveTeamLogo(rawTeam1, matchInfo.teamLogo1 || matchInfo.logo1 || null),
+          logo2: resolveTeamLogo(rawTeam2, matchInfo.teamLogo2 || matchInfo.logo2 || null),
           p1: currentSetScore.team1 ?? 0,
           p2: currentSetScore.team2 ?? 0,
           s1: stateInfo.setPoints?.team1 ?? 0,
@@ -472,11 +505,7 @@
         };
 
         updateUI(uiData);
-
-        // 1. ECHTE LIVE-AUSWECHSLUNGEN AUS DEM SAMS-TICKER VERARBEITEN
         processLiveSubstitutions(stateInfo, uiData);
-
-        // 2. ECHTE LIVE-STARTAUFSTELLUNGEN BEI SATZWECHSEL VERARBEITEN
         processLiveLineups(stateInfo, uiData);
 
       } catch (err) {
@@ -488,14 +517,18 @@
       const subs = stateInfo.substitutions || stateInfo.subs || [];
       if (Array.isArray(subs)) {
         subs.forEach(sub => {
-          const subKey = sub.id || `${sub.outNum}-${sub.inNum}-${sub.team || sub.isGuest}`;
+          const subKey = sub.id || `${sub.outNum || sub.playerOutNumber}-${sub.inNum || sub.playerInNumber}-${sub.team || sub.isGuest}`;
           if (!handledSubIds.has(subKey)) {
             handledSubIds.add(subKey);
+            const teamName = sub.team || (sub.isGuest ? uiData.team2 : uiData.team1);
+            const teamLogo = resolveTeamLogo(teamName, sub.isGuest ? uiData.logo2 : uiData.logo1);
+
             showSubPopup({
-              team: sub.team || (sub.isGuest ? uiData.team2 : uiData.team1),
-              outNum: sub.outNum || sub.playerOutNumber,
+              team: teamName,
+              logo: teamLogo,
+              outNum: sub.outNum || sub.playerOutNumber || '',
               outName: sub.outName || sub.playerOutName || '',
-              inNum: sub.inNum || sub.playerInNumber,
+              inNum: sub.inNum || sub.playerInNumber || '',
               inName: sub.inName || sub.playerInName || ''
             }, sub.isGuest || false);
           }
@@ -506,7 +539,6 @@
     function processLiveLineups(stateInfo, uiData) {
       const totalSetsPlayed = uiData.s1 + uiData.s2;
       
-      // Wenn ein neuer Satz gestartet wurde und Aufstellungsdaten vorhanden sind
       if (totalSetsPlayed !== lastHandledSetCount) {
         lastHandledSetCount = totalSetsPlayed;
         const currentSetNum = totalSetsPlayed + 1;
@@ -533,11 +565,20 @@
     }
 
     function parseLineupPlayers(rawLineup) {
-      if (Array.isArray(rawLineup)) return rawLineup;
-      return [];
+      if (!rawLineup) return [];
+      let list = Array.isArray(rawLineup) ? rawLineup : Object.values(rawLineup);
+      
+      return list.map(item => {
+        if (typeof item === 'string') return { number: '', name: item, pos: '' };
+        const pObj = item.player || item;
+        return {
+          number: pObj.number || pObj.jerseyNumber || item.number || '',
+          name: pObj.name || pObj.lastName || pObj.firstname ? `${pObj.firstname || ''} ${pObj.lastname || pObj.lastName || ''}`.trim() : (pObj.fullName || ''),
+          pos: pObj.pos || pObj.position || item.pos || ''
+        };
+      }).slice(0, 6);
     }
 
-    // Manuelles Auslösen einer Aufstellung (Hotkey / Broadcast)
     function triggerLiveLineup(teamType = 'home') {
       if (!currentMatchData) return;
       const matchInfo = currentMatchData.match || {};
@@ -553,7 +594,8 @@
 
       const players = parseLineupPlayers(rawLineup);
       const teamName = isGuest ? gTeam : hTeam;
-      const logo = isGuest ? (matchInfo.teamLogo2 || matchInfo.logo2) : (matchInfo.teamLogo1 || matchInfo.logo1);
+      const fallbackLogo = isGuest ? (matchInfo.teamLogo2 || matchInfo.logo2) : (matchInfo.teamLogo1 || matchInfo.logo1);
+      const logo = resolveTeamLogo(teamName, fallbackLogo);
 
       if (players.length === 6) {
         showTeamLineup("Startaufstellung", matchSub, teamName, players, logo, isGuest);
@@ -614,8 +656,9 @@
       }
 
       const logoEl = document.getElementById('vnl-team-logo');
-      if (logoUrl) { 
-        logoEl.src = logoUrl; 
+      const resolvedLogo = resolveTeamLogo(teamName, logoUrl);
+      if (resolvedLogo) { 
+        logoEl.src = resolvedLogo; 
         logoEl.style.display = 'block'; 
       } else { 
         logoEl.style.display = 'none'; 
@@ -626,15 +669,15 @@
 
       document.getElementById('vnl-front-row').innerHTML = frontPlayers.map(p => `
         <div class="vnl-player-card">
-          <div class="vnl-p-content">${p.number || ''} ${p.name || p.lastName || ''}</div>
-          <div class="vnl-zone-tag">${p.pos || p.position || ''}</div>
+          <div class="vnl-p-content">${p.number || ''} ${p.name || ''}</div>
+          <div class="vnl-zone-tag">${p.pos || ''}</div>
         </div>
       `).join('');
 
       document.getElementById('vnl-back-row').innerHTML = backPlayers.map(p => `
         <div class="vnl-player-card">
-          <div class="vnl-p-content">${p.number || ''} ${p.name || p.lastName || ''}</div>
-          <div class="vnl-zone-tag">${p.pos || p.position || ''}</div>
+          <div class="vnl-p-content">${p.number || ''} ${p.name || ''}</div>
+          <div class="vnl-zone-tag">${p.pos || ''}</div>
         </div>
       `).join('');
 
@@ -650,14 +693,20 @@
       const container = document.getElementById('sub-container');
 
       subs.forEach(sub => {
+        const teamName = sub.team || 'TEAM';
+        const logoUrl = sub.logo || resolveTeamLogo(teamName);
         const popup = document.createElement('div');
         popup.className = `sub-popup ${isGuest ? 'guest-sub' : ''}`;
+        
+        const logoHtml = logoUrl ? `<img src="${logoUrl}" class="sub-logo" alt="">` : '';
+
         popup.innerHTML = `
-          <span class="sub-tag">${sub.team}</span>
+          ${logoHtml}
+          <span class="sub-tag">${teamName}</span>
           <span>
-            <span class="sub-out">${sub.outNum} ${sub.outName}</span> 
+            <span class="sub-out">${sub.outNum || ''} ${sub.outName || ''}</span> 
             <span class="sub-icon">⇄</span> 
-            <span class="sub-in">${sub.inNum} ${sub.inName}</span>
+            <span class="sub-in">${sub.inNum || ''} ${sub.inName || ''}</span>
           </span>
         `;
         
@@ -679,6 +728,9 @@
       const gTeam = "TV F.A. Dresselndorf II";
       const matchSub = `${hTeam} vs. ${gTeam}`;
 
+      const hLogo = resolveTeamLogo(hTeam);
+      const gLogo = resolveTeamLogo(gTeam);
+
       const lineUp1 = [
         { number: 9, name: "Giesbrecht", pos: "Diagonal" },
         { number: "10", name: "Dunkel", pos: "Mitte" },
@@ -698,13 +750,13 @@
       ];
 
       let p1 = 0, p2 = 0, s1 = 0, s2 = 0;
-      updateUI({ team1: hTeam, team2: gTeam, p1: p1, p2: p2, s1: s1, s2: s2 });
+      updateUI({ team1: hTeam, team2: gTeam, logo1: hLogo, logo2: gLogo, p1: p1, p2: p2, s1: s1, s2: s2 });
 
-      showTeamLineup("Satz 1 – Startaufstellung", matchSub, hTeam, lineUp1, null, false);
+      showTeamLineup("Satz 1 – Startaufstellung", matchSub, hTeam, lineUp1, hLogo, false);
       setTimeout(() => hideVnlLineup(), 3000);
 
       setTimeout(() => {
-        showTeamLineup("Satz 1 – Startaufstellung", matchSub, gTeam, lineUp2, null, true);
+        showTeamLineup("Satz 1 – Startaufstellung", matchSub, gTeam, lineUp2, gLogo, true);
       }, 3800);
       setTimeout(() => hideVnlLineup(), 6800);
 
@@ -717,9 +769,9 @@
           }
 
           if (p1 === 3 && p2 === 2) {
-            showSubPopup([{ team: hTeam, outNum: 1, outName: "Lüttel", inNum: 10, inName: "Dunkel" }], false);
+            showSubPopup([{ team: hTeam, logo: hLogo, outNum: 1, outName: "Lüttel", inNum: 10, inName: "Dunkel" }], false);
           } else if (p2 === 6 && p1 < 8) {
-            showSubPopup([{ team: gTeam, outNum: 18, outName: "Pieper", inNum: 9, inName: "Müller" }], true);
+            showSubPopup([{ team: gTeam, logo: gLogo, outNum: 18, outName: "Pieper", inNum: 9, inName: "Müller" }], true);
           }
 
           if (p1 >= 15 || p2 >= 15) {
@@ -728,7 +780,7 @@
             p2 = 0;
           }
 
-          updateUI({ team1: hTeam, team2: gTeam, p1: p1, p2: p2, s1: s1, s2: s2 });
+          updateUI({ team1: hTeam, team2: gTeam, logo1: hLogo, logo2: gLogo, p1: p1, p2: p2, s1: s1, s2: s2 });
         }, 2000);
       }, 7500);
     }
