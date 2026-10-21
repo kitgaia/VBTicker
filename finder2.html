@@ -28,7 +28,6 @@
       color: #00f2fe;
     }
     
-    /* Filter Toggle Button */
     .filter-toggle-btn {
       background: #1e293b;
       color: #00f2fe;
@@ -44,14 +43,13 @@
       background: #334155;
     }
 
-    /* Filter Sektion (Einklappbar) */
     .filter-container {
       background: #111827;
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 8px;
       padding: 14px;
       margin-bottom: 16px;
-      display: none; /* Standardmäßig eingeklappt, kann per Button geöffnet werden */
+      display: none;
       flex-direction: column;
       gap: 12px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.6);
@@ -113,7 +111,7 @@
       box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
     .match-card.today-highlight {
-      border-left-color: #4ade80; /* Heutige Spiele grün hervorheben */
+      border-left-color: #4ade80;
     }
     .match-header {
       display: flex;
@@ -123,6 +121,16 @@
       font-weight: 700;
       text-transform: uppercase;
       gap: 8px;
+    }
+    .match-meta {
+      font-size: 10px;
+      color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 3px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      width: fit-content;
+      margin-top: -2px;
     }
     .match-teams {
       font-size: 16px;
@@ -195,7 +203,7 @@
       <button class="filter-toggle-btn" onclick="toggleFilter()">🔍 Filter</button>
     </div>
 
-    <!-- Filter Sektion (Geschlecht -> Liga -> Mannschaft) -->
+    <!-- Filter Sektion -->
     <div id="filter-container" class="filter-container">
       <div class="filter-grid">
         <div class="filter-full">
@@ -236,12 +244,10 @@
   <script>
     const WORKER_URL = "https://rapid-bread-25a8.nick-valbert2006.workers.dev";
     let allMatches = [];
-    let leaguesMap = new Map(); // Speichert Ligen mit zugehörigen Infos
 
     document.addEventListener('DOMContentLoaded', () => {
       loadMatches();
       
-      // Events für Filter
       document.getElementById('search-input').addEventListener('input', renderMatches);
       document.getElementById('filter-gender').addEventListener('change', onGenderChange);
       document.getElementById('filter-league').addEventListener('change', onLeagueChange);
@@ -249,8 +255,7 @@
     });
 
     function toggleFilter() {
-      const box = document.getElementById('filter-container');
-      box.classList.toggle('show');
+      document.getElementById('filter-container').classList.toggle('show');
     }
 
     async function loadMatches() {
@@ -261,23 +266,24 @@
 
         const data = await response.json();
         allMatches = [];
-        leaguesMap.clear();
 
-        // 1. Ligen-Struktur auslesen falls vorhanden (SAMS Struktur)
+        // 1. Ligen-Struktur mappen: Verknüpft Match-ID direkt mit Ligadaten (Name, Geschlecht, Team-IDs)
+        const matchToLeagueMap = new Map();
         if (data.leagues && typeof data.leagues === 'object') {
           Object.values(data.leagues).forEach(l => {
-            if (l.id) {
-              leaguesMap.set(l.id, {
-                id: l.id,
-                name: l.name || 'Unbekannte Liga',
-                gender: l.gender || 'UNKNOWN',
-                matches: l.matches || []
+            const leagueName = l.name || 'Unbekannte Liga';
+            const leagueGender = l.gender || 'UNKNOWN'; // FEMALE, MALE, etc.
+            
+            // Wenn die Liga ein Array von Match-IDs hat
+            if (Array.isArray(l.matches)) {
+              l.matches.forEach(mId => {
+                matchToLeagueMap.set(mId, { name: leagueName, gender: leagueGender });
               });
             }
           });
         }
 
-        // 2. Spiele einsammeln
+        // 2. Spiele aus matchDays einsammeln
         if (Array.isArray(data.matchDays)) {
           data.matchDays.forEach(day => {
             if (Array.isArray(day.matches)) {
@@ -286,24 +292,29 @@
                 const team2 = m.team2?.name || m.team2Name || m.teamDescription2 || '';
                 const matchId = m.id || m.matchId || m.uuid || m.matchUuid || '';
                 const rawDate = m.date || m.startDate || day.date || null;
-                const leagueId = m.leagueId || m.league?.id || '';
-                
-                // Versuche Geschlecht aus Liga-Daten zu ermitteln
-                let gender = 'UNKNOWN';
-                let leagueName = m.leagueName || m.competitionName || 'WVV Liga';
-
-                if (leagueId && leaguesMap.has(leagueId)) {
-                  const lData = leaguesMap.get(leagueId);
-                  gender = lData.gender;
-                  leagueName = lData.name;
-                } else {
-                  // Fallback Texterkennung
-                  const checkTxt = (leagueName + " " + team1).toLowerCase();
-                  if (checkTxt.includes('damen') || checkTxt.includes('frauen') || checkTxt.includes('w.')) gender = 'FEMALE';
-                  else if (checkTxt.includes('herren') || checkTxt.includes('männer') || checkTxt.includes('m.')) gender = 'MALE';
-                }
 
                 if (matchId && (team1 || team2)) {
+                  let leagueName = m.leagueName || m.competitionName || 'WVV Liga';
+                  let gender = 'UNKNOWN';
+
+                  // Abgleich über die Match-ID aus dem Ligen-Objekt
+                  if (matchToLeagueMap.has(matchId)) {
+                    const lInfo = matchToLeagueMap.get(matchId);
+                    leagueName = lInfo.name;
+                    gender = lInfo.gender;
+                  } else {
+                    // Fallback falls die Match-ID nicht direkt im Ligen-Array steht
+                    const checkTxt = (leagueName + " " + team1).toLowerCase();
+                    if (checkTxt.includes('damen') || checkTxt.includes('frauen') || checkTxt.includes('w.')) gender = 'FEMALE';
+                    else if (checkTxt.includes('herren') || checkTxt.includes('männer') || checkTxt.includes('m.')) gender = 'MALE';
+                  }
+
+                  // Lesbare Geschlechtsbezeichnung für die Anzeige
+                  let genderDisplay = 'Allgemein';
+                  if (gender === 'FEMALE') genderDisplay = 'Damen';
+                  else if (gender === 'MALE') genderDisplay = 'Herren';
+                  else if (gender === 'MIXED') genderDisplay = 'Mixed';
+
                   allMatches.push({
                     id: matchId,
                     team1: team1 || 'Unbekannt',
@@ -311,8 +322,8 @@
                     dateObj: rawDate ? new Date(rawDate) : new Date(0),
                     formattedDate: formatDate(rawDate),
                     league: leagueName,
-                    leagueId: leagueId,
-                    gender: gender
+                    gender: gender,
+                    genderDisplay: genderDisplay
                   });
                 }
               });
@@ -326,8 +337,6 @@
         updateLeagueDropdown();
         statusEl.style.display = 'none';
         renderMatches();
-
-        // Automatischer Scroll zum heutigen Tag (oder dem nächsten anstehenden Spiel)
         scrollToToday();
 
       } catch (err) {
@@ -335,48 +344,41 @@
       }
     }
 
-    // Filter-Abhängigkeit 1: Wenn Geschlecht geändert wird -> Ligen anpassen
     function onGenderChange() {
       updateLeagueDropdown();
       renderMatches();
     }
 
-    // Füllt das Liga-Dropdown abhängig vom gewählten Geschlecht
     function updateLeagueDropdown() {
       const genderVal = document.getElementById('filter-gender').value;
       const leagueSelect = document.getElementById('filter-league');
-      
-      // Aktuelle Auswahl merken
       const currentLeague = leagueSelect.value;
       
       leagueSelect.innerHTML = '<option value="all">Alle Ligen</option>';
 
-      const uniqueLeagues = new Map();
+      const uniqueLeagues = new Set();
       allMatches.forEach(m => {
         if (genderVal === 'all' || m.gender === genderVal) {
-          uniqueLeagues.set(m.league, m.league);
+          uniqueLeagues.add(m.league);
         }
       });
 
-      Array.from(uniqueLeagues.keys()).sort().forEach(lName => {
+      Array.from(uniqueLeagues).sort().forEach(lName => {
         const opt = document.createElement('option');
         opt.value = lName;
         opt.textContent = lName;
         leagueSelect.appendChild(opt);
       });
 
-      // Versuche vorherige Auswahl beizubehalten falls gültig
       leagueSelect.value = uniqueLeagues.has(currentLeague) ? currentLeague : 'all';
       updateTeamDropdown();
     }
 
-    // Filter-Abhängigkeit 2: Wenn Liga geändert wird -> Mannschaften anpassen
     function onLeagueChange() {
       updateTeamDropdown();
       renderMatches();
     }
 
-    // Füllt das Mannschafts-Dropdown abhängig von Geschlecht und Liga
     function updateTeamDropdown() {
       const genderVal = document.getElementById('filter-gender').value;
       const leagueVal = document.getElementById('filter-league').value;
@@ -430,15 +432,11 @@
       const listEl = document.getElementById('match-list');
 
       const filtered = allMatches.filter(m => {
-        // Freitext
         if (query && !m.team1.toLowerCase().includes(query) && !m.team2.toLowerCase().includes(query) && !m.league.toLowerCase().includes(query)) {
           return false;
         }
-        // Geschlecht
         if (genderFilter !== 'all' && m.gender !== genderFilter) return false;
-        // Liga
         if (leagueFilter !== 'all' && m.league !== leagueFilter) return false;
-        // Mannschaft
         if (teamFilter !== 'all' && m.team1 !== teamFilter && m.team2 !== teamFilter) return false;
 
         return true;
@@ -454,15 +452,15 @@
 
       listEl.innerHTML = filtered.map(m => {
         const fullLink = `${scoreboardBaseUrl}?match=${m.id}&assoc=wvv`;
-        // Markiere Spiele, die heute stattfinden
         const isToday = m.dateObj.toDateString() === now.toDateString();
 
         return `
-          <div class="match-card ${isToday ? 'today-highlight' : ''}" data-id="${m.id}" data-time="${m.dateObj.getTime()}">
+          <div class="match-card ${isToday ? 'today-highlight' : ''}" data-time="${m.dateObj.getTime()}">
             <div class="match-header">
               <span>📅 ${m.formattedDate} ${isToday ? '⭐ (HEUTE)' : ''}</span>
               <span>${m.league}</span>
             </div>
+            <div class="match-meta">👤 ${m.genderDisplay}</div>
             <div class="match-teams">${m.team1} vs. ${m.team2}</div>
             <div class="match-footer">
               <span class="match-id" title="${m.id}">ID: ${m.id}</span>
@@ -476,7 +474,6 @@
       }).join('');
     }
 
-    // Scrollt beim Start automatisch zum nächsten anstehenden Spiel (heute oder Zukunft)
     function scrollToToday() {
       const nowTime = new Date().getTime();
       const cards = document.querySelectorAll('.match-card');
@@ -486,7 +483,7 @@
         const cardTime = parseInt(card.getAttribute('data-time'));
         if (cardTime >= nowTime) {
           targetCard = card;
-          break; // Nimmt das erste Spiel ab jetzt
+          break;
         }
       }
 
