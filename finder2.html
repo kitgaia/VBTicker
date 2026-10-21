@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SAMS Match Finder - Smart Filter</title>
+  <title>SAMS Match Finder</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -17,83 +17,42 @@
       margin: 0 auto;
     }
     
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
+    /* Fixierter Header / Suchbereich (bleibt immer oben) */
+    .sticky-header {
+      position: sticky;
+      top: 0;
+      background: #0b0f19;
+      padding-top: 4px;
+      padding-bottom: 12px;
+      z-index: 100;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      margin-bottom: 16px;
     }
+
     h1 {
       font-size: 22px;
+      margin-bottom: 4px;
       color: #00f2fe;
     }
-    
-    .filter-toggle-btn {
-      background: #1e293b;
-      color: #00f2fe;
-      border: 1px solid rgba(0, 242, 254, 0.4);
-      padding: 8px 14px;
-      border-radius: 6px;
-      font-weight: 700;
+    p {
+      color: #94a3b8;
+      margin-bottom: 12px;
       font-size: 13px;
-      cursor: pointer;
-      text-transform: uppercase;
     }
-    .filter-toggle-btn:hover {
-      background: #334155;
-    }
-
-    .filter-container {
-      background: #111827;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 14px;
-      margin-bottom: 16px;
-      display: none;
-      flex-direction: column;
-      gap: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-    }
-    .filter-container.show {
-      display: flex;
-    }
-
-    .filter-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-    }
-    @media(min-width: 600px) {
-      .filter-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-      .filter-full {
-        grid-column: span 2;
-      }
-    }
-
-    .filter-control {
+    .search-box {
       width: 100%;
-      padding: 10px 12px;
+      padding: 12px;
       background: #1e293b;
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 6px;
       color: white;
-      font-size: 14px;
+      font-size: 16px;
       outline: none;
     }
-    .filter-control:focus {
+    .search-box:focus {
       border-color: #00f2fe;
     }
-    label {
-      display: block;
-      font-size: 11px;
-      color: #94a3b8;
-      margin-bottom: 4px;
-      text-transform: uppercase;
-      font-weight: 700;
-    }
-
+    
     .match-list {
       display: flex;
       flex-direction: column;
@@ -109,10 +68,18 @@
       flex-direction: column;
       gap: 8px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      transition: opacity 0.2s ease;
     }
-    .match-card.today-highlight {
-      border-left-color: #4ade80;
+    
+    /* Vergangene Spiele leicht ausgrauen */
+    .match-card.past-match {
+      opacity: 0.45;
+      border-left-color: #64748b;
     }
+    .match-card.past-match:hover {
+      opacity: 0.8;
+    }
+
     .match-header {
       display: flex;
       justify-content: space-between;
@@ -121,16 +88,6 @@
       font-weight: 700;
       text-transform: uppercase;
       gap: 8px;
-    }
-    .match-meta {
-      font-size: 10px;
-      color: #cbd5e1;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 3px 6px;
-      border-radius: 4px;
-      display: inline-block;
-      width: fit-content;
-      margin-top: -2px;
     }
     .match-teams {
       font-size: 16px;
@@ -198,43 +155,11 @@
 <body>
 
   <div class="container">
-    <div class="top-bar">
+    <!-- Sticky Header (bleibt beim Scrollen oben fixiert) -->
+    <div class="sticky-header">
       <h1>SAMS Match Finder</h1>
-      <button class="filter-toggle-btn" onclick="toggleFilter()">🔍 Filter</button>
-    </div>
-
-    <!-- Filter Sektion -->
-    <div id="filter-container" class="filter-container">
-      <div class="filter-grid">
-        <div class="filter-full">
-          <label>Freitext-Suche (Team / Begriff)</label>
-          <input type="text" id="search-input" class="filter-control" placeholder="Suchen...">
-        </div>
-
-        <div>
-          <label>1. Geschlecht</label>
-          <select id="filter-gender" class="filter-control">
-            <option value="all">Alle Geschlechter</option>
-            <option value="FEMALE">Damen / Frauen</option>
-            <option value="MALE">Herren / Männer</option>
-            <option value="MIXED">Mixed</option>
-          </select>
-        </div>
-
-        <div>
-          <label>2. Liga auswählen</label>
-          <select id="filter-league" class="filter-control">
-            <option value="all">Alle Ligen</option>
-          </select>
-        </div>
-
-        <div class="filter-full">
-          <label>3. Mannschaft auswählen</label>
-          <select id="filter-team" class="filter-control">
-            <option value="all">Alle Mannschaften</option>
-          </select>
-        </div>
-      </div>
+      <p>Finde alle Liga-Spiele und kopiere dir mit einem Klick den OBS-Link.</p>
+      <input type="text" id="search-input" class="search-box" placeholder="Nach Team oder Liga filtern...">
     </div>
 
     <div id="status" class="loading">Lade Spieldaten vom Worker...</div>
@@ -247,16 +172,8 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       loadMatches();
-      
       document.getElementById('search-input').addEventListener('input', renderMatches);
-      document.getElementById('filter-gender').addEventListener('change', onGenderChange);
-      document.getElementById('filter-league').addEventListener('change', onLeagueChange);
-      document.getElementById('filter-team').addEventListener('change', renderMatches);
     });
-
-    function toggleFilter() {
-      document.getElementById('filter-container').classList.toggle('show');
-    }
 
     async function loadMatches() {
       const statusEl = document.getElementById('status');
@@ -267,23 +184,6 @@
         const data = await response.json();
         allMatches = [];
 
-        // 1. Ligen-Struktur mappen: Verknüpft Match-ID direkt mit Ligadaten (Name, Geschlecht, Team-IDs)
-        const matchToLeagueMap = new Map();
-        if (data.leagues && typeof data.leagues === 'object') {
-          Object.values(data.leagues).forEach(l => {
-            const leagueName = l.name || 'Unbekannte Liga';
-            const leagueGender = l.gender || 'UNKNOWN'; // FEMALE, MALE, etc.
-            
-            // Wenn die Liga ein Array von Match-IDs hat
-            if (Array.isArray(l.matches)) {
-              l.matches.forEach(mId => {
-                matchToLeagueMap.set(mId, { name: leagueName, gender: leagueGender });
-              });
-            }
-          });
-        }
-
-        // 2. Spiele aus matchDays einsammeln
         if (Array.isArray(data.matchDays)) {
           data.matchDays.forEach(day => {
             if (Array.isArray(day.matches)) {
@@ -294,36 +194,13 @@
                 const rawDate = m.date || m.startDate || day.date || null;
 
                 if (matchId && (team1 || team2)) {
-                  let leagueName = m.leagueName || m.competitionName || 'WVV Liga';
-                  let gender = 'UNKNOWN';
-
-                  // Abgleich über die Match-ID aus dem Ligen-Objekt
-                  if (matchToLeagueMap.has(matchId)) {
-                    const lInfo = matchToLeagueMap.get(matchId);
-                    leagueName = lInfo.name;
-                    gender = lInfo.gender;
-                  } else {
-                    // Fallback falls die Match-ID nicht direkt im Ligen-Array steht
-                    const checkTxt = (leagueName + " " + team1).toLowerCase();
-                    if (checkTxt.includes('damen') || checkTxt.includes('frauen') || checkTxt.includes('w.')) gender = 'FEMALE';
-                    else if (checkTxt.includes('herren') || checkTxt.includes('männer') || checkTxt.includes('m.')) gender = 'MALE';
-                  }
-
-                  // Lesbare Geschlechtsbezeichnung für die Anzeige
-                  let genderDisplay = 'Allgemein';
-                  if (gender === 'FEMALE') genderDisplay = 'Damen';
-                  else if (gender === 'MALE') genderDisplay = 'Herren';
-                  else if (gender === 'MIXED') genderDisplay = 'Mixed';
-
                   allMatches.push({
                     id: matchId,
                     team1: team1 || 'Unbekannt',
                     team2: team2 || 'Unbekannt',
                     dateObj: rawDate ? new Date(rawDate) : new Date(0),
                     formattedDate: formatDate(rawDate),
-                    league: leagueName,
-                    gender: gender,
-                    genderDisplay: genderDisplay
+                    league: m.leagueName || m.competitionName || 'WVV Liga'
                   });
                 }
               });
@@ -334,9 +211,10 @@
         // Nach Datum sortieren (chronologisch aufsteigend)
         allMatches.sort((a, b) => a.dateObj - b.dateObj);
 
-        updateLeagueDropdown();
         statusEl.style.display = 'none';
         renderMatches();
+
+        // Automatischer Sprung zum heutigen Tag / nächsten Spiel nach dem Laden
         scrollToToday();
 
       } catch (err) {
@@ -344,67 +222,7 @@
       }
     }
 
-    function onGenderChange() {
-      updateLeagueDropdown();
-      renderMatches();
-    }
-
-    function updateLeagueDropdown() {
-      const genderVal = document.getElementById('filter-gender').value;
-      const leagueSelect = document.getElementById('filter-league');
-      const currentLeague = leagueSelect.value;
-      
-      leagueSelect.innerHTML = '<option value="all">Alle Ligen</option>';
-
-      const uniqueLeagues = new Set();
-      allMatches.forEach(m => {
-        if (genderVal === 'all' || m.gender === genderVal) {
-          uniqueLeagues.add(m.league);
-        }
-      });
-
-      Array.from(uniqueLeagues).sort().forEach(lName => {
-        const opt = document.createElement('option');
-        opt.value = lName;
-        opt.textContent = lName;
-        leagueSelect.appendChild(opt);
-      });
-
-      leagueSelect.value = uniqueLeagues.has(currentLeague) ? currentLeague : 'all';
-      updateTeamDropdown();
-    }
-
-    function onLeagueChange() {
-      updateTeamDropdown();
-      renderMatches();
-    }
-
-    function updateTeamDropdown() {
-      const genderVal = document.getElementById('filter-gender').value;
-      const leagueVal = document.getElementById('filter-league').value;
-      const teamSelect = document.getElementById('filter-team');
-
-      const currentTeam = teamSelect.value;
-      teamSelect.innerHTML = '<option value="all">Alle Mannschaften</option>';
-
-      const teamsSet = new Set();
-      allMatches.forEach(m => {
-        if (genderVal !== 'all' && m.gender !== genderVal) return;
-        if (leagueVal !== 'all' && m.league !== leagueVal) return;
-        teamsSet.add(m.team1);
-        teamsSet.add(m.team2);
-      });
-
-      Array.from(teamsSet).sort().forEach(teamName => {
-        const opt = document.createElement('option');
-        opt.value = teamName;
-        opt.textContent = teamName;
-        teamSelect.appendChild(opt);
-      });
-
-      teamSelect.value = teamsSet.has(currentTeam) ? currentTeam : 'all';
-    }
-
+    // Wandelt ISO-Daten / Timestamps sauber in deutsches Format um
     function formatDate(dateInput) {
       if (!dateInput) return 'Datum unbekannt';
       try {
@@ -425,42 +243,37 @@
 
     function renderMatches() {
       const query = document.getElementById('search-input').value.toLowerCase();
-      const genderFilter = document.getElementById('filter-gender').value;
-      const leagueFilter = document.getElementById('filter-league').value;
-      const teamFilter = document.getElementById('filter-team').value;
-      
       const listEl = document.getElementById('match-list');
 
-      const filtered = allMatches.filter(m => {
-        if (query && !m.team1.toLowerCase().includes(query) && !m.team2.toLowerCase().includes(query) && !m.league.toLowerCase().includes(query)) {
-          return false;
-        }
-        if (genderFilter !== 'all' && m.gender !== genderFilter) return false;
-        if (leagueFilter !== 'all' && m.league !== leagueFilter) return false;
-        if (teamFilter !== 'all' && m.team1 !== teamFilter && m.team2 !== teamFilter) return false;
-
-        return true;
-      });
+      const filtered = allMatches.filter(m => 
+        m.team1.toLowerCase().includes(query) || 
+        m.team2.toLowerCase().includes(query) ||
+        m.league.toLowerCase().includes(query)
+      );
 
       if (filtered.length === 0) {
-        listEl.innerHTML = '<div class="loading">Keine Spiele für diese Auswahl gefunden.</div>';
+        listEl.innerHTML = '<div class="loading">Keine Spiele gefunden.</div>';
         return;
       }
 
       const scoreboardBaseUrl = "https://kitgaia.github.io/VBTicker/scoreboardV1.html";
       const now = new Date();
+      // Setzt die Uhrzeit von 'heute' auf 00:00 Uhr für den Vergleich
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
       listEl.innerHTML = filtered.map(m => {
         const fullLink = `${scoreboardBaseUrl}?match=${m.id}&assoc=wvv`;
-        const isToday = m.dateObj.toDateString() === now.toDateString();
+        
+        // Prüfen, ob das Spiel in der Vergangenheit liegt (vor heute)
+        const matchDayTime = new Date(m.dateObj.getFullYear(), m.dateObj.getMonth(), m.dateObj.getDate()).getTime();
+        const isPast = matchDayTime < todayStart;
 
         return `
-          <div class="match-card ${isToday ? 'today-highlight' : ''}" data-time="${m.dateObj.getTime()}">
+          <div class="match-card ${isPast ? 'past-match' : ''}" data-time="${m.dateObj.getTime()}">
             <div class="match-header">
-              <span>📅 ${m.formattedDate} ${isToday ? '⭐ (HEUTE)' : ''}</span>
+              <span>📅 ${m.formattedDate}</span>
               <span>${m.league}</span>
             </div>
-            <div class="match-meta">👤 ${m.genderDisplay}</div>
             <div class="match-teams">${m.team1} vs. ${m.team2}</div>
             <div class="match-footer">
               <span class="match-id" title="${m.id}">ID: ${m.id}</span>
@@ -474,6 +287,7 @@
       }).join('');
     }
 
+    // Scrollt beim Start automatisch zum heutigen Tag / nächsten anstehenden Spiel
     function scrollToToday() {
       const nowTime = new Date().getTime();
       const cards = document.querySelectorAll('.match-card');
