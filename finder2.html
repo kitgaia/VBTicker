@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SAMS Match Finder - Gefiltert</title>
+  <title>SAMS Match Finder - Smart Filter</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -16,23 +16,54 @@
       max-width: 800px;
       margin: 0 auto;
     }
+    
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
     h1 {
       font-size: 22px;
-      margin-bottom: 6px;
       color: #00f2fe;
     }
-    p {
-      color: #94a3b8;
-      margin-bottom: 16px;
-      font-size: 13px;
-    }
     
-    /* Filter-Bereich */
+    /* Filter Toggle Button */
+    .filter-toggle-btn {
+      background: #1e293b;
+      color: #00f2fe;
+      border: 1px solid rgba(0, 242, 254, 0.4);
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+    .filter-toggle-btn:hover {
+      background: #334155;
+    }
+
+    /* Filter Sektion (Einklappbar) */
+    .filter-container {
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 16px;
+      display: none; /* Standardmäßig eingeklappt, kann per Button geöffnet werden */
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    }
+    .filter-container.show {
+      display: flex;
+    }
+
     .filter-grid {
       display: grid;
       grid-template-columns: 1fr;
       gap: 10px;
-      margin-bottom: 16px;
     }
     @media(min-width: 600px) {
       .filter-grid {
@@ -60,7 +91,7 @@
       display: block;
       font-size: 11px;
       color: #94a3b8;
-      margin-bottom: 4text-transform;
+      margin-bottom: 4px;
       text-transform: uppercase;
       font-weight: 700;
     }
@@ -80,6 +111,9 @@
       flex-direction: column;
       gap: 8px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    .match-card.today-highlight {
+      border-left-color: #4ade80; /* Heutige Spiele grün hervorheben */
     }
     .match-header {
       display: flex;
@@ -156,41 +190,42 @@
 <body>
 
   <div class="container">
-    <h1>SAMS Match Finder</h1>
-    <p>Nutze die Filteroptionen, um gezielt nach Spielen, Ligen oder Zeiträumen zu suchen.</p>
-    
-    <!-- Filter Sektion -->
-    <div class="filter-grid">
-      <div class="filter-full">
-        <label>Team-Suche</label>
-        <input type="text" id="search-input" class="filter-control" placeholder="z.B. Meinerzhagen..." value="Meinerzhagen">
-      </div>
+    <div class="top-bar">
+      <h1>SAMS Match Finder</h1>
+      <button class="filter-toggle-btn" onclick="toggleFilter()">🔍 Filter</button>
+    </div>
 
-      <div>
-        <label>Geschlecht</label>
-        <select id="filter-gender" class="filter-control">
-          <option value="all">Alle</option>
-          <option value="damen">Damen / Frauen</option>
-          <option value="herren">Herren / Männer</option>
-          <option value="mixed">Mixed</option>
-        </select>
-      </div>
+    <!-- Filter Sektion (Geschlecht -> Liga -> Mannschaft) -->
+    <div id="filter-container" class="filter-container">
+      <div class="filter-grid">
+        <div class="filter-full">
+          <label>Freitext-Suche (Team / Begriff)</label>
+          <input type="text" id="search-input" class="filter-control" placeholder="Suchen...">
+        </div>
 
-      <div>
-        <label>Liga</label>
-        <select id="filter-league" class="filter-control">
-          <option value="all">Alle Ligen</option>
-        </select>
-      </div>
+        <div>
+          <label>1. Geschlecht</label>
+          <select id="filter-gender" class="filter-control">
+            <option value="all">Alle Geschlechter</option>
+            <option value="FEMALE">Damen / Frauen</option>
+            <option value="MALE">Herren / Männer</option>
+            <option value="MIXED">Mixed</option>
+          </select>
+        </div>
 
-      <div>
-        <label>Datum von</label>
-        <input type="date" id="date-from" class="filter-control">
-      </div>
+        <div>
+          <label>2. Liga auswählen</label>
+          <select id="filter-league" class="filter-control">
+            <option value="all">Alle Ligen</option>
+          </select>
+        </div>
 
-      <div>
-        <label>Datum bis</label>
-        <input type="date" id="date-to" class="filter-control">
+        <div class="filter-full">
+          <label>3. Mannschaft auswählen</label>
+          <select id="filter-team" class="filter-control">
+            <option value="all">Alle Mannschaften</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -201,17 +236,22 @@
   <script>
     const WORKER_URL = "https://rapid-bread-25a8.nick-valbert2006.workers.dev";
     let allMatches = [];
+    let leaguesMap = new Map(); // Speichert Ligen mit zugehörigen Infos
 
     document.addEventListener('DOMContentLoaded', () => {
       loadMatches();
       
-      // Event Listener für alle Filter-Änderungen
+      // Events für Filter
       document.getElementById('search-input').addEventListener('input', renderMatches);
-      document.getElementById('filter-gender').addEventListener('change', renderMatches);
-      document.getElementById('filter-league').addEventListener('change', renderMatches);
-      document.getElementById('date-from').addEventListener('change', renderMatches);
-      document.getElementById('date-to').addEventListener('change', renderMatches);
+      document.getElementById('filter-gender').addEventListener('change', onGenderChange);
+      document.getElementById('filter-league').addEventListener('change', onLeagueChange);
+      document.getElementById('filter-team').addEventListener('change', renderMatches);
     });
+
+    function toggleFilter() {
+      const box = document.getElementById('filter-container');
+      box.classList.toggle('show');
+    }
 
     async function loadMatches() {
       const statusEl = document.getElementById('status');
@@ -221,8 +261,23 @@
 
         const data = await response.json();
         allMatches = [];
-        const leaguesSet = new Set();
+        leaguesMap.clear();
 
+        // 1. Ligen-Struktur auslesen falls vorhanden (SAMS Struktur)
+        if (data.leagues && typeof data.leagues === 'object') {
+          Object.values(data.leagues).forEach(l => {
+            if (l.id) {
+              leaguesMap.set(l.id, {
+                id: l.id,
+                name: l.name || 'Unbekannte Liga',
+                gender: l.gender || 'UNKNOWN',
+                matches: l.matches || []
+              });
+            }
+          });
+        }
+
+        // 2. Spiele einsammeln
         if (Array.isArray(data.matchDays)) {
           data.matchDays.forEach(day => {
             if (Array.isArray(day.matches)) {
@@ -231,17 +286,33 @@
                 const team2 = m.team2?.name || m.team2Name || m.teamDescription2 || '';
                 const matchId = m.id || m.matchId || m.uuid || m.matchUuid || '';
                 const rawDate = m.date || m.startDate || day.date || null;
-                const league = m.leagueName || m.competitionName || 'WVV Liga';
+                const leagueId = m.leagueId || m.league?.id || '';
+                
+                // Versuche Geschlecht aus Liga-Daten zu ermitteln
+                let gender = 'UNKNOWN';
+                let leagueName = m.leagueName || m.competitionName || 'WVV Liga';
+
+                if (leagueId && leaguesMap.has(leagueId)) {
+                  const lData = leaguesMap.get(leagueId);
+                  gender = lData.gender;
+                  leagueName = lData.name;
+                } else {
+                  // Fallback Texterkennung
+                  const checkTxt = (leagueName + " " + team1).toLowerCase();
+                  if (checkTxt.includes('damen') || checkTxt.includes('frauen') || checkTxt.includes('w.')) gender = 'FEMALE';
+                  else if (checkTxt.includes('herren') || checkTxt.includes('männer') || checkTxt.includes('m.')) gender = 'MALE';
+                }
 
                 if (matchId && (team1 || team2)) {
-                  leaguesSet.add(league);
                   allMatches.push({
                     id: matchId,
                     team1: team1 || 'Unbekannt',
                     team2: team2 || 'Unbekannt',
                     dateObj: rawDate ? new Date(rawDate) : new Date(0),
                     formattedDate: formatDate(rawDate),
-                    league: league
+                    league: leagueName,
+                    leagueId: leagueId,
+                    gender: gender
                   });
                 }
               });
@@ -249,24 +320,87 @@
           });
         }
 
-        // Liga-Dropdown dynamisch befüllen
-        const leagueSelect = document.getElementById('filter-league');
-        Array.from(leaguesSet).sort().forEach(l => {
-          const opt = document.createElement('option');
-          opt.value = l;
-          opt.textContent = l;
-          leagueSelect.appendChild(opt);
-        });
-
-        // Nach Datum sortieren
+        // Nach Datum sortieren (chronologisch aufsteigend)
         allMatches.sort((a, b) => a.dateObj - b.dateObj);
 
+        updateLeagueDropdown();
         statusEl.style.display = 'none';
         renderMatches();
+
+        // Automatischer Scroll zum heutigen Tag (oder dem nächsten anstehenden Spiel)
+        scrollToToday();
 
       } catch (err) {
         statusEl.innerText = "Fehler beim Laden: " + err.message;
       }
+    }
+
+    // Filter-Abhängigkeit 1: Wenn Geschlecht geändert wird -> Ligen anpassen
+    function onGenderChange() {
+      updateLeagueDropdown();
+      renderMatches();
+    }
+
+    // Füllt das Liga-Dropdown abhängig vom gewählten Geschlecht
+    function updateLeagueDropdown() {
+      const genderVal = document.getElementById('filter-gender').value;
+      const leagueSelect = document.getElementById('filter-league');
+      
+      // Aktuelle Auswahl merken
+      const currentLeague = leagueSelect.value;
+      
+      leagueSelect.innerHTML = '<option value="all">Alle Ligen</option>';
+
+      const uniqueLeagues = new Map();
+      allMatches.forEach(m => {
+        if (genderVal === 'all' || m.gender === genderVal) {
+          uniqueLeagues.set(m.league, m.league);
+        }
+      });
+
+      Array.from(uniqueLeagues.keys()).sort().forEach(lName => {
+        const opt = document.createElement('option');
+        opt.value = lName;
+        opt.textContent = lName;
+        leagueSelect.appendChild(opt);
+      });
+
+      // Versuche vorherige Auswahl beizubehalten falls gültig
+      leagueSelect.value = uniqueLeagues.has(currentLeague) ? currentLeague : 'all';
+      updateTeamDropdown();
+    }
+
+    // Filter-Abhängigkeit 2: Wenn Liga geändert wird -> Mannschaften anpassen
+    function onLeagueChange() {
+      updateTeamDropdown();
+      renderMatches();
+    }
+
+    // Füllt das Mannschafts-Dropdown abhängig von Geschlecht und Liga
+    function updateTeamDropdown() {
+      const genderVal = document.getElementById('filter-gender').value;
+      const leagueVal = document.getElementById('filter-league').value;
+      const teamSelect = document.getElementById('filter-team');
+
+      const currentTeam = teamSelect.value;
+      teamSelect.innerHTML = '<option value="all">Alle Mannschaften</option>';
+
+      const teamsSet = new Set();
+      allMatches.forEach(m => {
+        if (genderVal !== 'all' && m.gender !== genderVal) return;
+        if (leagueVal !== 'all' && m.league !== leagueVal) return;
+        teamsSet.add(m.team1);
+        teamsSet.add(m.team2);
+      });
+
+      Array.from(teamsSet).sort().forEach(teamName => {
+        const opt = document.createElement('option');
+        opt.value = teamName;
+        opt.textContent = teamName;
+        teamSelect.appendChild(opt);
+      });
+
+      teamSelect.value = teamsSet.has(currentTeam) ? currentTeam : 'all';
     }
 
     function formatDate(dateInput) {
@@ -291,61 +425,42 @@
       const query = document.getElementById('search-input').value.toLowerCase();
       const genderFilter = document.getElementById('filter-gender').value;
       const leagueFilter = document.getElementById('filter-league').value;
-      const dateFromVal = document.getElementById('date-from').value;
-      const dateToVal = document.getElementById('date-to').value;
+      const teamFilter = document.getElementById('filter-team').value;
       
       const listEl = document.getElementById('match-list');
 
       const filtered = allMatches.filter(m => {
-        // 1. Textsuche (Teams oder Liga)
-        const matchesQuery = m.team1.toLowerCase().includes(query) || 
-                             m.team2.toLowerCase().includes(query) ||
-                             m.league.toLowerCase().includes(query);
-        if (!matchesQuery) return false;
-
-        // 2. Liga Filter
+        // Freitext
+        if (query && !m.team1.toLowerCase().includes(query) && !m.team2.toLowerCase().includes(query) && !m.league.toLowerCase().includes(query)) {
+          return false;
+        }
+        // Geschlecht
+        if (genderFilter !== 'all' && m.gender !== genderFilter) return false;
+        // Liga
         if (leagueFilter !== 'all' && m.league !== leagueFilter) return false;
-
-        // 3. Geschlechter Filter (Erkennung über gängige Schlüsselwörter im Liginamen oder Teamnamen)
-        if (genderFilter !== 'all') {
-          const textToCheck = (m.league + " " + m.team1 + " " + m.team2).toLowerCase();
-          const isDamen = textToCheck.includes('damen') || textToCheck.includes('frauen') || textToCheck.includes('w.');
-          const isHerren = textToCheck.includes('herren') || textToCheck.includes('männer') || textToCheck.includes('m.');
-          
-          if (genderFilter === 'damen' && !isDamen) return false;
-          if (genderFilter === 'herren' && !isHerren) return false;
-          if (genderFilter === 'mixed' && !textToCheck.includes('mixed')) return false;
-        }
-
-        // 4. Datumsfilter (Von / Bis)
-        if (dateFromVal && m.dateObj.getTime() !== 0) {
-          const fromDate = new Date(dateFromVal);
-          fromDate.setHours(0, 0, 0, 0);
-          if (m.dateObj < fromDate) return false;
-        }
-
-        if (dateToVal && m.dateObj.getTime() !== 0) {
-          const toDate = new Date(dateToVal);
-          toDate.setHours(23, 59, 59, 999);
-          if (m.dateObj > toDate) return false;
-        }
+        // Mannschaft
+        if (teamFilter !== 'all' && m.team1 !== teamFilter && m.team2 !== teamFilter) return false;
 
         return true;
       });
 
       if (filtered.length === 0) {
-        listEl.innerHTML = '<div class="loading">Keine Spiele für diese Filterkriterien gefunden.</div>';
+        listEl.innerHTML = '<div class="loading">Keine Spiele für diese Auswahl gefunden.</div>';
         return;
       }
 
       const scoreboardBaseUrl = "https://kitgaia.github.io/VBTicker/scoreboardV1.html";
+      const now = new Date();
 
       listEl.innerHTML = filtered.map(m => {
         const fullLink = `${scoreboardBaseUrl}?match=${m.id}&assoc=wvv`;
+        // Markiere Spiele, die heute stattfinden
+        const isToday = m.dateObj.toDateString() === now.toDateString();
+
         return `
-          <div class="match-card">
+          <div class="match-card ${isToday ? 'today-highlight' : ''}" data-id="${m.id}" data-time="${m.dateObj.getTime()}">
             <div class="match-header">
-              <span>📅 ${m.formattedDate}</span>
+              <span>📅 ${m.formattedDate} ${isToday ? '⭐ (HEUTE)' : ''}</span>
               <span>${m.league}</span>
             </div>
             <div class="match-teams">${m.team1} vs. ${m.team2}</div>
@@ -359,6 +474,25 @@
           </div>
         `;
       }).join('');
+    }
+
+    // Scrollt beim Start automatisch zum nächsten anstehenden Spiel (heute oder Zukunft)
+    function scrollToToday() {
+      const nowTime = new Date().getTime();
+      const cards = document.querySelectorAll('.match-card');
+      let targetCard = null;
+
+      for (let card of cards) {
+        const cardTime = parseInt(card.getAttribute('data-time'));
+        if (cardTime >= nowTime) {
+          targetCard = card;
+          break; // Nimmt das erste Spiel ab jetzt
+        }
+      }
+
+      if (targetCard) {
+        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
 
     function copyToClipboard(text, btnElement) {
