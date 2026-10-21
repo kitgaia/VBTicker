@@ -7,20 +7,22 @@
   <style>
     :root {
       --bg-body: #000000;
-      --bg-card: #1c1c1e;
-      --bg-card-hover: #2c2c2e;
-      --bg-input: #1c1c1e;
+      --bg-card: rgba(28, 28, 30, 0.72);
+      --bg-card-hover: rgba(44, 44, 46, 0.85);
+      --bg-input: rgba(28, 28, 30, 0.9);
       --bg-tertiary: #2c2c2e;
       --apple-blue: #0a84ff;
       --apple-green: #30d158;
       --apple-gray: #8e8e93;
-      --apple-gray-light: #aeaeb2;
-      --border-subtle: rgba(255, 255, 255, 0.1);
+      --apple-gray-dark: #3a3a3c;
+      --border-glass: rgba(255, 255, 255, 0.12);
+      --border-focus: rgba(10, 132, 255, 0.55);
       --text-primary: #ffffff;
+      --text-secondary: #ebdbe0;
       --text-muted: #8e8e93;
-      --radius-lg: 16px;
+      --radius-lg: 18px;
       --radius-md: 12px;
-      --radius-pill: 20px;
+      --radius-pill: 40px;
       --ease-ios: cubic-bezier(0.16, 1, 0.3, 1);
     }
 
@@ -35,9 +37,8 @@
       background-color: var(--bg-body);
       color: var(--text-primary);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-      padding: 16px 16px 32px 16px;
-      line-height: 1.47059;
-      letter-spacing: -0.022em;
+      padding: 12px 12px 32px 12px;
+      line-height: 1.4;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -46,41 +47,41 @@
       margin: 0 auto;
     }
 
-    /* Apple Glassmorphism Header */
+    /* iOS 26 Glassmorphism Header */
     .sticky-header {
       position: sticky;
       top: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
-      padding: 12px 0 16px 0;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(30px) saturate(210%);
+      -webkit-backdrop-filter: blur(30px) saturate(210%);
+      padding: 12px 0 14px 0;
       z-index: 100;
-      border-bottom: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-glass);
       margin-bottom: 16px;
     }
 
     .header-top {
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     h1 {
       font-size: 26px;
       font-weight: 700;
-      letter-spacing: -0.5px;
+      letter-spacing: -0.6px;
       color: var(--text-primary);
     }
 
     .subtitle {
       color: var(--apple-gray);
       font-size: 13px;
-      margin-top: 2px;
+      margin-top: 1px;
       font-weight: 400;
     }
 
-    /* Search & Filter Bar */
+    /* Search & Filter Controls */
     .search-row {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       position: relative;
     }
 
@@ -94,7 +95,7 @@
       height: 44px;
       padding: 0 14px 0 38px;
       background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--border-glass);
       border-radius: var(--radius-md);
       color: var(--text-primary);
       font-size: 15px;
@@ -118,12 +119,12 @@
       pointer-events: none;
     }
 
-    /* Filter Toggle Button */
+    /* Filter Button */
     .filter-toggle-btn {
       height: 44px;
       padding: 0 16px;
       background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--border-glass);
       border-radius: var(--radius-md);
       color: var(--apple-blue);
       font-size: 14px;
@@ -137,7 +138,7 @@
     }
 
     .filter-toggle-btn:active {
-      transform: scale(0.96);
+      transform: scale(0.95);
       opacity: 0.8;
     }
 
@@ -155,7 +156,6 @@
       width: 16px;
       height: 16px;
       fill: var(--apple-blue);
-      transition: fill 0.2s ease;
     }
 
     /* Autocomplete Dropdown */
@@ -164,12 +164,12 @@
       top: 50px;
       left: 0;
       right: 0;
-      background: rgba(28, 28, 30, 0.95);
+      background: rgba(28, 28, 30, 0.96);
       backdrop-filter: blur(25px);
       -webkit-backdrop-filter: blur(25px);
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--border-glass);
       border-radius: var(--radius-md);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
       max-height: 240px;
       overflow-y: auto;
       z-index: 105;
@@ -213,7 +213,7 @@
 
     .filter-grid {
       background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--border-glass);
       border-radius: var(--radius-md);
       padding: 14px;
       display: grid;
@@ -239,12 +239,11 @@
       height: 38px;
       padding: 0 10px;
       background: var(--bg-body);
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--border-glass);
       border-radius: 8px;
       color: var(--text-primary);
       font-size: 13px;
       outline: none;
-      transition: border-color 0.2s ease;
     }
 
     .filter-control:focus {
@@ -254,10 +253,10 @@
     .reset-filters-btn {
       grid-column: 1 / -1;
       height: 34px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-glass);
       border-radius: 8px;
-      color: var(--apple-gray-light);
+      color: var(--apple-gray);
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
@@ -266,7 +265,7 @@
 
     .reset-filters-btn:active {
       transform: scale(0.98);
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.12);
     }
 
     /* Match List & Cards */
@@ -278,14 +277,16 @@
 
     .match-card {
       background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid var(--border-glass);
       border-radius: var(--radius-lg);
       padding: 14px 16px;
       display: flex;
       flex-direction: column;
       gap: 8px;
-      animation: iosFadeIn 0.35s var(--ease-ios) forwards;
-      transition: transform 0.2s var(--ease-ios), background-color 0.2s ease, border-color 0.2s ease;
+      animation: iosFadeIn 0.3s var(--ease-ios) forwards;
+      transition: transform 0.2s var(--ease-ios), background-color 0.2s ease, opacity 0.2s ease;
     }
 
     .match-card:active {
@@ -293,8 +294,15 @@
       background-color: var(--bg-card-hover);
     }
 
+    /* Dezentes Ausgrauen vergangener Spiele */
     .match-card.past-match {
-      opacity: 0.45;
+      opacity: 0.38;
+      filter: grayscale(20%);
+    }
+
+    .match-card.past-match:hover {
+      opacity: 0.75;
+      filter: grayscale(0%);
     }
 
     .match-header {
@@ -308,9 +316,9 @@
     .match-league-badge {
       color: var(--apple-blue);
       font-weight: 600;
-      background: rgba(10, 132, 255, 0.12);
-      padding: 3px 8px;
-      border-radius: 6px;
+      background: rgba(10, 132, 255, 0.14);
+      padding: 3px 9px;
+      border-radius: 8px;
       font-size: 11px;
       letter-spacing: -0.01em;
     }
@@ -394,14 +402,14 @@
       padding: 40px 16px;
       font-size: 15px;
       background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--border-glass);
       border-radius: var(--radius-lg);
     }
 
     @keyframes iosFadeIn {
       from {
         opacity: 0;
-        transform: translateY(8px);
+        transform: translateY(6px);
       }
       to {
         opacity: 1;
@@ -410,7 +418,7 @@
     }
 
     @media (max-width: 480px) {
-      body { padding: 12px; }
+      body { padding: 10px; }
       .search-box { font-size: 14px; }
       .match-teams { font-size: 15px; }
       .action-btn { padding: 0 12px; font-size: 11px; }
@@ -423,7 +431,7 @@
     <div class="sticky-header">
       <div class="header-top">
         <h1>SAMS Match Finder</h1>
-        <p class="subtitle">Finde deine Begegnung und kopiere den OBS-Overlay Link.</p>
+        <p class="subtitle">Begegnungen suchen & OBS-Overlay Link erstellen</p>
       </div>
 
       <div class="search-row">
@@ -502,7 +510,7 @@
 
       searchInput.addEventListener('input', (e) => {
         handleAutocomplete(e.target.value);
-        applyFilters();
+        applyFilters(false); // false = kein Sprung beim Tippen
       });
 
       searchInput.addEventListener('focus', (e) => {
@@ -522,14 +530,30 @@
         filterToggle.classList.toggle('active', isOpen);
       });
 
-      document.getElementById('filter-gender').addEventListener('change', applyFilters);
-      document.getElementById('filter-league').addEventListener('change', applyFilters);
-      document.getElementById('filter-team').addEventListener('input', applyFilters);
-      document.getElementById('filter-date').addEventListener('change', applyFilters);
+      document.getElementById('filter-gender').addEventListener('change', () => applyFilters(false));
+      document.getElementById('filter-league').addEventListener('change', () => applyFilters(false));
+      document.getElementById('filter-team').addEventListener('input', () => applyFilters(false));
+      document.getElementById('filter-date').addEventListener('change', () => applyFilters(false));
       document.getElementById('reset-filters').addEventListener('click', resetFilters);
     }
 
-    // Erstellt einen tiefen Index aller Ligen- und Serien-Objekte im gesamten JSON-Baum
+    // Exakter Wortgrenzen-Match für Teams (z. B. "TuS Meinerzhagen II" trifft NICHT "TuS Meinerzhagen III")
+    function matchesExactQuery(text, query) {
+      if (!query) return true;
+      const words = query.trim().split(/\s+/).filter(Boolean);
+
+      return words.every(word => {
+        const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        
+        // Prüft, ob es sich um eine Zahl oder Römische Zahl handelt (I, II, III, IV, etc.)
+        const isRomanOrNum = /^(i|ii|iii|iv|v|vi|vii|viii|ix|x|[0-9]+)$/i.test(word);
+
+        // Bei Zahlen/Römischen Zahlen strikte Wortgrenze \b beidseitig erzwingen
+        const pattern = isRomanOrNum ? `\\b${escaped}\\b` : `\\b${escaped}`;
+        return new RegExp(pattern, 'i').test(text);
+      });
+    }
+
     function buildLeagueLookupMap(data) {
       leagueLookupMap.clear();
 
@@ -547,7 +571,6 @@
           });
         }
 
-        // Falls ein Knoten eine Liste von Match-IDs enthält
         if (Array.isArray(obj.matches) && objName) {
           obj.matches.forEach(m => {
             const mId = typeof m === 'object' ? (m.id || m.uuid || m.matchId) : m;
@@ -570,7 +593,6 @@
       walk(data);
     }
 
-    // Rekursive Tiefensuche für unvollständige Matches
     function deepSearchLeagueAndGender(rootData, matchId, matchObj) {
       let foundName = null;
       let foundGender = null;
@@ -578,13 +600,11 @@
       function search(obj, depth = 0) {
         if (!obj || typeof obj !== 'object' || depth > 10 || (foundName && foundGender)) return;
 
-        // Prüfen, ob dieser Knoten das Match direkt beinhaltet
         const hasMatch = Array.isArray(obj.matches) && obj.matches.some(m => {
           const id = typeof m === 'object' ? (m.id || m.uuid || m.matchId) : m;
           return id === matchId;
         });
 
-        // Oder ob IDs übereinstimmen
         const targetIds = [matchObj.leagueId, matchObj.seriesId, matchObj.matchSeriesId, matchObj.groupId].filter(Boolean);
         const isTargetId = targetIds.some(id => id === obj.id || id === obj.uuid);
 
@@ -618,10 +638,8 @@
         uniqueTeamsSet.clear();
         uniqueLeaguesMap.clear();
 
-        // 1. Rekursiven Index aufbauen
         buildLeagueLookupMap(data);
 
-        // 2. Matches verarbeiten
         if (Array.isArray(data.matchDays)) {
           data.matchDays.forEach(day => {
             if (Array.isArray(day.matches)) {
@@ -631,18 +649,15 @@
                 const matchId = m.id || m.matchId || m.uuid || m.matchUuid || '';
                 const rawDate = m.date || m.startDate || day.date || null;
 
-                // Dynamische & rekursive Liga- und Geschlecht-Ermittlung
                 let rawLeague = m.leagueName || m.league?.name || m.competitionName || m.groupName || m.seriesName;
                 let rawGender = m.gender || m.leagueGender || m.league?.gender;
 
-                // 2a. Direkte Match-ID Zuordnung
                 if (!rawLeague && leagueLookupMap.has(`match_${matchId}`)) {
                   const info = leagueLookupMap.get(`match_${matchId}`);
                   rawLeague = info.name;
                   if (!rawGender) rawGender = info.gender;
                 }
 
-                // 2b. ID-basierte Zuordnung
                 const possibleIds = [m.leagueId, m.seriesId, m.matchSeriesId, m.groupId, m.competitionId].filter(Boolean);
                 for (const id of possibleIds) {
                   if ((!rawLeague || !rawGender) && leagueLookupMap.has(String(id))) {
@@ -652,7 +667,6 @@
                   }
                 }
 
-                // 2c. Vollständiger rekursiver Suchlauf im Datenbaum
                 if (!rawLeague || !rawGender) {
                   const deepRes = deepSearchLeagueAndGender(data, matchId, m);
                   if (!rawLeague) rawLeague = deepRes.name;
@@ -691,9 +705,9 @@
 
         populateLeagueSelect();
         statusEl.style.display = 'none';
-        applyFilters();
-
-        setTimeout(scrollToToday, 250);
+        
+        // Erstes Rendern + direkter harter Sprung zum aktuellen Tag
+        applyFilters(true);
 
       } catch (err) {
         statusEl.innerText = "Fehler beim Laden: " + err.message;
@@ -734,15 +748,16 @@
 
     function handleAutocomplete(query) {
       const listEl = document.getElementById('autocomplete-list');
-      const val = query.trim().toLowerCase();
+      const val = query.trim();
 
       if (val.length < 2) {
         closeAutocomplete();
         return;
       }
 
+      // Nutzen hier ebenfalls das stramme Matching
       const matches = Array.from(uniqueTeamsSet)
-        .filter(team => team.toLowerCase().includes(val))
+        .filter(team => matchesExactQuery(team, val))
         .slice(0, 6);
 
       if (matches.length === 0) {
@@ -762,7 +777,7 @@
     function selectSuggestion(teamName) {
       document.getElementById('search-input').value = teamName;
       closeAutocomplete();
-      applyFilters();
+      applyFilters(false);
     }
 
     function closeAutocomplete() {
@@ -775,30 +790,38 @@
       return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
     }
 
-    function applyFilters() {
-      const searchVal = document.getElementById('search-input').value.trim().toLowerCase();
+    function applyFilters(shouldJumpToToday = false) {
+      const searchVal = document.getElementById('search-input').value;
       const genderVal = document.getElementById('filter-gender').value;
       const leagueVal = document.getElementById('filter-league').value;
-      const teamVal = document.getElementById('filter-team').value.trim().toLowerCase();
+      const teamVal = document.getElementById('filter-team').value;
       const dateVal = document.getElementById('filter-date').value;
 
+      const isUnfiltered = !searchVal && !genderVal && !leagueVal && !teamVal && !dateVal;
+
       const filtered = allMatches.filter(m => {
+        // Exakte Wortgrenzen-Prüfung verhindert Verwechslung von "II" mit "III"
         const matchesSearch = !searchVal || 
-          m.team1.toLowerCase().includes(searchVal) ||
-          m.team2.toLowerCase().includes(searchVal) ||
-          m.leagueDisplay.toLowerCase().includes(searchVal);
+          matchesExactQuery(m.team1, searchVal) ||
+          matchesExactQuery(m.team2, searchVal) ||
+          m.leagueDisplay.toLowerCase().includes(searchVal.toLowerCase());
 
         const matchesGender = !genderVal || m.gender === genderVal;
         const matchesLeague = !leagueVal || m.leagueRaw === leagueVal;
         const matchesTeam = !teamVal || 
-          m.team1.toLowerCase().includes(teamVal) || 
-          m.team2.toLowerCase().includes(teamVal);
+          matchesExactQuery(m.team1, teamVal) || 
+          matchesExactQuery(m.team2, teamVal);
         const matchesDate = !dateVal || m.rawDateString === dateVal;
 
         return matchesSearch && matchesGender && matchesLeague && matchesTeam && matchesDate;
       });
 
       renderMatches(filtered);
+
+      // Nur direkt springen (ohne geschmeidige Scroll-Animation), wenn ungefiltert und initial geladen
+      if (shouldJumpToToday && isUnfiltered) {
+        jumpDirectlyToToday();
+      }
     }
 
     function resetFilters() {
@@ -808,7 +831,7 @@
       document.getElementById('filter-team').value = '';
       document.getElementById('filter-date').value = '';
       closeAutocomplete();
-      applyFilters();
+      applyFilters(true);
     }
 
     function renderMatches(matches) {
@@ -864,7 +887,8 @@
       }
     }
 
-    function scrollToToday() {
+    // Springt SOFORT (behavior: 'auto') ohne träges Scrollen zum heutigen Tag
+    function jumpDirectlyToToday() {
       const nowTime = new Date().getTime();
       const cards = document.querySelectorAll('.match-card');
       let targetCard = null;
@@ -878,7 +902,7 @@
       }
 
       if (targetCard) {
-        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetCard.scrollIntoView({ behavior: 'auto', block: 'center' });
       }
     }
 
