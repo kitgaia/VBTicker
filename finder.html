@@ -6,24 +6,24 @@
   <title>SAMS Match Finder</title>
   <style>
     :root {
-      --bg-body: #030508;
-      --glass-surface: rgba(255, 255, 255, 0.07);
-      --glass-surface-hover: rgba(255, 255, 255, 0.12);
-      --glass-border: rgba(255, 255, 255, 0.14);
-      --glass-border-light: rgba(255, 255, 255, 0.22);
-      --glass-gloss: rgba(255, 255, 255, 0.18);
-      --glass-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+      --bg-body: #020408;
+      --glass-surface: rgba(255, 255, 255, 0.06);
+      --glass-surface-hover: rgba(255, 255, 255, 0.1);
+      --glass-surface-active: rgba(255, 255, 255, 0.14);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --glass-border-light: rgba(255, 255, 255, 0.2);
+      --glass-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.22);
       
       --apple-blue: #0a84ff;
-      --apple-blue-glow: rgba(10, 132, 255, 0.35);
+      --apple-blue-glow: rgba(10, 132, 255, 0.32);
       --apple-green: #30d158;
-      --apple-gray: #98989d;
+      --apple-gray: #8e8e93;
       
       --text-primary: #ffffff;
-      --text-muted: #a1a1a6;
+      --text-muted: #98989d;
       
       --radius-pill: 9999px;
-      --radius-card: 20px;
+      --radius-card: 22px;
       --radius-inner: 14px;
       --ease-ios: cubic-bezier(0.16, 1, 0.3, 1);
     }
@@ -38,8 +38,8 @@
     body {
       background-color: var(--bg-body);
       background-image: 
-        radial-gradient(circle at 20% -10%, rgba(10, 132, 255, 0.18) 0%, transparent 50%),
-        radial-gradient(circle at 80% 100%, rgba(48, 209, 88, 0.08) 0%, transparent 50%);
+        radial-gradient(circle at 15% -10%, rgba(10, 132, 255, 0.15) 0%, transparent 45%),
+        radial-gradient(circle at 85% 105%, rgba(48, 209, 88, 0.07) 0%, transparent 45%);
       background-attachment: fixed;
       color: var(--text-primary);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
@@ -53,14 +53,14 @@
       margin: 0 auto;
     }
 
-    /* Liquid Glass Header */
+    /* Clean Liquid Glass Header */
     .sticky-header {
       position: sticky;
       top: 0;
-      background: rgba(3, 5, 8, 0.72);
-      backdrop-filter: blur(28px) saturate(200%);
-      -webkit-backdrop-filter: blur(28px) saturate(200%);
-      padding: calc(8px + env(safe-area-inset-top, 0px)) 0 16px 0;
+      background: rgba(2, 4, 8, 0.76);
+      backdrop-filter: blur(32px) saturate(210%);
+      -webkit-backdrop-filter: blur(32px) saturate(210%);
+      padding: calc(10px + env(safe-area-inset-top, 0px)) 0 16px 0;
       z-index: 100;
       border-bottom: 1px solid var(--glass-border);
       margin-bottom: 20px;
@@ -72,9 +72,9 @@
     }
 
     h1 {
-      font-size: 25px;
+      font-size: 26px;
       font-weight: 700;
-      letter-spacing: -0.5px;
+      letter-spacing: -0.6px;
       color: var(--text-primary);
     }
 
@@ -85,7 +85,7 @@
       font-weight: 400;
     }
 
-    /* Search & Action Row */
+    /* Search & Filter Controls */
     .search-row {
       display: flex;
       align-items: center;
@@ -98,7 +98,7 @@
       flex: 1;
     }
 
-    /* Vollständig abgerundete (Pill-förmige) Suchleiste */
+    /* Pill-förmige Suchleiste */
     .search-box {
       width: 100%;
       height: 46px;
@@ -117,7 +117,7 @@
 
     .search-box:focus {
       border-color: var(--apple-blue);
-      background: rgba(255, 255, 255, 0.11);
+      background: rgba(255, 255, 255, 0.1);
       box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 0 0 3px var(--apple-blue-glow);
     }
 
@@ -132,7 +132,7 @@
       pointer-events: none;
     }
 
-    /* Kreisförmiger Filter-Button (nur 3-Striche Icon) */
+    /* Rundes Filter-Icon Button */
     .filter-toggle-btn {
       width: 46px;
       height: 46px;
@@ -173,13 +173,13 @@
       transition: fill 0.2s ease;
     }
 
-    /* Autocomplete Dropdown Panel */
+    /* Autocomplete Panel */
     .autocomplete-list {
       position: absolute;
       top: 52px;
       left: 0;
       right: 0;
-      background: rgba(20, 24, 33, 0.92);
+      background: rgba(18, 22, 30, 0.94);
       backdrop-filter: blur(30px) saturate(200%);
       -webkit-backdrop-filter: blur(30px) saturate(200%);
       border: 1px solid var(--glass-border-light);
@@ -195,7 +195,7 @@
       padding: 12px 18px;
       font-size: 14px;
       cursor: pointer;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       color: var(--text-primary);
       transition: background 0.15s ease;
     }
@@ -209,7 +209,7 @@
       color: #ffffff;
     }
 
-    /* Liquid Glass Filter Drawer */
+    /* Cascading Filter Drawer */
     .filter-drawer {
       max-height: 0;
       overflow: hidden;
@@ -220,7 +220,7 @@
     }
 
     .filter-drawer.open {
-      max-height: 380px;
+      max-height: 400px;
       opacity: 1;
       transform: translateY(0);
       margin-top: 14px;
@@ -228,8 +228,8 @@
 
     .filter-grid {
       background: var(--glass-surface);
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
       border: 1px solid var(--glass-border);
       border-radius: var(--radius-card);
       padding: 16px;
@@ -256,17 +256,23 @@
     .filter-control {
       height: 40px;
       padding: 0 12px;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.45);
       border: 1px solid var(--glass-border);
       border-radius: var(--radius-inner);
       color: var(--text-primary);
       font-size: 13px;
       outline: none;
-      transition: border-color 0.2s ease;
+      transition: border-color 0.2s ease, background 0.2s ease;
     }
 
     .filter-control:focus {
       border-color: var(--apple-blue);
+      background: rgba(0, 0, 0, 0.6);
+    }
+
+    .filter-control option {
+      background: #12161f;
+      color: #ffffff;
     }
 
     .reset-filters-btn {
@@ -288,7 +294,7 @@
       color: var(--text-primary);
     }
 
-    /* Match List & Liquid Glass Cards */
+    /* Match List & Cards */
     .match-list {
       display: flex;
       flex-direction: column;
@@ -297,8 +303,8 @@
 
     .match-card {
       background: var(--glass-surface);
-      backdrop-filter: blur(25px) saturate(180%);
-      -webkit-backdrop-filter: blur(25px) saturate(180%);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
       border: 1px solid var(--glass-border);
       border-radius: var(--radius-card);
       padding: 16px 18px;
@@ -337,7 +343,7 @@
     .match-league-badge {
       color: var(--apple-blue);
       font-weight: 600;
-      background: rgba(10, 132, 255, 0.15);
+      background: rgba(10, 132, 255, 0.14);
       border: 1px solid rgba(10, 132, 255, 0.25);
       padding: 4px 10px;
       border-radius: var(--radius-pill);
@@ -450,6 +456,7 @@
       .search-box { font-size: 14.5px; }
       .match-teams { font-size: 15.5px; }
       .action-btn { padding: 0 12px; font-size: 11.5px; }
+      .filter-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
@@ -483,7 +490,7 @@
           <div class="filter-group">
             <label for="filter-gender">Geschlecht</label>
             <select id="filter-gender" class="filter-control">
-              <option value="">Alle</option>
+              <option value="">Alle Geschlechter</option>
               <option value="Herren">Herren</option>
               <option value="Damen">Damen</option>
               <option value="Mixed">Mixed</option>
@@ -499,7 +506,9 @@
 
           <div class="filter-group">
             <label for="filter-team">Mannschaft</label>
-            <input type="text" id="filter-team" class="filter-control" placeholder="Name filtern...">
+            <select id="filter-team" class="filter-control">
+              <option value="">Alle Teams</option>
+            </select>
           </div>
 
           <div class="filter-group">
@@ -522,7 +531,6 @@
 
     let allMatches = [];
     let uniqueTeamsSet = new Set();
-    let uniqueLeaguesMap = new Map();
     let leagueLookupMap = new Map();
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -557,9 +565,18 @@
         filterToggle.classList.toggle('active', isOpen);
       });
 
-      document.getElementById('filter-gender').addEventListener('change', () => applyFilters(false));
-      document.getElementById('filter-league').addEventListener('change', () => applyFilters(false));
-      document.getElementById('filter-team').addEventListener('input', () => applyFilters(false));
+      // Kaskadierende Reaktionen
+      document.getElementById('filter-gender').addEventListener('change', () => {
+        updateFilterDropdowns('gender');
+        applyFilters(false);
+      });
+
+      document.getElementById('filter-league').addEventListener('change', () => {
+        updateFilterDropdowns('league');
+        applyFilters(false);
+      });
+
+      document.getElementById('filter-team').addEventListener('change', () => applyFilters(false));
       document.getElementById('filter-date').addEventListener('change', () => applyFilters(false));
       document.getElementById('reset-filters').addEventListener('click', resetFilters);
     }
@@ -660,7 +677,6 @@
         const data = await response.json();
         allMatches = [];
         uniqueTeamsSet.clear();
-        uniqueLeaguesMap.clear();
 
         buildLeagueLookupMap(data);
 
@@ -704,9 +720,8 @@
                 const leagueDisplay = formattedGender ? `${rawLeague} (${formattedGender})` : rawLeague;
 
                 if (matchId && (team1 || team2)) {
-                  if (team1) uniqueTeamsSet.add(team1);
-                  if (team2) uniqueTeamsSet.add(team2);
-                  uniqueLeaguesMap.set(rawLeague, leagueDisplay);
+                  if (team1 && team1 !== 'Unbekannt') uniqueTeamsSet.add(team1);
+                  if (team2 && team2 !== 'Unbekannt') uniqueTeamsSet.add(team2);
 
                   allMatches.push({
                     id: matchId,
@@ -727,13 +742,86 @@
 
         allMatches.sort((a, b) => a.dateObj - b.dateObj);
 
-        populateLeagueSelect();
+        updateFilterDropdowns('all');
         statusEl.style.display = 'none';
         
         applyFilters(true);
 
       } catch (err) {
         statusEl.innerText = "Fehler beim Laden: " + err.message;
+      }
+    }
+
+    // Dynamische kaskadierende Befüllung der Filter-Dropdowns (Geschlecht -> Liga -> Mannschaft)
+    function updateFilterDropdowns(changedSource) {
+      const genderSelect = document.getElementById('filter-gender');
+      const leagueSelect = document.getElementById('filter-league');
+      const teamSelect = document.getElementById('filter-team');
+
+      const selectedGender = genderSelect.value;
+      const selectedLeague = leagueSelect.value;
+      const selectedTeam = teamSelect.value;
+
+      // 1. Ligen filtern (basierend auf gewähltem Geschlecht)
+      if (changedSource === 'all' || changedSource === 'gender') {
+        const availableLeaguesMap = new Map();
+
+        allMatches.forEach(m => {
+          if (!selectedGender || m.gender === selectedGender) {
+            availableLeaguesMap.set(m.leagueRaw, m.leagueDisplay);
+          }
+        });
+
+        leagueSelect.innerHTML = '<option value="">Alle Ligen</option>';
+        Array.from(availableLeaguesMap.entries())
+          .sort((a, b) => a[1].localeCompare(b[1]))
+          .forEach(([raw, display]) => {
+            const opt = document.createElement('option');
+            opt.value = raw;
+            opt.textContent = display;
+            selectOptionIfMatches(opt, raw, selectedLeague);
+            leagueSelect.appendChild(opt);
+          });
+
+        // Wenn die zuvor gewählte Liga beim Geschlechtswechsel nicht mehr existiert, zurücksetzen
+        if (!availableLeaguesMap.has(selectedLeague)) {
+          leagueSelect.value = "";
+        }
+      }
+
+      // 2. Mannschaften filtern (basierend auf gewähltem Geschlecht UND gewählter Liga)
+      const activeLeague = leagueSelect.value;
+      const availableTeamsSet = new Set();
+
+      allMatches.forEach(m => {
+        const matchesGender = !selectedGender || m.gender === selectedGender;
+        const matchesLeague = !activeLeague || m.leagueRaw === activeLeague;
+
+        if (matchesGender && matchesLeague) {
+          if (m.team1 && m.team1 !== 'Unbekannt') availableTeamsSet.add(m.team1);
+          if (m.team2 && m.team2 !== 'Unbekannt') availableTeamsSet.add(m.team2);
+        }
+      });
+
+      teamSelect.innerHTML = '<option value="">Alle Teams</option>';
+      Array.from(availableTeamsSet)
+        .sort((a, b) => a.localeCompare(b))
+        .forEach(team => {
+          const opt = document.createElement('option');
+          opt.value = team;
+          opt.textContent = team;
+          selectOptionIfMatches(opt, team, selectedTeam);
+          teamSelect.appendChild(opt);
+        });
+
+      if (!availableTeamsSet.has(selectedTeam)) {
+        teamSelect.value = "";
+      }
+    }
+
+    function selectOptionIfMatches(optElement, value, selectedVal) {
+      if (selectedVal && value === selectedVal) {
+        optElement.selected = true;
       }
     }
 
@@ -753,20 +841,6 @@
       if (g === 'FEMALE' || g === 'FRAUEN' || g === 'DAMEN' || g === 'W') return 'Damen';
       if (g === 'MIXED') return 'Mixed';
       return genderStr;
-    }
-
-    function populateLeagueSelect() {
-      const select = document.getElementById('filter-league');
-      select.innerHTML = '<option value="">Alle Ligen</option>';
-
-      Array.from(uniqueLeaguesMap.entries())
-        .sort((a, b) => a[1].localeCompare(b[1]))
-        .forEach(([raw, display]) => {
-          const opt = document.createElement('option');
-          opt.value = raw;
-          opt.textContent = display;
-          select.appendChild(opt);
-        });
     }
 
     function handleAutocomplete(query) {
@@ -830,8 +904,8 @@
         const matchesGender = !genderVal || m.gender === genderVal;
         const matchesLeague = !leagueVal || m.leagueRaw === leagueVal;
         const matchesTeam = !teamVal || 
-          matchesExactQuery(m.team1, teamVal) || 
-          matchesExactQuery(m.team2, teamVal);
+          m.team1 === teamVal || 
+          m.team2 === teamVal;
         const matchesDate = !dateVal || m.rawDateString === dateVal;
 
         return matchesSearch && matchesGender && matchesLeague && matchesTeam && matchesDate;
@@ -851,6 +925,7 @@
       document.getElementById('filter-team').value = '';
       document.getElementById('filter-date').value = '';
       closeAutocomplete();
+      updateFilterDropdowns('all');
       applyFilters(true);
     }
 
