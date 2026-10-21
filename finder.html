@@ -1,32 +1,78 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" data-theme="dark" data-scale="normal" data-accent="contrast">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>SAMS Match Finder</title>
   <style>
+    /* CSS Variables for Liquid Glass Themes & Scales */
     :root {
-      --bg-body: #020408;
-      --glass-surface: rgba(255, 255, 255, 0.06);
-      --glass-surface-hover: rgba(255, 255, 255, 0.1);
-      --glass-surface-active: rgba(255, 255, 255, 0.14);
-      --glass-border: rgba(255, 255, 255, 0.12);
-      --glass-border-light: rgba(255, 255, 255, 0.2);
-      --glass-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.22);
-      
-      --apple-blue: #0a84ff;
-      --apple-blue-glow: rgba(10, 132, 255, 0.32);
-      --apple-green: #30d158;
-      --apple-gray: #8e8e93;
-      
-      --text-primary: #ffffff;
-      --text-muted: #98989d;
-      
-      --radius-pill: 9999px;
+      /* Scales (Normal Default) */
+      --font-scale: 1rem;
+      --pad-scale: 1;
       --radius-card: 22px;
+      --radius-pill: 9999px;
       --radius-inner: 14px;
       --ease-ios: cubic-bezier(0.16, 1, 0.3, 1);
     }
+
+    [data-scale="compact"] {
+      --font-scale: 0.9rem;
+      --pad-scale: 0.85;
+      --radius-card: 16px;
+    }
+
+    [data-scale="large"] {
+      --font-scale: 1.12rem;
+      --pad-scale: 1.15;
+      --radius-card: 26px;
+    }
+
+    /* Dark Theme Defaults */
+    [data-theme="dark"] {
+      --bg-body: #030508;
+      --bg-gradient: radial-gradient(circle at 20% -10%, rgba(10, 132, 255, 0.15) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 100%, rgba(48, 209, 88, 0.08) 0%, transparent 50%);
+      --glass-surface: rgba(255, 255, 255, 0.07);
+      --glass-surface-hover: rgba(255, 255, 255, 0.13);
+      --glass-border: rgba(255, 255, 255, 0.14);
+      --glass-border-light: rgba(255, 255, 255, 0.22);
+      --glass-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+      --text-primary: #ffffff;
+      --text-muted: #98989d;
+      --accent-contrast: #ffffff;
+      --badge-bg: rgba(255, 255, 255, 0.1);
+      --badge-border: rgba(255, 255, 255, 0.2);
+      --input-bg: rgba(0, 0, 0, 0.45);
+      --past-opacity: 0.38;
+    }
+
+    /* Light Theme Overrides */
+    [data-theme="light"] {
+      --bg-body: #f2f2f7;
+      --bg-gradient: radial-gradient(circle at 30% -10%, rgba(0, 122, 255, 0.1) 0%, transparent 50%),
+                      radial-gradient(circle at 70% 100%, rgba(52, 199, 89, 0.08) 0%, transparent 50%);
+      --glass-surface: rgba(255, 255, 255, 0.68);
+      --glass-surface-hover: rgba(255, 255, 255, 0.85);
+      --glass-border: rgba(0, 0, 0, 0.1);
+      --glass-border-light: rgba(0, 0, 0, 0.16);
+      --glass-shadow: 0 12px 30px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+      --text-primary: #000000;
+      --text-muted: #6c6c70;
+      --accent-contrast: #000000;
+      --badge-bg: rgba(0, 0, 0, 0.06);
+      --badge-border: rgba(0, 0, 0, 0.12);
+      --input-bg: rgba(255, 255, 255, 0.7);
+      --past-opacity: 0.45;
+    }
+
+    /* Dynamic Accent Colors */
+    [data-accent="contrast"][data-theme="dark"] { --accent: #ffffff; --accent-glow: rgba(255,255,255,0.3); --accent-text: #000000; }
+    [data-accent="contrast"][data-theme="light"] { --accent: #000000; --accent-glow: rgba(0,0,0,0.2); --accent-text: #ffffff; }
+    [data-accent="blue"] { --accent: #0a84ff; --accent-glow: rgba(10, 132, 255, 0.35); --accent-text: #ffffff; }
+    [data-accent="emerald"] { --accent: #30d158; --accent-glow: rgba(48, 209, 88, 0.35); --accent-text: #000000; }
+    [data-accent="orange"] { --accent: #ff9f0a; --accent-glow: rgba(255, 159, 10, 0.35); --accent-text: #000000; }
+    [data-accent="purple"] { --accent: #bf5af2; --accent-glow: rgba(191, 90, 242, 0.35); --accent-text: #ffffff; }
 
     * {
       box-sizing: border-box;
@@ -37,55 +83,55 @@
 
     body {
       background-color: var(--bg-body);
-      background-image: 
-        radial-gradient(circle at 15% -10%, rgba(10, 132, 255, 0.15) 0%, transparent 45%),
-        radial-gradient(circle at 85% 105%, rgba(48, 209, 88, 0.07) 0%, transparent 45%);
+      background-image: var(--bg-gradient);
       background-attachment: fixed;
       color: var(--text-primary);
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-      padding: env(safe-area-inset-top, 12px) 14px calc(env(safe-area-inset-bottom, 24px) + 24px) 14px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: var(--font-scale);
+      padding: env(safe-area-inset-top, 16px) 16px calc(env(safe-area-inset-bottom, 24px) + 32px) 16px;
       line-height: 1.45;
       -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     .container {
-      max-width: 680px;
+      max-width: 1080px;
       margin: 0 auto;
     }
 
-    /* Clean Liquid Glass Header */
-    .sticky-header {
-      position: sticky;
-      top: 0;
-      background: rgba(2, 4, 8, 0.76);
-      backdrop-filter: blur(32px) saturate(210%);
-      -webkit-backdrop-filter: blur(32px) saturate(210%);
-      padding: calc(10px + env(safe-area-inset-top, 0px)) 0 16px 0;
-      z-index: 100;
-      border-bottom: 1px solid var(--glass-border);
-      margin-bottom: 20px;
-    }
-
-    .header-top {
-      margin-bottom: 12px;
-      padding: 0 4px;
+    /* 1. Scrollable Header (Disappears when scrolling down) */
+    .scrollable-header {
+      padding: 12px 4px 16px 4px;
     }
 
     h1 {
-      font-size: 26px;
-      font-weight: 700;
+      font-size: calc(1.75rem * var(--pad-scale));
+      font-weight: 800;
       letter-spacing: -0.6px;
       color: var(--text-primary);
     }
 
     .subtitle {
       color: var(--text-muted);
-      font-size: 13px;
-      margin-top: 2px;
+      font-size: calc(0.85rem * var(--pad-scale));
+      margin-top: 3px;
       font-weight: 400;
     }
 
-    /* Search & Filter Controls */
+    /* 2. Sticky Bar (Only Search, Filter, Settings stay pinned) */
+    .sticky-bar-wrapper {
+      position: sticky;
+      top: 0;
+      padding: 10px 0;
+      z-index: 100;
+      background: var(--bg-body);
+      backdrop-filter: blur(28px) saturate(200%);
+      -webkit-backdrop-filter: blur(28px) saturate(200%);
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--glass-border);
+      transition: background-color 0.3s ease;
+    }
+
     .search-row {
       display: flex;
       align-items: center;
@@ -98,16 +144,15 @@
       flex: 1;
     }
 
-    /* Pill-förmige Suchleiste */
     .search-box {
       width: 100%;
-      height: 46px;
+      height: calc(46px * var(--pad-scale));
       padding: 0 16px 0 42px;
       background: var(--glass-surface);
       border: 1px solid var(--glass-border);
       border-radius: var(--radius-pill);
       color: var(--text-primary);
-      font-size: 15px;
+      font-size: calc(0.95rem * var(--pad-scale));
       outline: none;
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
@@ -116,9 +161,8 @@
     }
 
     .search-box:focus {
-      border-color: var(--apple-blue);
-      background: rgba(255, 255, 255, 0.1);
-      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 0 0 3px var(--apple-blue-glow);
+      border-color: var(--accent);
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 0 0 3px var(--accent-glow);
     }
 
     .search-icon {
@@ -126,20 +170,20 @@
       left: 14px;
       top: 50%;
       transform: translateY(-50%);
-      width: 17px;
-      height: 17px;
+      width: 18px;
+      height: 18px;
       fill: var(--text-muted);
       pointer-events: none;
     }
 
-    /* Rundes Filter-Icon Button */
-    .filter-toggle-btn {
-      width: 46px;
-      height: 46px;
+    /* Round Icon Buttons (Filter & Settings) */
+    .icon-btn {
+      width: calc(46px * var(--pad-scale));
+      height: calc(46px * var(--pad-scale));
       border-radius: 50%;
       background: var(--glass-surface);
       border: 1px solid var(--glass-border);
-      color: var(--apple-blue);
+      color: var(--accent);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -151,41 +195,47 @@
       flex-shrink: 0;
     }
 
-    .filter-toggle-btn:active {
+    .icon-btn:hover {
+      background: var(--glass-surface-hover);
+      transform: translateY(-1px);
+    }
+
+    .icon-btn:active {
       transform: scale(0.92);
       opacity: 0.85;
     }
 
-    .filter-toggle-btn.active {
-      background: var(--apple-blue);
-      border-color: var(--apple-blue);
-      box-shadow: 0 4px 18px var(--apple-blue-glow);
+    .icon-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-text);
+      box-shadow: 0 4px 18px var(--accent-glow);
     }
 
-    .filter-toggle-btn.active svg {
-      fill: #ffffff;
+    .icon-btn.active svg {
+      fill: var(--accent-text);
     }
 
-    .filter-icon {
-      width: 18px;
-      height: 18px;
-      fill: var(--apple-blue);
+    .icon-btn svg {
+      width: 19px;
+      height: 19px;
+      fill: var(--text-primary);
       transition: fill 0.2s ease;
     }
 
-    /* Autocomplete Panel */
+    /* Autocomplete List Dropdown */
     .autocomplete-list {
       position: absolute;
-      top: 52px;
+      top: calc(52px * var(--pad-scale));
       left: 0;
       right: 0;
-      background: rgba(18, 22, 30, 0.94);
+      background: var(--glass-surface);
       backdrop-filter: blur(30px) saturate(200%);
       -webkit-backdrop-filter: blur(30px) saturate(200%);
       border: 1px solid var(--glass-border-light);
       border-radius: var(--radius-inner);
       box-shadow: var(--glass-shadow);
-      max-height: 240px;
+      max-height: 250px;
       overflow-y: auto;
       z-index: 105;
       display: none;
@@ -193,9 +243,9 @@
 
     .autocomplete-item {
       padding: 12px 18px;
-      font-size: 14px;
+      font-size: calc(0.9rem * var(--pad-scale));
       cursor: pointer;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid var(--glass-border);
       color: var(--text-primary);
       transition: background 0.15s ease;
     }
@@ -205,12 +255,12 @@
     }
 
     .autocomplete-item:hover, .autocomplete-item:active {
-      background: rgba(10, 132, 255, 0.2);
-      color: #ffffff;
+      background: var(--glass-surface-hover);
+      color: var(--accent);
     }
 
-    /* Cascading Filter Drawer */
-    .filter-drawer {
+    /* Filter & Settings Panels */
+    .drawer-panel {
       max-height: 0;
       overflow: hidden;
       opacity: 0;
@@ -219,149 +269,255 @@
       margin-top: 0;
     }
 
-    .filter-drawer.open {
-      max-height: 400px;
+    .drawer-panel.open {
+      max-height: 500px;
       opacity: 1;
       transform: translateY(0);
       margin-top: 14px;
     }
 
-    .filter-grid {
+    .glass-card-panel {
       background: var(--glass-surface);
-      backdrop-filter: blur(28px);
-      -webkit-backdrop-filter: blur(28px);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
       border: 1px solid var(--glass-border);
       border-radius: var(--radius-card);
-      padding: 16px;
+      padding: calc(18px * var(--pad-scale));
       box-shadow: var(--glass-shadow);
+    }
+
+    .filter-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 14px;
     }
 
     .filter-group {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 6px;
     }
 
     .filter-group label {
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
       color: var(--text-muted);
     }
 
     .filter-control {
-      height: 40px;
+      height: calc(42px * var(--pad-scale));
       padding: 0 12px;
-      background: rgba(0, 0, 0, 0.45);
+      background: var(--input-bg);
       border: 1px solid var(--glass-border);
       border-radius: var(--radius-inner);
       color: var(--text-primary);
-      font-size: 13px;
+      font-size: calc(0.88rem * var(--pad-scale));
       outline: none;
-      transition: border-color 0.2s ease, background 0.2s ease;
-    }
-
-    .filter-control:focus {
-      border-color: var(--apple-blue);
-      background: rgba(0, 0, 0, 0.6);
+      transition: border-color 0.2s ease;
     }
 
     .filter-control option {
-      background: #12161f;
-      color: #ffffff;
+      background: var(--bg-body);
+      color: var(--text-primary);
+    }
+
+    .filter-control:focus {
+      border-color: var(--accent);
     }
 
     .reset-filters-btn {
       grid-column: 1 / -1;
-      height: 38px;
-      background: rgba(255, 255, 255, 0.08);
+      height: calc(40px * var(--pad-scale));
+      background: var(--glass-surface-hover);
       border: 1px solid var(--glass-border);
       border-radius: var(--radius-pill);
-      color: var(--text-muted);
-      font-size: 13px;
+      color: var(--text-primary);
+      font-size: calc(0.85rem * var(--pad-scale));
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
     }
 
-    .reset-filters-btn:active {
-      transform: scale(0.97);
-      background: rgba(255, 255, 255, 0.15);
-      color: var(--text-primary);
+    .reset-filters-btn:hover {
+      background: var(--glass-border-light);
     }
 
-    /* Match List & Cards */
-    .match-list {
+    /* Settings Options */
+    .settings-section {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 18px;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .settings-label {
+      font-size: calc(0.95rem * var(--pad-scale));
+      font-weight: 600;
+    }
+
+    .settings-subtext {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Segmented Controls */
+    .segmented-control {
+      display: inline-flex;
+      background: var(--input-bg);
+      border: 1px solid var(--glass-border);
+      padding: 3px;
+      border-radius: var(--radius-pill);
+      gap: 4px;
+    }
+
+    .segment-btn {
+      border: none;
+      background: transparent;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      color: var(--text-muted);
+      font-size: calc(0.82rem * var(--pad-scale));
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .segment-btn.active {
+      background: var(--accent);
+      color: var(--accent-text);
+      box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+    /* Color Swatches */
+    .color-swatches {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .swatch:hover {
+      transform: scale(1.15);
+    }
+
+    .swatch.active {
+      border-color: var(--text-primary);
+      transform: scale(1.15);
+      box-shadow: 0 0 0 2px var(--bg-body);
+    }
+
+    .swatch-contrast { background: linear-gradient(135deg, #ffffff 50%, #000000 50%); border: 1px solid var(--glass-border-light); }
+    .swatch-blue { background: #0a84ff; }
+    .swatch-emerald { background: #30d158; }
+    .swatch-orange { background: #ff9f0a; }
+    .swatch-purple { background: #bf5af2; }
+
+    /* 3. Match List & Grid Optimization for Desktop */
+    .match-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    @media (min-width: 768px) {
+      .match-list {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .filter-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media (min-width: 1100px) {
+      .match-list {
+        grid-template-columns: repeat(3, 1fr);
+      }
     }
 
     .match-card {
       background: var(--glass-surface);
-      backdrop-filter: blur(28px) saturate(180%);
-      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      backdrop-filter: blur(25px) saturate(180%);
+      -webkit-backdrop-filter: blur(25px) saturate(180%);
       border: 1px solid var(--glass-border);
       border-radius: var(--radius-card);
-      padding: 16px 18px;
+      padding: calc(18px * var(--pad-scale));
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      justify-content: space-between;
+      gap: 12px;
       box-shadow: var(--glass-shadow);
       animation: glassFadeIn 0.35s var(--ease-ios) forwards;
-      transition: transform 0.22s var(--ease-ios), background 0.2s ease, opacity 0.22s ease;
+      transition: transform 0.22s var(--ease-ios), background 0.2s ease, opacity 0.22s ease, border-color 0.2s ease;
+    }
+
+    .match-card:hover {
+      transform: translateY(-2px);
+      background: var(--glass-surface-hover);
+      border-color: var(--glass-border-light);
     }
 
     .match-card:active {
       transform: scale(0.985);
-      background: var(--glass-surface-hover);
     }
 
-    /* Dezentes Ausgrauen vergangener Spiele */
     .match-card.past-match {
-      opacity: 0.38;
-      filter: grayscale(25%);
+      opacity: var(--past-opacity);
+      filter: grayscale(20%);
     }
 
     .match-card.past-match:hover {
-      opacity: 0.8;
+      opacity: 0.85;
       filter: grayscale(0%);
     }
 
     .match-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
+      align-items: flex-start;
+      font-size: calc(0.8rem * var(--pad-scale));
       gap: 10px;
     }
 
     .match-league-badge {
-      color: var(--apple-blue);
-      font-weight: 600;
-      background: rgba(10, 132, 255, 0.14);
-      border: 1px solid rgba(10, 132, 255, 0.25);
+      color: var(--accent);
+      font-weight: 700;
+      background: var(--badge-bg);
+      border: 1px solid var(--badge-border);
       padding: 4px 10px;
       border-radius: var(--radius-pill);
-      font-size: 11px;
+      font-size: calc(0.75rem * var(--pad-scale));
       letter-spacing: -0.01em;
     }
 
     .match-date {
       color: var(--text-muted);
       font-weight: 500;
-      font-size: 12px;
+      font-size: calc(0.8rem * var(--pad-scale));
+      white-space: nowrap;
     }
 
     .match-teams {
-      font-size: 16.5px;
-      font-weight: 600;
+      font-size: calc(1.05rem * var(--pad-scale));
+      font-weight: 700;
       color: var(--text-primary);
-      line-height: 1.4;
+      line-height: 1.35;
       letter-spacing: -0.015em;
     }
 
@@ -369,15 +525,15 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 2px;
+      margin-top: 4px;
       padding-top: 10px;
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      border-top: 1px solid var(--glass-border);
       gap: 10px;
     }
 
     .match-id {
       font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 11px;
+      font-size: calc(0.72rem * var(--pad-scale));
       color: var(--text-muted);
       overflow: hidden;
       text-overflow: ellipsis;
@@ -392,10 +548,10 @@
 
     .action-btn {
       border: none;
-      height: 34px;
-      padding: 0 15px;
+      height: calc(36px * var(--pad-scale));
+      padding: 0 16px;
       font-weight: 600;
-      font-size: 12px;
+      font-size: calc(0.82rem * var(--pad-scale));
       border-radius: var(--radius-pill);
       cursor: pointer;
       transition: all 0.2s var(--ease-ios);
@@ -405,32 +561,37 @@
       justify-content: center;
     }
 
+    .action-btn:hover {
+      transform: translateY(-1px);
+    }
+
     .action-btn:active {
       transform: scale(0.93);
     }
 
     .copy-btn {
-      background: var(--apple-blue);
-      color: #ffffff;
-      box-shadow: 0 4px 14px var(--apple-blue-glow);
+      background: var(--accent);
+      color: var(--accent-text);
+      box-shadow: 0 4px 14px var(--accent-glow);
     }
 
     .copy-btn.copied {
-      background: var(--apple-green);
-      color: #ffffff;
+      background: #30d158;
+      color: #000000;
       box-shadow: 0 4px 14px rgba(48, 209, 88, 0.35);
     }
 
     .open-btn {
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--glass-surface-hover);
       color: var(--text-primary);
       border: 1px solid var(--glass-border);
     }
 
     .status-box {
+      grid-column: 1 / -1;
       text-align: center;
       color: var(--text-muted);
-      padding: 44px 20px;
+      padding: 48px 20px;
       font-size: 15px;
       background: var(--glass-surface);
       backdrop-filter: blur(25px);
@@ -450,25 +611,19 @@
         transform: translateY(0);
       }
     }
-
-    @media (max-width: 480px) {
-      body { padding-left: 10px; padding-right: 10px; }
-      .search-box { font-size: 14.5px; }
-      .match-teams { font-size: 15.5px; }
-      .action-btn { padding: 0 12px; font-size: 11.5px; }
-      .filter-grid { grid-template-columns: 1fr 1fr; }
-    }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <div class="sticky-header">
-      <div class="header-top">
-        <h1>SAMS Match Finder</h1>
-        <p class="subtitle">Begegnungen suchen & OBS-Overlay Link erstellen</p>
-      </div>
+    <!-- 1. Scrollable Header (Will scroll out of view naturally) -->
+    <header class="scrollable-header">
+      <h1>SAMS Match Finder</h1>
+      <p class="subtitle">Begegnungen suchen & OBS-Overlay Link erstellen</p>
+    </header>
 
+    <!-- 2. Sticky Bar (Pins only the search controls to top) -->
+    <div class="sticky-bar-wrapper">
       <div class="search-row">
         <div class="search-wrapper">
           <svg class="search-icon" viewBox="0 0 24 24">
@@ -478,49 +633,105 @@
           <div id="autocomplete-list" class="autocomplete-list"></div>
         </div>
 
-        <button id="filter-toggle" class="filter-toggle-btn" aria-label="Filter umschalten">
-          <svg class="filter-icon" viewBox="0 0 24 24">
+        <!-- Filter Toggle Button -->
+        <button id="filter-toggle" class="icon-btn" aria-label="Filter umschalten" title="Filter öffnen">
+          <svg viewBox="0 0 24 24">
             <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
+          </svg>
+        </button>
+
+        <!-- Settings Toggle Button -->
+        <button id="settings-toggle" class="icon-btn" aria-label="Einstellungen umschalten" title="Einstellungen">
+          <svg viewBox="0 0 24 24">
+            <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
           </svg>
         </button>
       </div>
 
-      <div id="filter-drawer" class="filter-drawer">
-        <div class="filter-grid">
-          <div class="filter-group">
-            <label for="filter-gender">Geschlecht</label>
-            <select id="filter-gender" class="filter-control">
-              <option value="">Alle Geschlechter</option>
-              <option value="Herren">Herren</option>
-              <option value="Damen">Damen</option>
-              <option value="Mixed">Mixed</option>
-            </select>
-          </div>
+      <!-- Filter Panel Drawer -->
+      <div id="filter-drawer" class="drawer-panel">
+        <div class="glass-card-panel">
+          <div class="filter-grid">
+            <div class="filter-group">
+              <label for="filter-gender">Geschlecht</label>
+              <select id="filter-gender" class="filter-control">
+                <option value="">Alle Geschlechter</option>
+                <option value="Herren">Herren</option>
+                <option value="Damen">Damen</option>
+                <option value="Mixed">Mixed</option>
+              </select>
+            </div>
 
-          <div class="filter-group">
-            <label for="filter-league">Liga</label>
-            <select id="filter-league" class="filter-control">
-              <option value="">Alle Ligen</option>
-            </select>
-          </div>
+            <div class="filter-group">
+              <label for="filter-league">Liga</label>
+              <select id="filter-league" class="filter-control">
+                <option value="">Alle Ligen</option>
+              </select>
+            </div>
 
-          <div class="filter-group">
-            <label for="filter-team">Mannschaft</label>
-            <select id="filter-team" class="filter-control">
-              <option value="">Alle Teams</option>
-            </select>
-          </div>
+            <div class="filter-group">
+              <label for="filter-team">Mannschaft</label>
+              <select id="filter-team" class="filter-control">
+                <option value="">Alle Mannschaften</option>
+              </select>
+            </div>
 
-          <div class="filter-group">
-            <label for="filter-date">Datum</label>
-            <input type="date" id="filter-date" class="filter-control">
-          </div>
+            <div class="filter-group">
+              <label for="filter-date">Datum</label>
+              <input type="date" id="filter-date" class="filter-control">
+            </div>
 
-          <button id="reset-filters" class="reset-filters-btn">Filter zurücksetzen</button>
+            <button id="reset-filters" class="reset-filters-btn">Filter zurücksetzen</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Panel Drawer -->
+      <div id="settings-drawer" class="drawer-panel">
+        <div class="glass-card-panel">
+          <div class="settings-section">
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">Erscheinungsbild</div>
+                <div class="settings-subtext">Wähle zwischen Dunkel- und Hellmodus</div>
+              </div>
+              <div class="segmented-control">
+                <button class="segment-btn active" data-theme-val="dark">Dunkel</button>
+                <button class="segment-btn" data-theme-val="light">Hell</button>
+              </div>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">Akzentfarbe</div>
+                <div class="settings-subtext">Farbe für Buttons & Akzente</div>
+              </div>
+              <div class="color-swatches">
+                <div class="swatch swatch-contrast active" data-accent-val="contrast" title="Kontrast (Modus-Farbe)"></div>
+                <div class="swatch swatch-blue" data-accent-val="blue" title="Apple Blue"></div>
+                <div class="swatch swatch-emerald" data-accent-val="emerald" title="Smaragd"></div>
+                <div class="swatch swatch-orange" data-accent-val="orange" title="Sonnenorange"></div>
+                <div class="swatch swatch-purple" data-accent-val="purple" title="Violett"></div>
+              </div>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">UI-Skalierung</div>
+                <div class="settings-subtext">Text- und Elementgröße anpassen</div>
+              </div>
+              <div class="segmented-control">
+                <button class="segment-btn" data-scale-val="compact">Klein</button>
+                <button class="segment-btn active" data-scale-val="normal">Normal</button>
+                <button class="segment-btn" data-scale-val="large">Groß</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
+    <!-- 3. Match Grid List -->
     <div id="status" class="status-box">Lade aktuelle Spieldaten...</div>
     <div id="match-list" class="match-list"></div>
   </div>
@@ -530,18 +741,55 @@
     const SCOREBOARD_BASE_URL = "https://kitgaia.github.io/VBTicker/scoreboardV1.html";
 
     let allMatches = [];
-    let uniqueTeamsSet = new Set();
     let leagueLookupMap = new Map();
 
     document.addEventListener('DOMContentLoaded', () => {
+      initSettings();
       initEventListeners();
       loadMatches();
     });
 
+    /* --- Preferences & Settings --- */
+    function initSettings() {
+      const savedTheme = localStorage.getItem('sams_theme') || 'dark';
+      const savedAccent = localStorage.getItem('sams_accent') || 'contrast';
+      const savedScale = localStorage.getItem('sams_scale') || 'normal';
+
+      setTheme(savedTheme);
+      setAccent(savedAccent);
+      setScale(savedScale);
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('sams_theme', theme);
+      document.querySelectorAll('[data-theme-val]').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-theme-val') === theme);
+      });
+    }
+
+    function setAccent(accent) {
+      document.documentElement.setAttribute('data-accent', accent);
+      localStorage.setItem('sams_accent', accent);
+      document.querySelectorAll('[data-accent-val]').forEach(swatch => {
+        swatch.classList.toggle('active', swatch.getAttribute('data-accent-val') === accent);
+      });
+    }
+
+    function setScale(scale) {
+      document.documentElement.setAttribute('data-scale', scale);
+      localStorage.setItem('sams_scale', scale);
+      document.querySelectorAll('[data-scale-val]').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-scale-val') === scale);
+      });
+    }
+
     function initEventListeners() {
       const searchInput = document.getElementById('search-input');
       const filterToggle = document.getElementById('filter-toggle');
+      const settingsToggle = document.getElementById('settings-toggle');
       const filterDrawer = document.getElementById('filter-drawer');
+      const settingsDrawer = document.getElementById('settings-drawer');
 
       searchInput.addEventListener('input', (e) => {
         handleAutocomplete(e.target.value);
@@ -563,16 +811,42 @@
       filterToggle.addEventListener('click', () => {
         const isOpen = filterDrawer.classList.toggle('open');
         filterToggle.classList.toggle('active', isOpen);
+        if (isOpen) {
+          settingsDrawer.classList.remove('open');
+          settingsToggle.classList.remove('active');
+        }
       });
 
-      // Kaskadierende Reaktionen
+      settingsToggle.addEventListener('click', () => {
+        const isOpen = settingsDrawer.classList.toggle('open');
+        settingsToggle.classList.toggle('active', isOpen);
+        if (isOpen) {
+          filterDrawer.classList.remove('open');
+          filterToggle.classList.remove('active');
+        }
+      });
+
+      // Settings Listeners
+      document.querySelectorAll('[data-theme-val]').forEach(btn => {
+        btn.addEventListener('click', () => setTheme(btn.getAttribute('data-theme-val')));
+      });
+
+      document.querySelectorAll('[data-accent-val]').forEach(swatch => {
+        swatch.addEventListener('click', () => setAccent(swatch.getAttribute('data-accent-val')));
+      });
+
+      document.querySelectorAll('[data-scale-val]').forEach(btn => {
+        btn.addEventListener('click', () => setScale(btn.getAttribute('data-scale-val')));
+      });
+
+      // Cascading Filter Reactions
       document.getElementById('filter-gender').addEventListener('change', () => {
-        updateFilterDropdowns('gender');
+        updateCascadingDropdowns();
         applyFilters(false);
       });
 
       document.getElementById('filter-league').addEventListener('change', () => {
-        updateFilterDropdowns('league');
+        updateTeamDropdown();
         applyFilters(false);
       });
 
@@ -581,7 +855,7 @@
       document.getElementById('reset-filters').addEventListener('click', resetFilters);
     }
 
-    // Exakter Wortgrenzen-Match für Teams (z. B. "TuS Meinerzhagen II" trifft NICHT "TuS Meinerzhagen III")
+    /* Strikte Wortgrenzen-Suche (z.B. "TuS Meinerzhagen II" vs "III") */
     function matchesExactQuery(text, query) {
       if (!query) return true;
       const words = query.trim().split(/\s+/).filter(Boolean);
@@ -589,7 +863,6 @@
       return words.every(word => {
         const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const isRomanOrNum = /^(i|ii|iii|iv|v|vi|vii|viii|ix|x|[0-9]+)$/i.test(word);
-
         const pattern = isRomanOrNum ? `\\b${escaped}\\b` : `\\b${escaped}`;
         return new RegExp(pattern, 'i').test(text);
       });
@@ -606,20 +879,14 @@
         const objGender = obj.gender || obj.leagueGender || obj.competitionGender;
 
         if (objId && objName && typeof objName === 'string') {
-          leagueLookupMap.set(String(objId), {
-            name: objName,
-            gender: objGender || ''
-          });
+          leagueLookupMap.set(String(objId), { name: objName, gender: objGender || '' });
         }
 
         if (Array.isArray(obj.matches) && objName) {
           obj.matches.forEach(m => {
             const mId = typeof m === 'object' ? (m.id || m.uuid || m.matchId) : m;
             if (mId) {
-              leagueLookupMap.set(`match_${mId}`, {
-                name: objName,
-                gender: objGender || ''
-              });
+              leagueLookupMap.set(`match_${mId}`, { name: objName, gender: objGender || '' });
             }
           });
         }
@@ -676,7 +943,6 @@
 
         const data = await response.json();
         allMatches = [];
-        uniqueTeamsSet.clear();
 
         buildLeagueLookupMap(data);
 
@@ -720,9 +986,6 @@
                 const leagueDisplay = formattedGender ? `${rawLeague} (${formattedGender})` : rawLeague;
 
                 if (matchId && (team1 || team2)) {
-                  if (team1 && team1 !== 'Unbekannt') uniqueTeamsSet.add(team1);
-                  if (team2 && team2 !== 'Unbekannt') uniqueTeamsSet.add(team2);
-
                   allMatches.push({
                     id: matchId,
                     team1: team1 || 'Unbekannt',
@@ -742,86 +1005,13 @@
 
         allMatches.sort((a, b) => a.dateObj - b.dateObj);
 
-        updateFilterDropdowns('all');
+        updateCascadingDropdowns();
         statusEl.style.display = 'none';
         
         applyFilters(true);
 
       } catch (err) {
         statusEl.innerText = "Fehler beim Laden: " + err.message;
-      }
-    }
-
-    // Dynamische kaskadierende Befüllung der Filter-Dropdowns (Geschlecht -> Liga -> Mannschaft)
-    function updateFilterDropdowns(changedSource) {
-      const genderSelect = document.getElementById('filter-gender');
-      const leagueSelect = document.getElementById('filter-league');
-      const teamSelect = document.getElementById('filter-team');
-
-      const selectedGender = genderSelect.value;
-      const selectedLeague = leagueSelect.value;
-      const selectedTeam = teamSelect.value;
-
-      // 1. Ligen filtern (basierend auf gewähltem Geschlecht)
-      if (changedSource === 'all' || changedSource === 'gender') {
-        const availableLeaguesMap = new Map();
-
-        allMatches.forEach(m => {
-          if (!selectedGender || m.gender === selectedGender) {
-            availableLeaguesMap.set(m.leagueRaw, m.leagueDisplay);
-          }
-        });
-
-        leagueSelect.innerHTML = '<option value="">Alle Ligen</option>';
-        Array.from(availableLeaguesMap.entries())
-          .sort((a, b) => a[1].localeCompare(b[1]))
-          .forEach(([raw, display]) => {
-            const opt = document.createElement('option');
-            opt.value = raw;
-            opt.textContent = display;
-            selectOptionIfMatches(opt, raw, selectedLeague);
-            leagueSelect.appendChild(opt);
-          });
-
-        // Wenn die zuvor gewählte Liga beim Geschlechtswechsel nicht mehr existiert, zurücksetzen
-        if (!availableLeaguesMap.has(selectedLeague)) {
-          leagueSelect.value = "";
-        }
-      }
-
-      // 2. Mannschaften filtern (basierend auf gewähltem Geschlecht UND gewählter Liga)
-      const activeLeague = leagueSelect.value;
-      const availableTeamsSet = new Set();
-
-      allMatches.forEach(m => {
-        const matchesGender = !selectedGender || m.gender === selectedGender;
-        const matchesLeague = !activeLeague || m.leagueRaw === activeLeague;
-
-        if (matchesGender && matchesLeague) {
-          if (m.team1 && m.team1 !== 'Unbekannt') availableTeamsSet.add(m.team1);
-          if (m.team2 && m.team2 !== 'Unbekannt') availableTeamsSet.add(m.team2);
-        }
-      });
-
-      teamSelect.innerHTML = '<option value="">Alle Teams</option>';
-      Array.from(availableTeamsSet)
-        .sort((a, b) => a.localeCompare(b))
-        .forEach(team => {
-          const opt = document.createElement('option');
-          opt.value = team;
-          opt.textContent = team;
-          selectOptionIfMatches(opt, team, selectedTeam);
-          teamSelect.appendChild(opt);
-        });
-
-      if (!availableTeamsSet.has(selectedTeam)) {
-        teamSelect.value = "";
-      }
-    }
-
-    function selectOptionIfMatches(optElement, value, selectedVal) {
-      if (selectedVal && value === selectedVal) {
-        optElement.selected = true;
       }
     }
 
@@ -843,6 +1033,73 @@
       return genderStr;
     }
 
+    function updateCascadingDropdowns() {
+      const selectedGender = document.getElementById('filter-gender').value;
+      const leagueSelect = document.getElementById('filter-league');
+      const previousSelectedLeague = leagueSelect.value;
+
+      leagueSelect.innerHTML = '<option value="">Alle Ligen</option>';
+
+      const validLeagues = new Map();
+      allMatches.forEach(m => {
+        if (!selectedGender || m.gender === selectedGender) {
+          validLeagues.set(m.leagueRaw, m.leagueDisplay);
+        }
+      });
+
+      Array.from(validLeagues.entries())
+        .sort((a, b) => a[1].localeCompare(b[1]))
+        .forEach(([raw, display]) => {
+          const opt = document.createElement('option');
+          opt.value = raw;
+          opt.textContent = display;
+          leagueSelect.appendChild(opt);
+        });
+
+      if (validLeagues.has(previousSelectedLeague)) {
+        leagueSelect.value = previousSelectedLeague;
+      } else {
+        leagueSelect.value = "";
+      }
+
+      updateTeamDropdown();
+    }
+
+    function updateTeamDropdown() {
+      const selectedGender = document.getElementById('filter-gender').value;
+      const selectedLeague = document.getElementById('filter-league').value;
+      const teamSelect = document.getElementById('filter-team');
+      const previousSelectedTeam = teamSelect.value;
+
+      teamSelect.innerHTML = '<option value="">Alle Mannschaften</option>';
+
+      const validTeams = new Set();
+      allMatches.forEach(m => {
+        const matchesGender = !selectedGender || m.gender === selectedGender;
+        const matchesLeague = !selectedLeague || m.leagueRaw === selectedLeague;
+
+        if (matchesGender && matchesLeague) {
+          if (m.team1 && m.team1 !== 'Unbekannt') validTeams.add(m.team1);
+          if (m.team2 && m.team2 !== 'Unbekannt') validTeams.add(m.team2);
+        }
+      });
+
+      Array.from(validTeams)
+        .sort((a, b) => a.localeCompare(b))
+        .forEach(team => {
+          const opt = document.createElement('option');
+          opt.value = team;
+          opt.textContent = team;
+          teamSelect.appendChild(opt);
+        });
+
+      if (validTeams.has(previousSelectedTeam)) {
+        teamSelect.value = previousSelectedTeam;
+      } else {
+        teamSelect.value = "";
+      }
+    }
+
     function handleAutocomplete(query) {
       const listEl = document.getElementById('autocomplete-list');
       const val = query.trim();
@@ -852,7 +1109,13 @@
         return;
       }
 
-      const matches = Array.from(uniqueTeamsSet)
+      const allTeams = new Set();
+      allMatches.forEach(m => {
+        if (m.team1) allTeams.add(m.team1);
+        if (m.team2) allTeams.add(m.team2);
+      });
+
+      const matches = Array.from(allTeams)
         .filter(team => matchesExactQuery(team, val))
         .slice(0, 6);
 
@@ -925,7 +1188,7 @@
       document.getElementById('filter-team').value = '';
       document.getElementById('filter-date').value = '';
       closeAutocomplete();
-      updateFilterDropdowns('all');
+      updateCascadingDropdowns();
       applyFilters(true);
     }
 
@@ -947,11 +1210,13 @@
 
         return `
           <div class="match-card ${isPast ? 'past-match' : ''}" data-time="${m.dateObj.getTime()}">
-            <div class="match-header">
-              <span class="match-league-badge">${m.leagueDisplay}</span>
-              <span class="match-date">${m.formattedDate}</span>
+            <div>
+              <div class="match-header">
+                <span class="match-league-badge">${m.leagueDisplay}</span>
+                <span class="match-date">${m.formattedDate}</span>
+              </div>
+              <div class="match-teams" style="margin-top: 10px;">${m.team1} vs. ${m.team2}</div>
             </div>
-            <div class="match-teams">${m.team1} vs. ${m.team2}</div>
             <div class="match-footer">
               <span class="match-id" title="${m.id}">ID: ${m.id}</span>
               <div class="btn-group">
