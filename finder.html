@@ -12,14 +12,11 @@
       --bg-input: #1c1c1e;
       --bg-tertiary: #2c2c2e;
       --apple-blue: #0a84ff;
-      --apple-blue-tap: #0066cc;
       --apple-green: #30d158;
       --apple-gray: #8e8e93;
       --apple-gray-light: #aeaeb2;
       --border-subtle: rgba(255, 255, 255, 0.1);
-      --border-focus: rgba(10, 132, 255, 0.5);
       --text-primary: #ffffff;
-      --text-secondary: #ebdbe0;
       --text-muted: #8e8e93;
       --radius-lg: 16px;
       --radius-md: 12px;
@@ -490,8 +487,8 @@
 
     let allMatches = [];
     let uniqueTeamsSet = new Set();
-    let uniqueLeaguesMap = new Map(); // Raw Name -> Display Name
-    let leagueLookupMap = new Map();  // ID / Key -> { name, gender }
+    let uniqueLeaguesMap = new Map();
+    let leagueLookupMap = new Map();
 
     document.addEventListener('DOMContentLoaded', () => {
       initEventListeners();
@@ -532,21 +529,34 @@
       document.getElementById('reset-filters').addEventListener('click', resetFilters);
     }
 
-    // Erstellt einen tiefen Index aller Ligen-Objekte aus den SAMS-Rohdaten
+    // Erstellt einen tiefen Index aller Ligen- und Serien-Objekte im gesamten JSON-Baum
     function buildLeagueLookupMap(data) {
       leagueLookupMap.clear();
 
       function walk(obj, depth = 0) {
-        if (!obj || typeof obj !== 'object' || depth > 6) return;
+        if (!obj || typeof obj !== 'object' || depth > 10) return;
 
-        const objId = obj.id || obj.uuid || obj.leagueId || obj.seriesId;
-        const objName = obj.name || obj.leagueName || obj.competitionName || obj.caption || obj.groupName;
-        const objGender = obj.gender || obj.leagueGender;
+        const objId = obj.id || obj.uuid || obj.leagueId || obj.seriesId || obj.matchSeriesId;
+        const objName = obj.name || obj.leagueName || obj.competitionName || obj.caption || obj.groupName || obj.title || obj.seriesName;
+        const objGender = obj.gender || obj.leagueGender || obj.competitionGender;
 
         if (objId && objName && typeof objName === 'string') {
-          leagueLookupMap.set(objId, {
+          leagueLookupMap.set(String(objId), {
             name: objName,
             gender: objGender || ''
+          });
+        }
+
+        // Falls ein Knoten eine Liste von Match-IDs enthält
+        if (Array.isArray(obj.matches) && objName) {
+          obj.matches.forEach(m => {
+            const mId = typeof m === 'object' ? (m.id || m.uuid || m.matchId) : m;
+            if (mId) {
+              leagueLookupMap.set(`match_${mId}`, {
+                name: objName,
+                gender: objGender || ''
+              });
+            }
           });
         }
 
@@ -560,6 +570,43 @@
       walk(data);
     }
 
+    // Rekursive Tiefensuche für unvollständige Matches
+    function deepSearchLeagueAndGender(rootData, matchId, matchObj) {
+      let foundName = null;
+      let foundGender = null;
+
+      function search(obj, depth = 0) {
+        if (!obj || typeof obj !== 'object' || depth > 10 || (foundName && foundGender)) return;
+
+        // Prüfen, ob dieser Knoten das Match direkt beinhaltet
+        const hasMatch = Array.isArray(obj.matches) && obj.matches.some(m => {
+          const id = typeof m === 'object' ? (m.id || m.uuid || m.matchId) : m;
+          return id === matchId;
+        });
+
+        // Oder ob IDs übereinstimmen
+        const targetIds = [matchObj.leagueId, matchObj.seriesId, matchObj.matchSeriesId, matchObj.groupId].filter(Boolean);
+        const isTargetId = targetIds.some(id => id === obj.id || id === obj.uuid);
+
+        if (hasMatch || isTargetId) {
+          const name = obj.name || obj.leagueName || obj.competitionName || obj.caption || obj.groupName || obj.title;
+          const gender = obj.gender || obj.leagueGender || obj.competitionGender;
+          
+          if (name && !foundName) foundName = name;
+          if (gender && !foundGender) foundGender = gender;
+        }
+
+        for (const key of Object.keys(obj)) {
+          if (typeof obj[key] === 'object' && obj[key] !== null) {
+            search(obj[key], depth + 1);
+          }
+        }
+      }
+
+      search(rootData);
+      return { name: foundName, gender: foundGender };
+    }
+
     async function loadMatches() {
       const statusEl = document.getElementById('status');
       try {
@@ -571,10 +618,10 @@
         uniqueTeamsSet.clear();
         uniqueLeaguesMap.clear();
 
-        // 1. Tiefen-Lookup für Ligen aufbauen
+        // 1. Rekursiven Index aufbauen
         buildLeagueLookupMap(data);
 
-        // 2. Spiele verarbeiten
+        // 2. Matches verarbeiten
         if (Array.isArray(data.matchDays)) {
           data.matchDays.forEach(day => {
             if (Array.isArray(day.matches)) {
@@ -584,24 +631,36 @@
                 const matchId = m.id || m.matchId || m.uuid || m.matchUuid || '';
                 const rawDate = m.date || m.startDate || day.date || null;
 
-                // Dynamische Liga-Ermittlung
+                // Dynamische & rekursive Liga- und Geschlecht-Ermittlung
                 let rawLeague = m.leagueName || m.league?.name || m.competitionName || m.groupName || m.seriesName;
                 let rawGender = m.gender || m.leagueGender || m.league?.gender;
 
-                if (!rawLeague && m.leagueId && leagueLookupMap.has(m.leagueId)) {
-                  rawLeague = leagueLookupMap.get(m.leagueId).name;
-                  if (!rawGender) rawGender = leagueLookupMap.get(m.leagueId).gender;
-                }
-                if (!rawLeague && m.seriesId && leagueLookupMap.has(m.seriesId)) {
-                  rawLeague = leagueLookupMap.get(m.seriesId).name;
-                  if (!rawGender) rawGender = leagueLookupMap.get(m.seriesId).gender;
+                // 2a. Direkte Match-ID Zuordnung
+                if (!rawLeague && leagueLookupMap.has(`match_${matchId}`)) {
+                  const info = leagueLookupMap.get(`match_${matchId}`);
+                  rawLeague = info.name;
+                  if (!rawGender) rawGender = info.gender;
                 }
 
-                if (!rawLeague) rawLeague = "WVV Liga";
-
-                if (!rawGender) {
-                  rawGender = parseGenderFromLeague(rawLeague);
+                // 2b. ID-basierte Zuordnung
+                const possibleIds = [m.leagueId, m.seriesId, m.matchSeriesId, m.groupId, m.competitionId].filter(Boolean);
+                for (const id of possibleIds) {
+                  if ((!rawLeague || !rawGender) && leagueLookupMap.has(String(id))) {
+                    const info = leagueLookupMap.get(String(id));
+                    if (!rawLeague) rawLeague = info.name;
+                    if (!rawGender) rawGender = info.gender;
+                  }
                 }
+
+                // 2c. Vollständiger rekursiver Suchlauf im Datenbaum
+                if (!rawLeague || !rawGender) {
+                  const deepRes = deepSearchLeagueAndGender(data, matchId, m);
+                  if (!rawLeague) rawLeague = deepRes.name;
+                  if (!rawGender) rawGender = deepRes.gender;
+                }
+
+                if (!rawLeague) rawLeague = "Unbekannte Liga";
+                if (!rawGender) rawGender = parseGenderFromLeague(rawLeague);
 
                 const formattedGender = formatGender(rawGender);
                 const leagueDisplay = formattedGender ? `${rawLeague} (${formattedGender})` : rawLeague;
