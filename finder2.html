@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SAMS Match Finder</title>
+  <title>SAMS Match Finder - Gefiltert</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -26,20 +26,45 @@
       margin-bottom: 16px;
       font-size: 13px;
     }
-    .search-box {
+    
+    /* Filter-Bereich */
+    .filter-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    @media(min-width: 600px) {
+      .filter-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .filter-full {
+        grid-column: span 2;
+      }
+    }
+
+    .filter-control {
       width: 100%;
-      padding: 12px;
+      padding: 10px 12px;
       background: #1e293b;
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 6px;
       color: white;
-      font-size: 16px;
-      margin-bottom: 20px;
+      font-size: 14px;
       outline: none;
     }
-    .search-box:focus {
+    .filter-control:focus {
       border-color: #00f2fe;
     }
+    label {
+      display: block;
+      font-size: 11px;
+      color: #94a3b8;
+      margin-bottom: 4text-transform;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
     .match-list {
       display: flex;
       flex-direction: column;
@@ -132,9 +157,42 @@
 
   <div class="container">
     <h1>SAMS Match Finder</h1>
-    <p>Finde alle Liga-Spiele und kopiere dir mit einem Klick den OBS-Link oder öffne ihn direkt.</p>
+    <p>Nutze die Filteroptionen, um gezielt nach Spielen, Ligen oder Zeiträumen zu suchen.</p>
     
-    <input type="text" id="search-input" class="search-box" placeholder="Nach Team filtern (z.B. Meinerzhagen)..." value="Meinerzhagen">
+    <!-- Filter Sektion -->
+    <div class="filter-grid">
+      <div class="filter-full">
+        <label>Team-Suche</label>
+        <input type="text" id="search-input" class="filter-control" placeholder="z.B. Meinerzhagen..." value="Meinerzhagen">
+      </div>
+
+      <div>
+        <label>Geschlecht</label>
+        <select id="filter-gender" class="filter-control">
+          <option value="all">Alle</option>
+          <option value="damen">Damen / Frauen</option>
+          <option value="herren">Herren / Männer</option>
+          <option value="mixed">Mixed</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Liga</label>
+        <select id="filter-league" class="filter-control">
+          <option value="all">Alle Ligen</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Datum von</label>
+        <input type="date" id="date-from" class="filter-control">
+      </div>
+
+      <div>
+        <label>Datum bis</label>
+        <input type="date" id="date-to" class="filter-control">
+      </div>
+    </div>
 
     <div id="status" class="loading">Lade Spieldaten vom Worker...</div>
     <div id="match-list" class="match-list"></div>
@@ -146,7 +204,13 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       loadMatches();
+      
+      // Event Listener für alle Filter-Änderungen
       document.getElementById('search-input').addEventListener('input', renderMatches);
+      document.getElementById('filter-gender').addEventListener('change', renderMatches);
+      document.getElementById('filter-league').addEventListener('change', renderMatches);
+      document.getElementById('date-from').addEventListener('change', renderMatches);
+      document.getElementById('date-to').addEventListener('change', renderMatches);
     });
 
     async function loadMatches() {
@@ -157,6 +221,7 @@
 
         const data = await response.json();
         allMatches = [];
+        const leaguesSet = new Set();
 
         if (Array.isArray(data.matchDays)) {
           data.matchDays.forEach(day => {
@@ -166,15 +231,17 @@
                 const team2 = m.team2?.name || m.team2Name || m.teamDescription2 || '';
                 const matchId = m.id || m.matchId || m.uuid || m.matchUuid || '';
                 const rawDate = m.date || m.startDate || day.date || null;
+                const league = m.leagueName || m.competitionName || 'WVV Liga';
 
                 if (matchId && (team1 || team2)) {
+                  leaguesSet.add(league);
                   allMatches.push({
                     id: matchId,
                     team1: team1 || 'Unbekannt',
                     team2: team2 || 'Unbekannt',
                     dateObj: rawDate ? new Date(rawDate) : new Date(0),
                     formattedDate: formatDate(rawDate),
-                    league: m.leagueName || m.competitionName || 'WVV Liga'
+                    league: league
                   });
                 }
               });
@@ -182,7 +249,16 @@
           });
         }
 
-        // Nach Datum sortieren (ältester/nächster Termin zuerst)
+        // Liga-Dropdown dynamisch befüllen
+        const leagueSelect = document.getElementById('filter-league');
+        Array.from(leaguesSet).sort().forEach(l => {
+          const opt = document.createElement('option');
+          opt.value = l;
+          opt.textContent = l;
+          leagueSelect.appendChild(opt);
+        });
+
+        // Nach Datum sortieren
         allMatches.sort((a, b) => a.dateObj - b.dateObj);
 
         statusEl.style.display = 'none';
@@ -193,7 +269,6 @@
       }
     }
 
-    // Wandelt ISO-Daten / Timestamps sauber in deutsches Format um
     function formatDate(dateInput) {
       if (!dateInput) return 'Datum unbekannt';
       try {
@@ -214,16 +289,52 @@
 
     function renderMatches() {
       const query = document.getElementById('search-input').value.toLowerCase();
+      const genderFilter = document.getElementById('filter-gender').value;
+      const leagueFilter = document.getElementById('filter-league').value;
+      const dateFromVal = document.getElementById('date-from').value;
+      const dateToVal = document.getElementById('date-to').value;
+      
       const listEl = document.getElementById('match-list');
 
-      const filtered = allMatches.filter(m => 
-        m.team1.toLowerCase().includes(query) || 
-        m.team2.toLowerCase().includes(query) ||
-        m.league.toLowerCase().includes(query)
-      );
+      const filtered = allMatches.filter(m => {
+        // 1. Textsuche (Teams oder Liga)
+        const matchesQuery = m.team1.toLowerCase().includes(query) || 
+                             m.team2.toLowerCase().includes(query) ||
+                             m.league.toLowerCase().includes(query);
+        if (!matchesQuery) return false;
+
+        // 2. Liga Filter
+        if (leagueFilter !== 'all' && m.league !== leagueFilter) return false;
+
+        // 3. Geschlechter Filter (Erkennung über gängige Schlüsselwörter im Liginamen oder Teamnamen)
+        if (genderFilter !== 'all') {
+          const textToCheck = (m.league + " " + m.team1 + " " + m.team2).toLowerCase();
+          const isDamen = textToCheck.includes('damen') || textToCheck.includes('frauen') || textToCheck.includes('w.');
+          const isHerren = textToCheck.includes('herren') || textToCheck.includes('männer') || textToCheck.includes('m.');
+          
+          if (genderFilter === 'damen' && !isDamen) return false;
+          if (genderFilter === 'herren' && !isHerren) return false;
+          if (genderFilter === 'mixed' && !textToCheck.includes('mixed')) return false;
+        }
+
+        // 4. Datumsfilter (Von / Bis)
+        if (dateFromVal && m.dateObj.getTime() !== 0) {
+          const fromDate = new Date(dateFromVal);
+          fromDate.setHours(0, 0, 0, 0);
+          if (m.dateObj < fromDate) return false;
+        }
+
+        if (dateToVal && m.dateObj.getTime() !== 0) {
+          const toDate = new Date(dateToVal);
+          toDate.setHours(23, 59, 59, 999);
+          if (m.dateObj > toDate) return false;
+        }
+
+        return true;
+      });
 
       if (filtered.length === 0) {
-        listEl.innerHTML = '<div class="loading">Keine Spiele gefunden.</div>';
+        listEl.innerHTML = '<div class="loading">Keine Spiele für diese Filterkriterien gefunden.</div>';
         return;
       }
 
