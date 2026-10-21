@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SAMS Match Finder V2</title>
+  <style>
+    :root {
+      --bg-main: #0b0f17;
+      --bg-card: #151c2c;
+      --bg-input: #1e293b;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-focus: #38bdf8;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #0284c7;
+      --accent-hover: #0369a1;
+      --accent-light: #38bdf8;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 12px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    /* Sticky Header */
+    .sticky-header {
+      position: sticky;
+      top: 0;
+      background: rgba(11, 15, 23, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 12px 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 16px;
+    }
+
+    .header-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--text-main);
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+
+    /* Search & Filter Bar */
+    .search-row {
+      display: flex;
+      gap: 8px;
+      position: relative;
+    }
+
+    .search-wrapper {
+      position: relative;
+      flex: 1;
+    }
+
+    .search-box {
+      width: 100%;
+      height: 44px;
+      padding: 0 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      color: var(--text-main);
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .search-box:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+
+    .filter-toggle-btn {
+      height: 44px;
+      padding: 0 16px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      color: var(--text-main);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+      flex-shrink: 0;
+    }
+
+    .filter-toggle-btn:active {
+      transform: scale(0.97);
+    }
+
+    .filter-toggle-btn.active {
+      background: var(--accent);
+      border-color: var(--accent-light);
+    }
+
+    .filter-icon {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    /* Suggestions Dropdown */
+    .autocomplete-list {
+      position: absolute;
+      top: 48px;
+      left: 0;
+      right: 0;
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      max-height: 220px;
+      overflow-y: auto;
+      z-index: 105;
+      display: none;
+    }
+
+    .autocomplete-item {
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
+      transition: background 0.15s ease;
+    }
+
+    .autocomplete-item:last-child {
+      border-bottom: none;
+    }
+
+    .autocomplete-item:hover, .autocomplete-item.active {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-light);
+    }
+
+    /* Filter Drawer Panel */
+    .filter-drawer {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, margin-top 0.25s ease;
+      margin-top: 0;
+    }
+
+    .filter-drawer.open {
+      max-height: 320px;
+      opacity: 1;
+      margin-top: 10px;
+    }
+
+    .filter-grid {
+      background: #131a27;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .filter-group label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    .filter-control {
+      height: 36px;
+      padding: 0 10px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-main);
+      font-size: 13px;
+      outline: none;
+    }
+
+    .filter-control:focus {
+      border-color: var(--border-focus);
+    }
+
+    .reset-filters-btn {
+      grid-column: 1 / -1;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .reset-filters-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+    }
+
+    /* Match Cards List */
+    .match-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .match-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-left: 3px solid var(--accent-light);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      animation: fadeIn 0.3s ease forwards;
+      transition: transform 0.15s ease, border-color 0.2s ease;
+    }
+
+    .match-card:hover {
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    .match-card.past-match {
+      opacity: 0.5;
+      border-left-color: #64748b;
+    }
+
+    .match-card.past-match:hover {
+      opacity: 0.85;
+    }
+
+    .match-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--accent-light);
+      font-weight: 600;
+      gap: 8px;
+    }
+
+    .match-date {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .match-teams {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.3;
+      word-break: break-word;
+    }
+
+    .match-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 2px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      gap: 8px;
+    }
+
+    .match-id {
+      font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .action-btn {
+      border: none;
+      height: 32px;
+      padding: 0 12px;
+      font-weight: 600;
+      font-size: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.18s ease, transform 0.1s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .action-btn:active {
+      transform: scale(0.96);
+    }
+
+    .copy-btn {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    .copy-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .copy-btn.copied {
+      background: #16a34a;
+      color: #ffffff;
+    }
+
+    .open-btn {
+      background: var(--bg-input);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+
+    .open-btn:hover {
+      background: #334155;
+    }
+
+    /* Empty / Status State */
+    .status-box {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 32px 16px;
+      font-size: 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 480px) {
+      body { padding: 8px; }
+      .filter-grid { grid-template-columns: 1fr 1fr; }
+      .match-teams { font-size: 14px; }
+      .action-btn { padding: 0 10px; font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="sticky-header">
+      <div class="header-title-row">
+        <h1>SAMS Match Finder</h1>
+      </div>
+      <p class="subtitle">Finde Liga-Spiele und erstelle dir per Klick den passenden OBS-Scoreboard-Link.</p>
+
+      <div class="search-row">
+        <div class="search-wrapper">
+          <input type="text" id="search-input" class="search-box" placeholder="Verein, Mannschaft oder Liga suchen..." autocomplete="off">
+          <div id="autocomplete-list" class="autocomplete-list"></div>
+        </div>
+
+        <button id="filter-toggle" class="filter-toggle-btn" aria-label="Filter anzeigen">
+          <svg class="filter-icon" viewBox="0 0 24 24">
+            <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
+          </svg>
+          <span>Filter</span>
+        </button>
+      </div>
+
+      <div id="filter-drawer" class="filter-drawer">
+        <div class="filter-grid">
+          <div class="filter-group">
+            <label for="filter-gender">Geschlecht</label>
+            <select id="filter-gender" class="filter-control">
+              <option value="">Alle</option>
+              <option value="Herren">Herren</option>
+              <option value="Damen">Damen</option>
+              <option value="Mixed">Mixed</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-league">Liga</label>
+            <select id="filter-league" class="filter-control">
+              <option value="">Alle Ligen</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-team">Mannschaft</label>
+            <input type="text" id="filter-team" class="filter-control" placeholder="Name filtern...">
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-date">Datum</label>
+            <input type="date" id="filter-date" class="filter-control">
+          </div>
+
+          <button id="reset-filters" class="reset-filters-btn">Filter zurücksetzen</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="status" class="status-box">Lade aktuelle Spieldaten vom Server...</div>
+    <div id="match-list" class="match-list"></div>
+  </div>
+
+  <script>
+    const WORKER_URL = "https://tickerv2.nick-valbert2006.workers.dev";
+    const SCOREBOARD_BASE_URL = "https://kitgaia.github.io/VBTicker/scoreboardV1.html";
+
+    let allMatches = [];
+    let uniqueTeamsSet = new Set();
+    let uniqueLeaguesMap = new Map(); // League Name -> Formatted display
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initEventListeners();
+      loadMatches();
+    });
+
+    function initEventListeners() {
+      const searchInput = document.getElementById('search-input');
+      const filterToggle = document.getElementById('filter-toggle');
+      const filterDrawer = document.getElementById('filter-drawer');
+      
+      searchInput.addEventListener('input', (e) => {
+        handleAutocomplete(e.target.value);
+        applyFilters();
+      });
+
+      searchInput.addEventListener('focus', (e) => {
+        if (e.target.value.trim().length > 0) {
+          handleAutocomplete(e.target.value);
+        }
+      });
+
+      // Klick außerhalb schließt Autocomplete
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-wrapper')) {
+          closeAutocomplete();
+        }
+      });
+
+      filterToggle.addEventListener('click', () => {
+        const isOpen = filterDrawer.classList.toggle('open');
+        filterToggle.classList.toggle('active', isOpen);
+      });
+
+      document.getElementById('filter-gender').addEventListener('change', applyFilters);
+      document.getElementById('filter-league').addEventListener('change', applyFilters);
+      document.getElementById('filter-team').addEventListener('input', applyFilters);
+      document.getElementById('filter-date').addEventListener('change', applyFilters);
+
+      document.getElementById('reset-filters').addEventListener('click', resetFilters);
+    }
+
+    async function loadMatches() {
+      const statusEl = document.getElementById('status');
+      try {
+        const response = await fetch(`${WORKER_URL}/?assoc=wvv`);
+        if (!response.ok) throw new Error("Fehler beim Laden der Daten vom Worker.");
+
+        const data = await response.json();
+        allMatches = [];
+        uniqueTeamsSet.clear();
+        uniqueLeaguesMap.clear();
+
+        if (Array.isArray(data.matchDays)) {
+          data.matchDays.forEach(day => {
+            if (Array.isArray(day.matches)) {
+              day.matches.forEach(m => {
+                const team1 = m.team1?.name || m.team1Name || m.teamDescription1 || '';
+                const team2 = m.team2?.name || m.team2Name || m.teamDescription2 || '';
+                const matchId = m.id || m.matchId || m.uuid || m.matchUuid || '';
+                const rawDate = m.date || m.startDate || day.date || null;
+
+                // Liga & Geschlecht ermitteln
+                const rawLeague = m.leagueName || m.competitionName || m.league?.name || 'Unbekannte Liga';
+                const rawGender = m.gender || m.leagueGender || m.league?.gender || parseGenderFromLeague(rawLeague);
+                const formattedGender = formatGender(rawGender);
+
+                const leagueDisplay = formattedGender ? `${rawLeague} (${formattedGender})` : rawLeague;
+
+                if (matchId && (team1 || team2)) {
+                  if (team1) uniqueTeamsSet.add(team1);
+                  if (team2) uniqueTeamsSet.add(team2);
+                  uniqueLeaguesMap.set(rawLeague, leagueDisplay);
+
+                  allMatches.push({
+                    id: matchId,
+                    team1: team1 || 'Unbekannt',
+                    team2: team2 || 'Unbekannt',
+                    dateObj: rawDate ? new Date(rawDate) : new Date(0),
+                    formattedDate: formatDate(rawDate),
+                    rawDateString: rawDate ? new Date(rawDate).toISOString().split('T')[0] : '',
+                    leagueRaw: rawLeague,
+                    leagueDisplay: leagueDisplay,
+                    gender: formattedGender || 'Unbekannt'
+                  });
+                }
+              });
+            }
+          });
+        }
+
+        // Aufsteigend nach Datum sortieren
+        allMatches.sort((a, b) => a.dateObj - b.dateObj);
+
+        populateLeagueSelect();
+        statusEl.style.display = 'none';
+        applyFilters();
+
+        // Automatischer Sprung zum heutigen/nächsten Spiel
+        setTimeout(scrollToToday, 200);
+
+      } catch (err) {
+        statusEl.innerText = "Fehler beim Laden der Spieldaten: " + err.message;
+      }
+    }
+
+    function parseGenderFromLeague(leagueName) {
+      if (!leagueName) return '';
+      const lower = leagueName.toLowerCase();
+      if (lower.includes('männer') || lower.includes('herren') || lower.includes(' männer')) return 'Herren';
+      if (lower.includes('frauen') || lower.includes('damen') || lower.includes(' damen')) return 'Damen';
+      if (lower.includes('mixed')) return 'Mixed';
+      return '';
+    }
+
+    function formatGender(genderStr) {
+      if (!genderStr) return '';
+      const g = genderStr.toUpperCase();
+      if (g === 'MALE' || g === 'MÄNNER' || g === 'HERREN' || g === 'M') return 'Herren';
+      if (g === 'FEMALE' || g === 'FRAUEN' || g === 'DAMEN' || g === 'W') return 'Damen';
+      if (g === 'MIXED') return 'Mixed';
+      return genderStr;
+    }
+
+    function populateLeagueSelect() {
+      const select = document.getElementById('filter-league');
+      select.innerHTML = '<option value="">Alle Ligen</option>';
+
+      Array.from(uniqueLeaguesMap.entries())
+        .sort((a, b) => a[1].localeCompare(b[1]))
+        .forEach(([raw, display]) => {
+          const opt = document.createElement('option');
+          opt.value = raw;
+          opt.textContent = display;
+          select.appendChild(opt);
+        });
+    }
+
+    function handleAutocomplete(query) {
+      const listEl = document.getElementById('autocomplete-list');
+      const val = query.trim().toLowerCase();
+
+      if (val.length < 2) {
+        closeAutocomplete();
+        return;
+      }
+
+      const matches = Array.from(uniqueTeamsSet)
+        .filter(team => team.toLowerCase().includes(val))
+        .slice(0, 8); // maximal 8 Vorschläge
+
+      if (matches.length === 0) {
+        closeAutocomplete();
+        return;
+      }
+
+      listEl.innerHTML = matches.map(team => `
+        <div class="autocomplete-item" onclick="selectSuggestion('${escapeQuotes(team)}')">
+          ${highlightMatch(team, val)}
+        </div>
+      `).join('');
+
+      listEl.style.display = 'block';
+    }
+
+    function highlightMatch(text, query) {
+      const idx = text.toLowerCase().indexOf(query);
+      if (idx === -1) return text;
+      return text.substring(0, idx) + '<strong>' + text.substring(idx, idx + query.length) + '</strong>' + text.substring(idx + query.length);
+    }
+
+    function selectSuggestion(teamName) {
+      const searchInput = document.getElementById('search-input');
+      searchInput.value = teamName;
+      closeAutocomplete();
+      applyFilters();
+    }
+
+    function closeAutocomplete() {
+      const listEl = document.getElementById('autocomplete-list');
+      listEl.style.display = 'none';
+      listEl.innerHTML = '';
+    }
+
+    function escapeQuotes(str) {
+      return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
+    function applyFilters() {
+      const searchVal = document.getElementById('search-input').value.trim().toLowerCase();
+      const genderVal = document.getElementById('filter-gender').value;
+      const leagueVal = document.getElementById('filter-league').value;
+      const teamVal = document.getElementById('filter-team').value.trim().toLowerCase();
+      const dateVal = document.getElementById('filter-date').value;
+
+      const filtered = allMatches.filter(m => {
+        // Freitextsuche (Haupt-Suchfeld)
+        const matchesSearch = !searchVal || 
+          m.team1.toLowerCase().includes(searchVal) ||
+          m.team2.toLowerCase().includes(searchVal) ||
+          m.leagueDisplay.toLowerCase().includes(searchVal);
+
+        // Geschlechter-Filter
+        const matchesGender = !genderVal || m.gender === genderVal;
+
+        // Ligen-Filter
+        const matchesLeague = !leagueVal || m.leagueRaw === leagueVal;
+
+        // Mannschafts-Filter
+        const matchesTeam = !teamVal || 
+          m.team1.toLowerCase().includes(teamVal) || 
+          m.team2.toLowerCase().includes(teamVal);
+
+        // Datums-Filter
+        const matchesDate = !dateVal || m.rawDateString === dateVal;
+
+        return matchesSearch && matchesGender && matchesLeague && matchesTeam && matchesDate;
+      });
+
+      renderMatches(filtered);
+    }
+
+    function resetFilters() {
+      document.getElementById('search-input').value = '';
+      document.getElementById('filter-gender').value = '';
+      document.getElementById('filter-league').value = '';
+      document.getElementById('filter-team').value = '';
+      document.getElementById('filter-date').value = '';
+      closeAutocomplete();
+      applyFilters();
+    }
+
+    function renderMatches(matches) {
+      const listEl = document.getElementById('match-list');
+
+      if (matches.length === 0) {
+        listEl.innerHTML = '<div class="status-box">Keine passenden Spiele gefunden.</div>';
+        return;
+      }
+
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+      listEl.innerHTML = matches.map(m => {
+        const fullLink = `${SCOREBOARD_BASE_URL}?match=${m.id}&assoc=wvv`;
+        const matchDayTime = new Date(m.dateObj.getFullYear(), m.dateObj.getMonth(), m.dateObj.getDate()).getTime();
+        const isPast = matchDayTime < todayStart;
+
+        return `
+          <div class="match-card ${isPast ? 'past-match' : ''}" data-time="${m.dateObj.getTime()}">
+            <div class="match-header">
+              <span>${m.leagueDisplay}</span>
+              <span class="match-date">${m.formattedDate}</span>
+            </div>
+            <div class="match-teams">${m.team1} vs. ${m.team2}</div>
+            <div class="match-footer">
+              <span class="match-id" title="${m.id}">ID: ${m.id}</span>
+              <div class="btn-group">
+                <a href="${fullLink}" target="_blank" rel="noopener" class="action-btn open-btn">Öffnen</a>
+                <button class="action-btn copy-btn" onclick="copyToClipboard('${fullLink}', this)">Kopieren</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function formatDate(dateInput) {
+      if (!dateInput) return 'Datum unbekannt';
+      try {
+        const d = new Date(dateInput);
+        if (isNaN(d.getTime())) return dateInput;
+        return d.toLocaleDateString('de-DE', {
+          weekday: 'short',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }) + ' Uhr';
+      } catch {
+        return dateInput;
+      }
+    }
+
+    function scrollToToday() {
+      const nowTime = new Date().getTime();
+      const cards = document.querySelectorAll('.match-card');
+      let targetCard = null;
+
+      for (let card of cards) {
+        const cardTime = parseInt(card.getAttribute('data-time'));
+        if (cardTime >= nowTime) {
+          targetCard = card;
+          break;
+        }
+      }
+
+      if (targetCard) {
+        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    function copyToClipboard(text, btnElement) {
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btnElement.innerText;
+        btnElement.innerText = "Kopiert!";
+        btnElement.classList.add('copied');
+        setTimeout(() => {
+          btnElement.innerText = originalText;
+          btnElement.classList.remove('copied');
+        }, 2000);
+      }).catch(err => {
+        alert('Fehler beim Kopieren: ' + err);
+      });
+    }
+  </script>
+</body>
+</html>
