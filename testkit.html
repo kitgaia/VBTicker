@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAMS Ticker Testkit</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen font-sans antialiased p-4 md:p-6 max-w-4xl mx-auto space-y-4">
+
+  <!-- HEADER & URL PARAMETER CONTROL -->
+  <header class="bg-zinc-900 border border-zinc-800 rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+    <div class="flex items-center gap-3 w-full sm:w-auto">
+      <span id="status-indicator" class="w-2.5 h-2.5 rounded-full bg-zinc-600 shrink-0" title="Status"></span>
+      <div>
+        <h1 class="text-base font-bold tracking-tight text-white leading-tight">SAMS Testkit & Timeline</h1>
+        <p id="status-text" class="text-xs text-zinc-400 font-mono">Inaktiv</p>
+      </div>
+    </div>
+
+    <!-- Match ID Input & Controls -->
+    <div class="flex items-center gap-2 w-full sm:w-auto">
+      <div class="relative flex-1 sm:w-44">
+        <input 
+          type="text" 
+          id="match-id-input" 
+          placeholder="Match-ID (z.B. 12345)"
+          class="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-1.5 text-xs font-mono text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-500"
+        />
+      </div>
+      <button 
+        id="toggle-polling-btn" 
+        class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded transition shrink-0"
+      >
+        Start
+      </button>
+      <button 
+        id="wake-lock-btn" 
+        class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium px-2.5 py-1.5 rounded border border-zinc-700 transition shrink-0"
+        title="Display-Sperre aktivieren"
+      >
+        💡 Screen
+      </button>
+    </div>
+  </header>
+
+  <!-- LIVE MATCH MONITOR CARD -->
+  <section id="match-monitor" class="bg-zinc-900 border border-zinc-800 rounded-lg p-4 space-y-3 hidden">
+    <div class="flex items-center justify-between border-b border-zinc-800 pb-2 text-xs">
+      <span id="league-name" class="font-semibold text-zinc-400 uppercase tracking-wider">Liga Unbekannt</span>
+      <span id="last-fetch-time" class="font-mono text-zinc-500">--:--:--</span>
+    </div>
+
+    <div class="grid grid-cols-7 items-center text-center py-2">
+      <!-- Team 1 -->
+      <div class="col-span-3 text-left sm:text-center">
+        <h2 id="team1-name" class="text-sm sm:text-base font-bold text-white truncate">Heimteam</h2>
+        <div class="text-xs font-mono text-zinc-400 mt-0.5">Sätze: <span id="t1-sets" class="text-white font-bold">0</span> | TO: <span id="t1-timeouts" class="text-zinc-300">0</span></div>
+      </div>
+
+      <!-- Main Score -->
+      <div class="col-span-1 flex flex-col items-center justify-center">
+        <div id="main-sets-score" class="text-xl sm:text-3xl font-black text-white font-mono">0:0</div>
+        <div id="current-set-points" class="text-xs font-mono text-emerald-400 font-bold mt-0.5">(0:0)</div>
+      </div>
+
+      <!-- Team 2 -->
+      <div class="col-span-3 text-right sm:text-center">
+        <h2 id="team2-name" class="text-sm sm:text-base font-bold text-white truncate">Gastteam</h2>
+        <div class="text-xs font-mono text-zinc-400 mt-0.5">Sätze: <span id="t2-sets" class="text-white font-bold">0</span> | TO: <span id="t2-timeouts" class="text-zinc-300">0</span></div>
+      </div>
+    </div>
+
+    <!-- Set Breakdown Pills -->
+    <div id="sets-history-row" class="flex flex-wrap gap-1.5 justify-center border-t border-zinc-800 pt-2.5 text-xs font-mono text-zinc-400">
+      <!-- Injected via JS -->
+    </div>
+  </section>
+
+  <!-- CONTROLS & SETTINGS BAR -->
+  <div class="flex flex-wrap items-center justify-between gap-2 bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 px-4 text-xs">
+    <div class="flex items-center gap-2">
+      <label for="interval-select" class="text-zinc-400 font-medium">Intervall:</label>
+      <select id="interval-select" class="bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-zinc-200 focus:outline-none focus:border-zinc-700">
+        <option value="2">2s</option>
+        <option value="4" selected>4s</option>
+        <option value="10">10s</option>
+        <option value="15">15s</option>
+      </select>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <span id="log-count" class="font-mono text-zinc-500 mr-2">0 Events</span>
+      <button id="export-json-btn" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-2.5 py-1 rounded border border-zinc-700 transition">JSON</button>
+      <button id="export-csv-btn" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-2.5 py-1 rounded border border-zinc-700 transition">CSV</button>
+      <button id="clear-log-btn" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-800/60 px-2.5 py-1 rounded transition">Löschen</button>
+    </div>
+  </div>
+
+  <!-- TIMELINE EVENT LIST -->
+  <main class="space-y-2">
+    <div id="timeline-feed" class="space-y-1.5">
+      <!-- Empty State -->
+      <div id="empty-state" class="bg-zinc-900 border border-zinc-800 rounded-lg p-8 text-center text-zinc-500 text-xs">
+        Keine Events für dieses Spiel erfasst. Starte das Tracking mit einer gültigen Match-ID.
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // --- STATE MANAGEMENT ---
+    let isPolling = false;
+    let timerId = null;
+    let wakeLock = null;
+    let previousSnapshot = null;
+    let timelineEvents = [];
+    const WORKER_BASE = "https://rapid-bread-25a8.nick-valbert2006.workers.dev";
+
+    // --- DOM ELEMENTS ---
+    const matchIdInput = document.getElementById('match-id-input');
+    const togglePollingBtn = document.getElementById('toggle-polling-btn');
+    const wakeLockBtn = document.getElementById('wake-lock-btn');
+    const statusIndicator = document.getElementById('status-indicator');
+    const statusText = document.getElementById('status-text');
+    const intervalSelect = document.getElementById('interval-select');
+
+    const matchMonitor = document.getElementById('match-monitor');
+    const timelineFeed = document.getElementById('timeline-feed');
+    const emptyState = document.getElementById('empty-state');
+    const logCountEl = document.getElementById('log-count');
+
+    // --- INITIALIZATION ---
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Read URL Query Parameter (?match=...)
+      const urlParams = new URLSearchParams(window.location.search);
+      const matchParam = urlParams.get('match') || urlParams.get('id');
+
+      if (matchParam) {
+        matchIdInput.value = matchParam;
+        loadStoredLogs(matchParam);
+      }
+
+      setupEventListeners();
+    });
+
+    function setupEventListeners() {
+      togglePollingBtn.addEventListener('click', togglePolling);
+      wakeLockBtn.addEventListener('click', toggleWakeLock);
+
+      document.getElementById('clear-log-btn').addEventListener('click', clearLogs);
+      document.getElementById('export-json-btn').addEventListener('click', exportJSON);
+      document.getElementById('export-csv-btn').addEventListener('click', exportCSV);
+
+      intervalSelect.addEventListener('change', () => {
+        if (isPolling) {
+          stopPolling();
+          startPolling();
+        }
+      });
+
+      // Update URL without reloading when input changes
+      matchIdInput.addEventListener('input', () => {
+        const value = matchIdInput.value.trim();
+        const url = new URL(window.location.href);
+        if (value) {
+          url.searchParams.set('match', value);
+        } else {
+          url.searchParams.delete('match');
+        }
+        window.history.replaceState({}, '', url);
+
+        previousSnapshot = null;
+        if (value) loadStoredLogs(value);
+      });
+    }
+
+    // --- SCREEN WAKE LOCK ---
+    async function toggleWakeLock() {
+      if (!('wakeLock' in navigator)) {
+        alert('Wake Lock API wird von diesem Browser nicht unterstützt.');
+        return;
+      }
+
+      try {
+        if (wakeLock) {
+          await wakeLock.release();
+          wakeLock = null;
+          wakeLockBtn.classList.remove('bg-amber-600', 'border-amber-500', 'text-white');
+          wakeLockBtn.classList.add('bg-zinc-800', 'border-zinc-700', 'text-zinc-300');
+        } else {
+          wakeLock = await navigator.wakeLock.request('screen');
+          wakeLockBtn.classList.remove('bg-zinc-800', 'border-zinc-700', 'text-zinc-300');
+          wakeLockBtn.classList.add('bg-amber-600', 'border-amber-500', 'text-white');
+          wakeLock.addEventListener('release', () => {
+            wakeLock = null;
+            wakeLockBtn.classList.remove('bg-amber-600', 'border-amber-500', 'text-white');
+            wakeLockBtn.classList.add('bg-zinc-800', 'border-zinc-700', 'text-zinc-300');
+          });
+        }
+      } catch (err) {
+        console.error('WakeLock Fehler:', err);
+      }
+    }
+
+    // --- POLLING CONTROLLER ---
+    function togglePolling() {
+      if (isPolling) {
+        stopPolling();
+      } else {
+        const matchId = matchIdInput.value.trim();
+        if (!matchId) {
+          alert('Bitte gib eine gültige Match-ID ein.');
+          matchIdInput.focus();
+          return;
+        }
+        startPolling();
+      }
+    }
+
+    function startPolling() {
+      isPolling = true;
+      togglePollingBtn.textContent = 'Stop';
+      togglePollingBtn.classList.remove('bg-blue-600', 'hover:bg-blue-500');
+      togglePollingBtn.classList.add('bg-red-600', 'hover:bg-red-500');
+
+      statusIndicator.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500';
+      statusText.textContent = 'Aktiv (Polling)';
+
+      fetchMatchData();
+      const intervalMs = (parseInt(intervalSelect.value) || 4) * 1000;
+      timerId = setInterval(fetchMatchData, intervalMs);
+    }
+
+    function stopPolling() {
+      isPolling = false;
+      if (timerId) clearInterval(timerId);
+      timerId = null;
+
+      togglePollingBtn.textContent = 'Start';
+      togglePollingBtn.classList.remove('bg-red-600', 'hover:bg-red-500');
+      togglePollingBtn.classList.add('bg-blue-600', 'hover:bg-blue-500');
+
+      statusIndicator.className = 'w-2.5 h-2.5 rounded-full bg-zinc-600';
+      statusText.textContent = 'Pausiert';
+    }
+
+    // --- FETCH & DIFF CHECKER ---
+    async function fetchMatchData() {
+      const matchId = matchIdInput.value.trim();
+      const url = `${WORKER_BASE}/?match=${matchId}`;
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        document.getElementById('last-fetch-time').textContent = new Date().toLocaleTimeString('de-DE');
+        processSnapshot(data);
+      } catch (err) {
+        statusIndicator.className = 'w-2.5 h-2.5 rounded-full bg-red-500';
+        statusText.textContent = `Fehler: ${err.message}`;
+      }
+    }
+
+    function processSnapshot(currentData) {
+      updateMatchMonitorUI(currentData);
+
+      if (!previousSnapshot) {
+        addTimelineEvent({
+          type: 'SYSTEM',
+          badgeStyle: 'bg-zinc-800 text-zinc-300 border-zinc-700',
+          badgeText: 'INIT',
+          title: 'Tracking Gestartet',
+          description: 'Erster Daten-Snapshot geladen.',
+          scoreContext: getCurrentScoreContext(currentData)
+        });
+      } else {
+        runDiffChecker(previousSnapshot, currentData);
+      }
+
+      previousSnapshot = currentData;
+    }
+
+    function runDiffChecker(oldData, newData) {
+      const scoreContext = getCurrentScoreContext(newData);
+      const oldSet = getActiveSetObject(oldData);
+      const newSet = getActiveSetObject(newData);
+
+      const t1Name = newData.team1?.name || newData.team1Name || 'Heim';
+      const t2Name = newData.team2?.name || newData.team2Name || 'Gast';
+
+      if (!oldSet || !newSet) return;
+
+      // 1. Point Checks
+      const oldP1 = oldSet.points1 ?? oldSet.team1Points ?? 0;
+      const newP1 = newSet.points1 ?? newSet.team1Points ?? 0;
+      if (newP1 > oldP1) {
+        addTimelineEvent({
+          type: 'POINT',
+          badgeStyle: 'bg-emerald-950/80 text-emerald-400 border-emerald-800/80',
+          badgeText: '+PUNKT',
+          title: `Punkt ${t1Name} (+${newP1 - oldP1})`,
+          description: `Satzstand: ${newP1}:${newSet.points2 ?? 0}`,
+          scoreContext
+        });
+      }
+
+      const oldP2 = oldSet.points2 ?? oldSet.team2Points ?? 0;
+      const newP2 = newSet.points2 ?? newSet.team2Points ?? 0;
+      if (newP2 > oldP2) {
+        addTimelineEvent({
+          type: 'POINT',
+          badgeStyle: 'bg-emerald-950/80 text-emerald-400 border-emerald-800/80',
+          badgeText: '+PUNKT',
+          title: `Punkt ${t2Name} (+${newP2 - oldP2})`,
+          description: `Satzstand: ${newSet.points1 ?? 0}:${newP2}`,
+          scoreContext
+        });
+      }
+
+      // 2. Timeout Checks
+      const oldTo1 = oldSet.timeouts1 ?? 0;
+      const newTo1 = newSet.timeouts1 ?? 0;
+      if (newTo1 > oldTo1) {
+        addTimelineEvent({
+          type: 'TIMEOUT',
+          badgeStyle: 'bg-amber-950/80 text-amber-400 border-amber-800/80',
+          badgeText: 'TIMEOUT',
+          title: `Auszeit: ${t1Name}`,
+          description: `Auszeit #${newTo1} in Satz ${newData.currentSet || 1}`,
+          scoreContext
+        });
+      }
+
+      const oldTo2 = oldSet.timeouts2 ?? 0;
+      const newTo2 = newSet.timeouts2 ?? 0;
+      if (newTo2 > oldTo2) {
+        addTimelineEvent({
+          type: 'TIMEOUT',
+          badgeStyle: 'bg-amber-950/80 text-amber-400 border-amber-800/80',
+          badgeText: 'TIMEOUT',
+          title: `Auszeit: ${t2Name}`,
+          description: `Auszeit #${newTo2} in Satz ${newData.currentSet || 1}`,
+          scoreContext
+        });
+      }
+
+      // 3. Set Transitions
+      const oldSetNum = oldData.currentSet || oldData.setNumber;
+      const newSetNum = newData.currentSet || newData.setNumber;
+      if (newSetNum && oldSetNum && newSetNum > oldSetNum) {
+        addTimelineEvent({
+          type: 'SET_END',
+          badgeStyle: 'bg-blue-950/80 text-blue-400 border-blue-800/80',
+          badgeText: 'SATZENDE',
+          title: `Satz ${oldSetNum} Beendet`,
+          description: `Satz ${newSetNum} gestartet. Gesamtergebnis: ${getSetsScoreString(newData)}`,
+          scoreContext
+        });
+      }
+
+      // 4. Serve Changes
+      if (oldData.serve !== undefined && newData.serve !== undefined && oldData.serve !== newData.serve) {
+        const serverName = newData.serve === 1 ? t1Name : t2Name;
+        addTimelineEvent({
+          type: 'SERVE',
+          badgeStyle: 'bg-purple-950/80 text-purple-400 border-purple-800/80',
+          badgeText: 'AUFSCHLAG',
+          title: `Aufschlagwechsel: ${serverName}`,
+          description: `Aufschlagrecht gewechselt`,
+          scoreContext
+        });
+      }
+    }
+
+    // --- PARSERS & HELPERS ---
+    function getActiveSetObject(data) {
+      if (!data) return null;
+      if (data.currentSetObject) return data.currentSetObject;
+      if (Array.isArray(data.sets) && data.sets.length > 0) {
+        return data.sets[data.sets.length - 1];
+      }
+      if (data.score?.currentSet) return data.score.currentSet;
+      return data;
+    }
+
+    function getCurrentScoreContext(data) {
+      const activeSet = getActiveSetObject(data);
+      const p1 = activeSet?.points1 ?? 0;
+      const p2 = activeSet?.points2 ?? 0;
+      return `Satz ${data.currentSet || 1} (${p1}:${p2}) | ${getSetsScoreString(data)}`;
+    }
+
+    function getSetsScoreString(data) {
+      const s1 = data.score?.sets?.team1 ?? data.team1Sets ?? 0;
+      const s2 = data.score?.sets?.team2 ?? data.team2Sets ?? 0;
+      return `${s1}:${s2}`;
+    }
+
+    // --- UI MATCH MONITOR ---
+    function updateMatchMonitorUI(data) {
+      matchMonitor.classList.remove('hidden');
+
+      const t1Name = data.team1?.name || data.team1Name || 'Heim';
+      const t2Name = data.team2?.name || data.team2Name || 'Gast';
+
+      document.getElementById('team1-name').textContent = t1Name;
+      document.getElementById('team2-name').textContent = t2Name;
+      document.getElementById('league-name').textContent = data.leagueName || data.league?.name || 'SAMS Liga';
+
+      document.getElementById('main-sets-score').textContent = getSetsScoreString(data);
+
+      const activeSet = getActiveSetObject(data);
+      const p1 = activeSet?.points1 ?? 0;
+      const p2 = activeSet?.points2 ?? 0;
+      document.getElementById('current-set-points').textContent = `(Satz ${data.currentSet || 1}: ${p1}:${p2})`;
+
+      document.getElementById('t1-sets').textContent = data.team1Sets ?? 0;
+      document.getElementById('t2-sets').textContent = data.team2Sets ?? 0;
+      document.getElementById('t1-timeouts').textContent = activeSet?.timeouts1 ?? 0;
+      document.getElementById('t2-timeouts').textContent = activeSet?.timeouts2 ?? 0;
+
+      const historyRow = document.getElementById('sets-history-row');
+      if (Array.isArray(data.sets) && data.sets.length > 0) {
+        historyRow.innerHTML = data.sets.map((s, idx) => `
+          <span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 ${idx + 1 === data.currentSet ? 'text-emerald-400 border-emerald-900/60 font-bold' : 'text-zinc-400'}">
+            S${idx + 1}: ${s.points1 ?? 0}:${s.points2 ?? 0}
+          </span>
+        `).join('');
+      } else {
+        historyRow.innerHTML = `<span class="text-zinc-600">Keine vorherigen Sätze</span>`;
+      }
+    }
+
+    // --- EVENT LOGGING & RENDER ---
+    function addTimelineEvent(evt) {
+      const eventObj = {
+        id: Date.now() + Math.random().toString(36).substr(2, 4),
+        timestamp: new Date().toLocaleTimeString('de-DE'),
+        isoDate: new Date().toISOString(),
+        ...evt
+      };
+
+      timelineEvents.unshift(eventObj);
+      saveLogsToStorage();
+      renderTimeline();
+    }
+
+    function renderTimeline() {
+      logCountEl.textContent = `${timelineEvents.length} Events`;
+
+      if (timelineEvents.length === 0) {
+        emptyState.classList.remove('hidden');
+        timelineFeed.innerHTML = '';
+        timelineFeed.appendChild(emptyState);
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      timelineFeed.innerHTML = timelineEvents.map(item => `
+        <article class="bg-zinc-900 border border-zinc-800/80 rounded-md p-2.5 sm:p-3 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <div class="flex items-center gap-2 flex-1 min-w-0">
+            <span class="font-mono font-bold text-[10px] uppercase px-1.5 py-0.5 rounded border ${item.badgeStyle}">
+              ${item.badgeText}
+            </span>
+            <div class="truncate">
+              <span class="font-bold text-zinc-100 mr-2">${escapeHtml(item.title)}</span>
+              <span class="text-zinc-400 hidden sm:inline">${escapeHtml(item.description)}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between w-full sm:w-auto gap-4 shrink-0 pt-1 sm:pt-0 border-t sm:border-0 border-zinc-800/60 text-zinc-500 font-mono text-[11px]">
+            <span class="text-zinc-300 font-semibold">${escapeHtml(item.scoreContext)}</span>
+            <time>${item.timestamp}</time>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    // --- LOCAL STORAGE ---
+    function getStorageKey() {
+      const matchId = matchIdInput.value.trim() || 'default';
+      return `sams_timeline_${matchId}`;
+    }
+
+    function saveLogsToStorage() {
+      try {
+        localStorage.setItem(getStorageKey(), JSON.stringify(timelineEvents));
+      } catch (e) {
+        console.error("Storage Error:", e);
+      }
+    }
+
+    function loadStoredLogs(matchId) {
+      try {
+        const stored = localStorage.getItem(`sams_timeline_${matchId}`);
+        timelineEvents = stored ? JSON.parse(stored) : [];
+        renderTimeline();
+      } catch (e) {
+        timelineEvents = [];
+        renderTimeline();
+      }
+    }
+
+    function clearLogs() {
+      if (confirm("Möchtest du die aufgezeichneten Events für dieses Spiel wirklich löschen?")) {
+        timelineEvents = [];
+        localStorage.removeItem(getStorageKey());
+        renderTimeline();
+      }
+    }
+
+    // --- EXPORT FUNCTIONS ---
+    function exportJSON() {
+      if (timelineEvents.length === 0) return alert("Keine Events vorhanden.");
+      const str = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(timelineEvents, null, 2));
+      downloadFile(str, `sams_events_${matchIdInput.value || 'match'}.json`);
+    }
+
+    function exportCSV() {
+      if (timelineEvents.length === 0) return alert("Keine Events vorhanden.");
+      const headers = ["ID", "Zeitstempel", "Typ", "Titel", "Beschreibung", "Spielstand"];
+      const rows = timelineEvents.map(e => [
+        e.id,
+        e.timestamp,
+        e.type,
+        `"${e.title.replace(/"/g, '""')}"`,
+        `"${e.description.replace(/"/g, '""')}"`,
+        `"${e.scoreContext.replace(/"/g, '""')}"`
+      ]);
+
+      const content = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+      downloadFile(content, `sams_events_${matchIdInput.value || 'match'}.csv`);
+    }
+
+    function downloadFile(content, fileName) {
+      const a = document.createElement('a');
+      a.setAttribute("href", content);
+      a.setAttribute("download", fileName);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+  </script>
+</body>
+</html>
