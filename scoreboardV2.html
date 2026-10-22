@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Volleyball Scoreboard Overlay - V1.5</title>
+  <title>Volleyball Scoreboard Overlay - V1.5 Base</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -84,7 +84,7 @@
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
     }
 
-    /* Keine Abschneidung mehr (voller Name, zentriert) */
+    /* Vollständiger Teamname zentriert */
     .team-name-wrapper {
       flex-grow: 1;
       display: flex;
@@ -102,7 +102,7 @@
       text-align: center;
     }
 
-    /* Punkteanzeige mit dynamischem Hintergrund */
+    /* Punkteanzeige */
     .points {
       background: var(--color-home);
       color: var(--color-home-text);
@@ -130,7 +130,7 @@
     }
     .pulse { animation: pulseScore 0.45s ease-out !important; }
 
-    /* Satzstand in der Mitte */
+    /* Satzstand */
     .sets-container {
       display: flex;
       flex-direction: column;
@@ -162,7 +162,7 @@
       backdrop-filter: blur(4px);
     }
 
-    /* Mobile Responsive Layout */
+    /* Mobile Responsive Layout: Untereinander bei schmalen Bildschirmen */
     @media (max-width: 600px) {
       .scoreboard {
         flex-direction: column;
@@ -284,7 +284,7 @@
       prevS1 = d.s1; prevS2 = d.s2;
       document.getElementById('team1-points').innerText = d.p1;
       document.getElementById('team2-points').innerText = d.p2;
-      document.getElementById('sets-score').innerText = `${d.s1} : ${d.s2}`; // Korrigiert!
+      document.getElementById('sets-score').innerText = `${d.s1} : ${d.s2}`;
 
       setTimeout(equalizeTeamWidths, 100);
       window.addEventListener('resize', equalizeTeamWidths);
@@ -349,7 +349,7 @@
 
       img.onload = () => {
         try {
-          const color = extractVibrantColor(img);
+          const color = extractLargestConnectedColor(img);
           applyColor(cssVarName, cssTextVarName, color || fallbackColor);
         } catch (e) {
           applyColor(cssVarName, cssTextVarName, fallbackColor);
@@ -362,45 +362,107 @@
       };
     }
 
-    /* NEU: Farb-Picker sucht nach der knalligsten Farbe (Höchste Sättigung im HSV-Modell) */
-    function extractVibrantColor(img) {
+    /* NEU: Größte zusammenhängende Einzelfläche im Logo ermitteln (Connected Component Flood Fill) */
+    function extractLargestConnectedColor(img) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      canvas.width = 50;
-      canvas.height = 50;
+      const width = 64;
+      const height = 64;
+      canvas.width = width;
+      canvas.height = height;
 
-      ctx.drawImage(img, 0, 0, 50, 50);
-      const imgData = ctx.getImageData(0, 0, 50, 50).data;
+      ctx.drawImage(img, 0, 0, width, height);
+      const imgData = ctx.getImageData(0, 0, width, height).data;
 
-      let bestColor = null;
-      let maxScore = -1;
+      // Matrix für Farb-Bins und Besuchsstatus
+      const visited = new Uint8Array(width * height);
+      const colorBins = new Int32Array(width * height);
 
-      for (let i = 0; i < imgData.length; i += 4) {
-        const r = imgData[i];
-        const g = imgData[i + 1];
-        const b = imgData[i + 2];
-        const alpha = imgData[i + 3];
+      // Quantisierung: Farbtöne in ähnliche Bins gruppieren
+      for (let i = 0; i < width * height; i++) {
+        const idx = i * 4;
+        const r = imgData[idx];
+        const g = imgData[idx + 1];
+        const b = imgData[idx + 2];
+        const a = imgData[idx + 3];
 
-        if (alpha < 150) continue; // Transparenz überspringen
+        if (a < 128) {
+          colorBins[i] = -1; // Transparenz
+          continue;
+        }
 
-        const [h, s, v] = rgbToHsv(r, g, b);
+        // Bins vereinfachen (Raster von 32x32x32 Farben)
+        const qR = Math.floor(r / 32);
+        const qG = Math.floor(g / 32);
+        const qB = Math.floor(b / 32);
+        colorBins[i] = (qR << 10) | (qG << 5) | qB;
+      }
 
-        // Filter: Dunkles Schwarz/Grau, reines Weiß und blasse Farben aussortieren
-        if (v < 0.2 || v > 0.98 || s < 0.25) continue;
+      let maxRegionSize = 0;
+      let bestRgb = null;
 
-        // Score basiert vor allem auf Sättigung (Knalligkeit) und guter Helligkeit
-        const score = s * 2 + v;
+      // Connected Component Flood-Fill durchführen
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const pos = y * width + x;
+          if (visited[pos] || colorBins[pos] === -1) continue;
 
-        if (score > maxScore) {
-          maxScore = score;
-          bestColor = `rgb(${r}, ${g}, ${b})`;
+          const bin = colorBins[pos];
+          let currentRegionSize = 0;
+          let sumR = 0, sumG = 0, sumB = 0;
+
+          const queue = [pos];
+          visited[pos] = 1;
+
+          while (queue.length > 0) {
+            const curr = queue.pop();
+            const cx = curr % width;
+            const cy = Math.floor(curr / width);
+            const pixelIdx = curr * 4;
+
+            currentRegionSize++;
+            sumR += imgData[pixelIdx];
+            sumG += imgData[pixelIdx + 1];
+            sumB += imgData[pixelIdx + 2];
+
+            // 4er Nachbarschaft prüfen
+            const neighbors = [];
+            if (cx > 0) neighbors.push(curr - 1);
+            if (cx < width - 1) neighbors.push(curr + 1);
+            if (cy > 0) neighbors.push(curr - width);
+            if (cy < height - 1) neighbors.push(curr + width);
+
+            for (const n of neighbors) {
+              if (!visited[n] && colorBins[n] === bin) {
+                visited[n] = 1;
+                queue.push(n);
+              }
+            }
+          }
+
+          // Durchschnittsfarbe der zusammenhängenden Region
+          const avgR = Math.round(sumR / currentRegionSize);
+          const avgG = Math.round(sumG / currentRegionSize);
+          const avgB = Math.round(sumB / currentRegionSize);
+
+          const [h, s, v] = rgbToHsv(avgR, avgG, avgB);
+
+          // Ausschluss von Weiß, Schwarz und blassen Grautönen
+          if (v < 0.2 || v > 0.98 || s < 0.22) continue;
+
+          // Bevorzugung von zusammenhängender Größe + lebendiger Farbe
+          const score = currentRegionSize * (1 + s);
+
+          if (score > maxRegionSize) {
+            maxRegionSize = score;
+            bestRgb = `rgb(${avgR}, ${avgG}, ${avgB})`;
+          }
         }
       }
 
-      return bestColor;
+      return bestRgb;
     }
 
-    // Hilfsfunktion: RGB zu HSV Konvertierung
     function rgbToHsv(r, g, b) {
       r /= 255; g /= 255; b /= 255;
       const max = Math.max(r, g, b), min = Math.min(r, g, b);
