@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Volleyball Scoreboard Overlay - V1.5 Clean</title>
+  <title>Volleyball Scoreboard Overlay</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -49,15 +49,18 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #030712 0%, #0f172a 100%);
+      /* Transparentes Dark-Theme (88% Deckkraft) */
+      background: linear-gradient(135deg, rgba(3, 7, 18, 0.88) 0%, rgba(15, 23, 42, 0.88) 100%);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       border-radius: 6px;
       padding: 6px 12px;
       color: #ffffff;
-      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.85);
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.65);
       border-left: 5px solid var(--color-home);
       border-right: 5px solid var(--color-guest);
-      border-top: 1px solid rgba(255, 255, 255, 0.12);
-      border-bottom: 2px solid rgba(255, 255, 255, 0.12);
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      border-bottom: 2px solid rgba(255, 255, 255, 0.15);
       font-weight: 800;
       gap: 12px;
       transition: border-color 0.4s ease;
@@ -66,7 +69,7 @@
     .team { 
       display: flex; 
       align-items: center; 
-      gap: 10px; 
+      gap: 8px; 
       padding: 0 4px;
     }
     
@@ -86,7 +89,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 8px;
+      padding: 0 4px;
     }
 
     .team-name {
@@ -96,6 +99,54 @@
       white-space: nowrap;
       font-weight: 900;
       text-align: center;
+    }
+
+    /* Platzhalter für den Aufschlag-Dot (verhindert Neuausrichtung) */
+    .serving-dot-container {
+      width: 14px;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* Minimalistischer Aufschlag-Dot mit Akzentfarbe */
+    .serving-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      opacity: 0;
+      transform: scale(0);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .home .serving-dot {
+      background-color: var(--color-home);
+    }
+
+    .guest .serving-dot {
+      background-color: var(--color-guest);
+    }
+
+    .serving-dot.active {
+      opacity: 1;
+      transform: scale(1);
+      animation: pulseDot 1.8s infinite ease-in-out;
+    }
+
+    .home .serving-dot.active {
+      box-shadow: 0 0 8px var(--color-home), 0 0 12px var(--color-home);
+    }
+
+    .guest .serving-dot.active {
+      box-shadow: 0 0 8px var(--color-guest), 0 0 12px var(--color-guest);
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { transform: scale(1); opacity: 0.85; }
+      50% { transform: scale(1.35); opacity: 1; }
     }
 
     .points {
@@ -135,8 +186,6 @@
       border-right: 2px solid rgba(255,255,255,0.12);
     }
     .sets-score { font-size: clamp(16px, 2.8vw, 22px); color: #f8fafc; letter-spacing: 2px; font-weight: 900; }
-    
-    /* Hier auf Weiß geändert */
     .sets-label { font-size: 8px; color: #ffffff; text-transform: uppercase; letter-spacing: 1px; font-weight: 900; }
 
     .version-badge {
@@ -198,9 +247,12 @@
     <div class="scoreboard" id="main-scoreboard">
       <!-- HEIM TEAM -->
       <div class="team home" id="team-home">
-        <img id="team1-logo" class="team-logo" src="" style="display:none;" alt="">
+        <img id="team1-logo" class="team-logo" src="" style="display:none;" crossorigin="anonymous" alt="">
         <div class="team-name-wrapper">
           <span id="team1-name" class="team-name">HEIM</span>
+        </div>
+        <div class="serving-dot-container">
+          <div id="team1-serving" class="serving-dot"></div>
         </div>
         <span id="team1-points" class="points">0</span>
       </div>
@@ -213,9 +265,12 @@
 
       <!-- GAST TEAM -->
       <div class="team guest" id="team-guest">
-        <img id="team2-logo" class="team-logo" src="" style="display:none;" alt="">
+        <img id="team2-logo" class="team-logo" src="" style="display:none;" crossorigin="anonymous" alt="">
         <div class="team-name-wrapper">
           <span id="team2-name" class="team-name">GAST</span>
+        </div>
+        <div class="serving-dot-container">
+          <div id="team2-serving" class="serving-dot"></div>
         </div>
         <span id="team2-points" class="points">0</span>
       </div>
@@ -252,7 +307,8 @@
           p1: data.score?.currentSetScore?.team1 ?? 0,
           p2: data.score?.currentSetScore?.team2 ?? 0,
           s1: data.score?.sets?.team1 ?? 0,
-          s2: data.score?.sets?.team2 ?? 0
+          s2: data.score?.sets?.team2 ?? 0,
+          serving: data.score?.serving || null
         };
 
         if (!isInitialized) {
@@ -268,11 +324,14 @@
     }
 
     function initializeStaticData(d) {
+      // Tab-Titel dynamisch anpassen
+      document.title = `${d.team1} - ${d.team2}`;
+
       document.getElementById('team1-name').innerText = d.team1;
       document.getElementById('team2-name').innerText = d.team2;
 
-      setupTeamLogo('team1-logo', d.logo1);
-      setupTeamLogo('team2-logo', d.logo2);
+      setupTeamLogoAndColor('team1-logo', d.logo1, '--color-home', '--color-home-text', '#0a84ff');
+      setupTeamLogoAndColor('team2-logo', d.logo2, '--color-guest', '--color-guest-text', '#ff9f0a');
 
       prevP1 = d.p1; prevP2 = d.p2;
       prevS1 = d.s1; prevS2 = d.s2;
@@ -282,17 +341,6 @@
 
       setTimeout(equalizeTeamWidths, 100);
       window.addEventListener('resize', equalizeTeamWidths);
-    }
-
-    function setupTeamLogo(imgId, logoUrl) {
-      const img = document.getElementById(imgId);
-      if (logoUrl) {
-        img.src = logoUrl;
-        img.style.display = 'block';
-        img.onerror = () => { img.style.display = 'none'; };
-      } else {
-        img.style.display = 'none';
-      }
     }
 
     function equalizeTeamWidths() {
@@ -330,6 +378,21 @@
       }
       prevS1 = d.s1; prevS2 = d.s2;
       document.getElementById('sets-score').innerText = `${d.s1} : ${d.s2}`;
+
+      // Aufschlag-Dot steuern
+      const s1Ind = document.getElementById('team1-serving');
+      const s2Ind = document.getElementById('team2-serving');
+
+      if (d.serving === 'TEAM1' || d.serving === '1' || d.serving === 'team1') {
+        s1Ind.classList.add('active');
+        s2Ind.classList.remove('active');
+      } else if (d.serving === 'TEAM2' || d.serving === '2' || d.serving === 'team2') {
+        s1Ind.classList.remove('active');
+        s2Ind.classList.add('active');
+      } else {
+        s1Ind.classList.remove('active');
+        s2Ind.classList.remove('active');
+      }
     }
 
     function triggerPulse(elementId) {
@@ -339,6 +402,190 @@
       void el.offsetWidth;
       el.classList.add('pulse');
       setTimeout(() => el.classList.remove('pulse'), 450);
+    }
+
+    function setupTeamLogoAndColor(imgId, logoUrl, cssVarName, cssTextVarName, fallbackColor) {
+      const img = document.getElementById(imgId);
+      if (!logoUrl) {
+        img.style.display = 'none';
+        applyColor(cssVarName, cssTextVarName, fallbackColor);
+        return;
+      }
+
+      img.src = logoUrl;
+      img.style.display = 'block';
+
+      img.onload = () => {
+        try {
+          const color = extractLargestConnectedColor(img);
+          applyColor(cssVarName, cssTextVarName, color || fallbackColor);
+        } catch (e) {
+          applyColor(cssVarName, cssTextVarName, fallbackColor);
+        }
+      };
+
+      img.onerror = () => {
+        img.style.display = 'none';
+        applyColor(cssVarName, cssTextVarName, fallbackColor);
+      };
+    }
+
+    /* Connected Component Flood-Fill Methode zur Buntfarben-Extraktion mit Knalligkeits-Boost */
+    function extractLargestConnectedColor(img) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const width = 64;
+      const height = 64;
+      canvas.width = width;
+      canvas.height = height;
+
+      ctx.drawImage(img, 0, 0, width, height);
+      const imgData = ctx.getImageData(0, 0, width, height).data;
+
+      const visited = new Uint8Array(width * height);
+      const colorBins = new Int32Array(width * height);
+
+      for (let i = 0; i < width * height; i++) {
+        const idx = i * 4;
+        const r = imgData[idx];
+        const g = imgData[idx + 1];
+        const b = imgData[idx + 2];
+        const a = imgData[idx + 3];
+
+        if (a < 128) {
+          colorBins[i] = -1;
+          continue;
+        }
+
+        const qR = Math.floor(r / 32);
+        const qG = Math.floor(g / 32);
+        const qB = Math.floor(b / 32);
+        colorBins[i] = (qR << 10) | (qG << 5) | qB;
+      }
+
+      let maxColorScore = -1;
+      let bestColorRgb = null;
+
+      let maxMonoSize = -1;
+      let bestMonoRgb = null;
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const pos = y * width + x;
+          if (visited[pos] || colorBins[pos] === -1) continue;
+
+          const bin = colorBins[pos];
+          let currentRegionSize = 0;
+          let sumR = 0, sumG = 0, sumB = 0;
+
+          const queue = [pos];
+          visited[pos] = 1;
+
+          while (queue.length > 0) {
+            const curr = queue.pop();
+            const cx = curr % width;
+            const cy = Math.floor(curr / width);
+            const pixelIdx = curr * 4;
+
+            currentRegionSize++;
+            sumR += imgData[pixelIdx];
+            sumG += imgData[pixelIdx + 1];
+            sumB += imgData[pixelIdx + 2];
+
+            const neighbors = [];
+            if (cx > 0) neighbors.push(curr - 1);
+            if (cx < width - 1) neighbors.push(curr + 1);
+            if (cy > 0) neighbors.push(curr - width);
+            if (cy < height - 1) neighbors.push(curr + width);
+
+            for (const n of neighbors) {
+              if (n >= 0 && n < width * height && !visited[n] && colorBins[n] === bin) {
+                visited[n] = 1;
+                queue.push(n);
+              }
+            }
+          }
+
+          const avgR = Math.round(sumR / currentRegionSize);
+          const avgG = Math.round(sumG / currentRegionSize);
+          const avgB = Math.round(sumB / currentRegionSize);
+
+          let [h, s, v] = rgbToHsv(avgR, avgG, avgB);
+
+          const isChromaticallyVibrant = (v >= 0.20 && v <= 0.98 && s >= 0.20);
+
+          if (isChromaticallyVibrant) {
+            const score = currentRegionSize * (1 + s);
+            if (score > maxColorScore) {
+              maxColorScore = score;
+              
+              // Knalligkeits-Boost: Sättigung & Helligkeit leicht anheben
+              s = Math.min(1.0, s * 1.25);
+              v = Math.min(1.0, Math.max(0.65, v * 1.15));
+              const boostedRgb = hsvToRgb(h, s, v);
+              
+              bestColorRgb = `rgb(${boostedRgb[0]}, ${boostedRgb[1]}, ${boostedRgb[2]})`;
+            }
+          } else {
+            if (currentRegionSize > maxMonoSize) {
+              maxMonoSize = currentRegionSize;
+              bestMonoRgb = `rgb(${avgR}, ${avgG}, ${avgB})`;
+            }
+          }
+        }
+      }
+
+      return bestColorRgb || bestMonoRgb;
+    }
+
+    function rgbToHsv(r, g, b) {
+      r /= 255; g /= 255; b /= 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h, s, v = max;
+      const d = max - min;
+      s = max === 0 ? 0 : d / max;
+
+      if (max === min) {
+        h = 0;
+      } else {
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+      }
+      return [h, s, v];
+    }
+
+    function hsvToRgb(h, s, v) {
+      let r, g, b;
+      const i = Math.floor(h * 6);
+      const f = h * 6 - i;
+      const p = v * (1 - s);
+      const q = v * (1 - f * s);
+      const t = v * (1 - (1 - f) * s);
+
+      switch (i % 6) {
+        case 0: r = v; g = t; b = p; break;
+        case 1: r = q; g = v; b = p; break;
+        case 2: r = p; g = v; b = t; break;
+        case 3: r = p; g = q; b = v; break;
+        case 4: r = t; g = p; b = v; break;
+        case 5: r = v; g = p; b = q; break;
+      }
+      return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+    }
+
+    function applyColor(cssVarName, cssTextVarName, colorRgb) {
+      document.documentElement.style.setProperty(cssVarName, colorRgb);
+      
+      const rgb = colorRgb.match(/\d+/g);
+      if (rgb && rgb.length >= 3) {
+        const brightness = (parseInt(rgb[0]) * 299 + parseInt(rgb[1]) * 587 + parseInt(rgb[2]) * 114) / 1000;
+        const textColor = brightness > 165 ? '#030712' : '#ffffff';
+        document.documentElement.style.setProperty(cssTextVarName, textColor);
+      }
     }
   </script>
 </body>
