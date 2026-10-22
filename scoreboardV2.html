@@ -162,7 +162,7 @@
       backdrop-filter: blur(4px);
     }
 
-    /* Mobile Responsive Layout: Untereinander bei schmalen Displaygrößen */
+    /* Mobile Responsive Layout */
     @media (max-width: 600px) {
       .scoreboard {
         flex-direction: column;
@@ -229,7 +229,6 @@
   </div>
 
   <script>
-    // 1. Neuer Worker URL
     const WORKER_URL = "https://tickerv2.nick-valbert2006.workers.dev";
     
     let prevP1 = null, prevP2 = null, prevS1 = null, prevS2 = null;
@@ -278,7 +277,6 @@
       document.getElementById('team1-name').innerText = d.team1;
       document.getElementById('team2-name').innerText = d.team2;
 
-      // Logos setzen und Akzentfarben extrahieren
       setupTeamLogoAndColor('team1-logo', d.logo1, '--color-home', '--color-home-text', '#0a84ff');
       setupTeamLogoAndColor('team2-logo', d.logo2, '--color-guest', '--color-guest-text', '#ff9f0a');
 
@@ -286,14 +284,12 @@
       prevS1 = d.s1; prevS2 = d.s2;
       document.getElementById('team1-points').innerText = d.p1;
       document.getElementById('team2-points').innerText = d.p2;
-      document.getElementById('sets-score').innerText = `${d.s1} : ${d.s2}`;
+      document.getElementById('sets-score').innerText = `${d.s1} : `${d.s2}`;
 
-      // Nach Rendern der Namen: Seitenlängen angleichen
       setTimeout(equalizeTeamWidths, 100);
       window.addEventListener('resize', equalizeTeamWidths);
     }
 
-    /* 5. Beide Seiten gleich lang halten */
     function equalizeTeamWidths() {
       if (window.innerWidth <= 600) {
         document.getElementById('team-home').style.width = '100%';
@@ -340,7 +336,6 @@
       setTimeout(() => el.classList.remove('pulse'), 450);
     }
 
-    /* 2. Akzentfarbe aus Logo ziehen mit Canvas Analysis */
     function setupTeamLogoAndColor(imgId, logoUrl, cssVarName, cssTextVarName, fallbackColor) {
       const img = document.getElementById(imgId);
       if (!logoUrl) {
@@ -354,12 +349,8 @@
 
       img.onload = () => {
         try {
-          const color = extractDominantColor(img);
-          if (color) {
-            applyColor(cssVarName, cssTextVarName, color);
-          } else {
-            applyColor(cssVarName, cssTextVarName, fallbackColor);
-          }
+          const color = extractVibrantColor(img);
+          applyColor(cssVarName, cssTextVarName, color || fallbackColor);
         } catch (e) {
           applyColor(cssVarName, cssTextVarName, fallbackColor);
         }
@@ -371,16 +362,18 @@
       };
     }
 
-    function extractDominantColor(img) {
+    /* NEU: Farb-Picker sucht nach der knalligsten Farbe (Höchste Sättigung im HSV-Modell) */
+    function extractVibrantColor(img) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      canvas.width = 40;
-      canvas.height = 40;
+      canvas.width = 50;
+      canvas.height = 50;
 
-      ctx.drawImage(img, 0, 0, 40, 40);
-      const imgData = ctx.getImageData(0, 0, 40, 40).data;
+      ctx.drawImage(img, 0, 0, 50, 50);
+      const imgData = ctx.getImageData(0, 0, 50, 50).data;
 
-      let rSum = 0, gSum = 0, bSum = 0, count = 0;
+      let bestColor = null;
+      let maxScore = -1;
 
       for (let i = 0; i < imgData.length; i += 4) {
         const r = imgData[i];
@@ -388,35 +381,53 @@
         const b = imgData[i + 2];
         const alpha = imgData[i + 3];
 
-        if (alpha < 128) continue; // Transparenz überspringen
+        if (alpha < 150) continue; // Transparenz überspringen
 
-        // Helligkeit berechnen
-        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-        
-        // Schwarz, Weiß und extremes Grau filtern
-        if (brightness < 35 || brightness > 225) continue;
+        const [h, s, v] = rgbToHsv(r, g, b);
 
-        rSum += r; gSum += g; bSum += b;
-        count++;
+        // Filter: Dunkles Schwarz/Grau, reines Weiß und blasse Farben aussortieren
+        if (v < 0.2 || v > 0.98 || s < 0.25) continue;
+
+        // Score basiert vor allem auf Sättigung (Knalligkeit) und guter Helligkeit
+        const score = s * 2 + v;
+
+        if (score > maxScore) {
+          maxScore = score;
+          bestColor = `rgb(${r}, ${g}, ${b})`;
+        }
       }
 
-      if (count === 0) return null;
+      return bestColor;
+    }
 
-      const rFinal = Math.round(rSum / count);
-      const gFinal = Math.round(gSum / count);
-      const bFinal = Math.round(bSum / count);
+    // Hilfsfunktion: RGB zu HSV Konvertierung
+    function rgbToHsv(r, g, b) {
+      r /= 255; g /= 255; b /= 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h, s, v = max;
+      const d = max - min;
+      s = max === 0 ? 0 : d / max;
 
-      return `rgb(${rFinal}, ${gFinal}, ${bFinal})`;
+      if (max === min) {
+        h = 0;
+      } else {
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+      }
+      return [h, s, v];
     }
 
     function applyColor(cssVarName, cssTextVarName, colorRgb) {
       document.documentElement.style.setProperty(cssVarName, colorRgb);
       
-      // Textfarbe je nach Kontrast auf Weiß oder Dunkel setzen
       const rgb = colorRgb.match(/\d+/g);
       if (rgb && rgb.length >= 3) {
         const brightness = (parseInt(rgb[0]) * 299 + parseInt(rgb[1]) * 587 + parseInt(rgb[2]) * 114) / 1000;
-        const textColor = brightness > 150 ? '#030712' : '#ffffff';
+        const textColor = brightness > 165 ? '#030712' : '#ffffff';
         document.documentElement.style.setProperty(cssTextVarName, textColor);
       }
     }
