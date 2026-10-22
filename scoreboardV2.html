@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Volleyball Scoreboard Overlay - V1.5 Base</title>
+  <title>Volleyball Scoreboard Overlay - V1.5 Clean</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: transparent; /* In OBS transparent */
+      background: transparent;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 'Helvetica Neue', Arial, sans-serif;
       overflow: hidden;
       width: 100vw;
@@ -26,7 +26,6 @@
       --color-guest-text: #ffffff;
     }
 
-    /* Scoreboard Wrapper */
     .scoreboard-wrapper {
       position: absolute;
       top: 20px;
@@ -46,7 +45,6 @@
       100% { opacity: 1; transform: translate(-50%, 0); }
     }
 
-    /* Haupt-Scoreboard Container */
     .scoreboard {
       display: flex;
       align-items: center;
@@ -65,7 +63,6 @@
       transition: border-color 0.4s ease;
     }
 
-    /* Team Hälften */
     .team { 
       display: flex; 
       align-items: center; 
@@ -84,7 +81,6 @@
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
     }
 
-    /* Vollständiger Teamname zentriert */
     .team-name-wrapper {
       flex-grow: 1;
       display: flex;
@@ -102,7 +98,6 @@
       text-align: center;
     }
 
-    /* Punkteanzeige */
     .points {
       background: var(--color-home);
       color: var(--color-home-text);
@@ -130,7 +125,6 @@
     }
     .pulse { animation: pulseScore 0.45s ease-out !important; }
 
-    /* Satzstand */
     .sets-container {
       display: flex;
       flex-direction: column;
@@ -141,16 +135,17 @@
       border-right: 2px solid rgba(255,255,255,0.12);
     }
     .sets-score { font-size: clamp(16px, 2.8vw, 22px); color: #f8fafc; letter-spacing: 2px; font-weight: 900; }
-    .sets-label { font-size: 8px; color: #38bdf8; text-transform: uppercase; letter-spacing: 1px; font-weight: 900; }
+    
+    /* Hier auf Weiß geändert */
+    .sets-label { font-size: 8px; color: #ffffff; text-transform: uppercase; letter-spacing: 1px; font-weight: 900; }
 
-    /* Version Badge */
     .version-badge {
       position: fixed;
       bottom: 12px;
       right: 12px;
       background: rgba(3, 7, 18, 0.85);
-      border: 1px solid rgba(0, 242, 254, 0.4);
-      color: #00f2fe;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
       font-size: 10px;
       font-weight: 900;
       padding: 3px 8px;
@@ -162,7 +157,6 @@
       backdrop-filter: blur(4px);
     }
 
-    /* Mobile Responsive Layout */
     @media (max-width: 600px) {
       .scoreboard {
         flex-direction: column;
@@ -198,13 +192,13 @@
 </head>
 <body>
 
-  <div class="version-badge">v1.5 Base</div>
+  <div class="version-badge">v1.5 Clean</div>
 
   <div class="scoreboard-wrapper">
     <div class="scoreboard" id="main-scoreboard">
       <!-- HEIM TEAM -->
       <div class="team home" id="team-home">
-        <img id="team1-logo" class="team-logo" src="" style="display:none;" crossorigin="anonymous" alt="">
+        <img id="team1-logo" class="team-logo" src="" style="display:none;" alt="">
         <div class="team-name-wrapper">
           <span id="team1-name" class="team-name">HEIM</span>
         </div>
@@ -219,7 +213,7 @@
 
       <!-- GAST TEAM -->
       <div class="team guest" id="team-guest">
-        <img id="team2-logo" class="team-logo" src="" style="display:none;" crossorigin="anonymous" alt="">
+        <img id="team2-logo" class="team-logo" src="" style="display:none;" alt="">
         <div class="team-name-wrapper">
           <span id="team2-name" class="team-name">GAST</span>
         </div>
@@ -277,8 +271,8 @@
       document.getElementById('team1-name').innerText = d.team1;
       document.getElementById('team2-name').innerText = d.team2;
 
-      setupTeamLogoAndColor('team1-logo', d.logo1, '--color-home', '--color-home-text', '#0a84ff');
-      setupTeamLogoAndColor('team2-logo', d.logo2, '--color-guest', '--color-guest-text', '#ff9f0a');
+      setupTeamLogo('team1-logo', d.logo1);
+      setupTeamLogo('team2-logo', d.logo2);
 
       prevP1 = d.p1; prevP2 = d.p2;
       prevS1 = d.s1; prevS2 = d.s2;
@@ -288,6 +282,17 @@
 
       setTimeout(equalizeTeamWidths, 100);
       window.addEventListener('resize', equalizeTeamWidths);
+    }
+
+    function setupTeamLogo(imgId, logoUrl) {
+      const img = document.getElementById(imgId);
+      if (logoUrl) {
+        img.src = logoUrl;
+        img.style.display = 'block';
+        img.onerror = () => { img.style.display = 'none'; };
+      } else {
+        img.style.display = 'none';
+      }
     }
 
     function equalizeTeamWidths() {
@@ -334,168 +339,6 @@
       void el.offsetWidth;
       el.classList.add('pulse');
       setTimeout(() => el.classList.remove('pulse'), 450);
-    }
-
-    function setupTeamLogoAndColor(imgId, logoUrl, cssVarName, cssTextVarName, fallbackColor) {
-      const img = document.getElementById(imgId);
-      if (!logoUrl) {
-        img.style.display = 'none';
-        applyColor(cssVarName, cssTextVarName, fallbackColor);
-        return;
-      }
-
-      img.src = logoUrl;
-      img.style.display = 'block';
-
-      img.onload = () => {
-        try {
-          const color = extractLargestConnectedColor(img);
-          applyColor(cssVarName, cssTextVarName, color || fallbackColor);
-        } catch (e) {
-          applyColor(cssVarName, cssTextVarName, fallbackColor);
-        }
-      };
-
-      img.onerror = () => {
-        img.style.display = 'none';
-        applyColor(cssVarName, cssTextVarName, fallbackColor);
-      };
-    }
-
-    /* EXAKTE Connected Component Flood-Fill Methode */
-    function extractLargestConnectedColor(img) {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const width = 64;
-      const height = 64;
-      canvas.width = width;
-      canvas.height = height;
-
-      ctx.drawImage(img, 0, 0, width, height);
-      const imgData = ctx.getImageData(0, 0, width, height).data;
-
-      const visited = new Uint8Array(width * height);
-      const colorBins = new Int32Array(width * height);
-
-      for (let i = 0; i < width * height; i++) {
-        const idx = i * 4;
-        const r = imgData[idx];
-        const g = imgData[idx + 1];
-        const b = imgData[idx + 2];
-        const a = imgData[idx + 3];
-
-        if (a < 128) {
-          colorBins[i] = -1; // Transparenz
-          continue;
-        }
-
-        const qR = Math.floor(r / 32);
-        const qG = Math.floor(g / 32);
-        const qB = Math.floor(b / 32);
-        colorBins[i] = (qR << 10) | (qG << 5) | qB;
-      }
-
-      let maxColorScore = -1;
-      let bestColorRgb = null;
-
-      let maxMonoSize = -1;
-      let bestMonoRgb = null;
-
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          const pos = y * width + x;
-          if (visited[pos] || colorBins[pos] === -1) continue;
-
-          const bin = colorBins[pos];
-          let currentRegionSize = 0;
-          let sumR = 0, sumG = 0, sumB = 0;
-
-          const queue = [pos];
-          visited[pos] = 1;
-
-          while (queue.length > 0) {
-            const curr = queue.pop();
-            const cx = curr % width;
-            const cy = Math.floor(curr / width);
-            const pixelIdx = curr * 4;
-
-            currentRegionSize++;
-            sumR += imgData[pixelIdx];
-            sumG += imgData[pixelIdx + 1];
-            sumB += imgData[pixelIdx + 2];
-
-            const neighbors = [];
-            if (cx > 0) neighbors.push(curr - 1);
-            if (cx < width - 1) neighbors.push(curr + 1);
-            if (cy > 0) neighbors.push(curr - width);
-            if (cy < height - 1) neighbors.push(curr + width);
-
-            for (const n of neighbors) {
-              if (n >= 0 && n < width * height && !visited[n] && colorBins[n] === bin) {
-                visited[n] = 1;
-                queue.push(n);
-              }
-            }
-          }
-
-          const avgR = Math.round(sumR / currentRegionSize);
-          const avgG = Math.round(sumG / currentRegionSize);
-          const avgB = Math.round(sumB / currentRegionSize);
-
-          const [h, s, v] = rgbToHsv(avgR, avgG, avgB);
-
-          // Prüfen ob Buntfarbe vorliegt
-          const isChromaticallyVibrant = (v >= 0.20 && v <= 0.98 && s >= 0.20);
-
-          if (isChromaticallyVibrant) {
-            const score = currentRegionSize * (1 + s);
-            if (score > maxColorScore) {
-              maxColorScore = score;
-              bestColorRgb = `rgb(${avgR}, ${avgG}, ${avgB})`;
-            }
-          } else {
-            // Schwarz/Weiß/Graustufen Fallback-Verarbeitung
-            if (currentRegionSize > maxMonoSize) {
-              maxMonoSize = currentRegionSize;
-              bestMonoRgb = `rgb(${avgR}, ${avgG}, ${avgB})`;
-            }
-          }
-        }
-      }
-
-      // Falls Buntfarbe existiert, nimm diese; sonst nimm die größte Schwarz/Weiß/Grau-Fläche
-      return bestColorRgb || bestMonoRgb;
-    }
-
-    function rgbToHsv(r, g, b) {
-      r /= 255; g /= 255; b /= 255;
-      const max = Math.max(r, g, b), min = Math.min(r, g, b);
-      let h, s, v = max;
-      const d = max - min;
-      s = max === 0 ? 0 : d / max;
-
-      if (max === min) {
-        h = 0;
-      } else {
-        switch (max) {
-          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-          case g: h = (b - r) / d + 2; break;
-          case b: h = (r - g) / d + 4; break;
-        }
-        h /= 6;
-      }
-      return [h, s, v];
-    }
-
-    function applyColor(cssVarName, cssTextVarName, colorRgb) {
-      document.documentElement.style.setProperty(cssVarName, colorRgb);
-      
-      const rgb = colorRgb.match(/\d+/g);
-      if (rgb && rgb.length >= 3) {
-        const brightness = (parseInt(rgb[0]) * 299 + parseInt(rgb[1]) * 587 + parseInt(rgb[2]) * 114) / 1000;
-        const textColor = brightness > 165 ? '#030712' : '#ffffff';
-        document.documentElement.style.setProperty(cssTextVarName, textColor);
-      }
     }
   </script>
 </body>
