@@ -26,7 +26,7 @@
       --color-guest-text: #ffffff;
     }
 
-    /* Scoreboard Container */
+    /* Scoreboard Wrapper */
     .scoreboard-wrapper {
       position: absolute;
       top: 20px;
@@ -46,7 +46,7 @@
       100% { opacity: 1; transform: translate(-50%, 0); }
     }
 
-    /* Scoreboard Rumpf */
+    /* Haupt-Scoreboard Container */
     .scoreboard {
       display: flex;
       align-items: center;
@@ -84,6 +84,7 @@
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
     }
 
+    /* Vollständiger Teamname zentriert */
     .team-name-wrapper {
       flex-grow: 1;
       display: flex;
@@ -161,7 +162,7 @@
       backdrop-filter: blur(4px);
     }
 
-    /* Responsive Screen Layout */
+    /* Mobile Responsive Layout */
     @media (max-width: 600px) {
       .scoreboard {
         flex-direction: column;
@@ -179,7 +180,9 @@
         justify-content: space-between;
       }
 
-      .team.guest { flex-direction: row; }
+      .team.guest {
+        flex-direction: row;
+      }
 
       .sets-container {
         border-left: none;
@@ -199,24 +202,24 @@
 
   <div class="scoreboard-wrapper">
     <div class="scoreboard" id="main-scoreboard">
-      <!-- HEIM -->
+      <!-- HEIM TEAM -->
       <div class="team home" id="team-home">
-        <img id="team1-logo" class="team-logo" src="" style="display:none;" alt="">
+        <img id="team1-logo" class="team-logo" src="" style="display:none;" crossorigin="anonymous" alt="">
         <div class="team-name-wrapper">
           <span id="team1-name" class="team-name">HEIM</span>
         </div>
         <span id="team1-points" class="points">0</span>
       </div>
 
-      <!-- SÄTZE -->
+      <!-- SÄTZE MITTE -->
       <div class="sets-container">
         <span class="sets-label">SÄTZE</span>
         <span id="sets-score" class="sets-score">0 : 0</span>
       </div>
 
-      <!-- GAST -->
+      <!-- GAST TEAM -->
       <div class="team guest" id="team-guest">
-        <img id="team2-logo" class="team-logo" src="" style="display:none;" alt="">
+        <img id="team2-logo" class="team-logo" src="" style="display:none;" crossorigin="anonymous" alt="">
         <div class="team-name-wrapper">
           <span id="team2-name" class="team-name">GAST</span>
         </div>
@@ -226,8 +229,7 @@
   </div>
 
   <script>
-    // Zurückgestellt auf den Scoreboard-Worker
-    const WORKER_URL = "https://rapid-bread-25a8.nick-valbert2006.workers.dev";
+    const WORKER_URL = "https://scoreboardv2.nick-valbert2006.workers.dev";
     
     let prevP1 = null, prevP2 = null, prevS1 = null, prevS2 = null;
     let isInitialized = false;
@@ -342,74 +344,127 @@
         return;
       }
 
-      // Nutzen eines separaten Off-screen Canvas Bildes für Farb-Extraction ohne OBS-CORS Konflikte
-      const colorLoader = new Image();
-      colorLoader.crossOrigin = "Anonymous";
+      img.src = logoUrl;
+      img.style.display = 'block';
 
-      colorLoader.onload = () => {
-        img.src = logoUrl;
-        img.style.display = 'block';
+      img.onload = () => {
         try {
-          const extractedColor = extractColorFromImage(colorLoader);
-          applyColor(cssVarName, cssTextVarName, extractedColor || fallbackColor);
+          const color = extractLargestConnectedColor(img);
+          applyColor(cssVarName, cssTextVarName, color || fallbackColor);
         } catch (e) {
           applyColor(cssVarName, cssTextVarName, fallbackColor);
         }
       };
 
-      colorLoader.onerror = () => {
-        // Falls Bild-Security blockiert, trotzdem normales Bild anzeigen und Fallback-Farbe nehmen
-        img.src = logoUrl;
-        img.style.display = 'block';
+      img.onerror = () => {
+        img.style.display = 'none';
         applyColor(cssVarName, cssTextVarName, fallbackColor);
       };
-
-      colorLoader.src = logoUrl;
     }
 
-    /* Robuste Farb-Extraction (Buntfarben > Monochrom/Schwarz-Weiß) */
-    function extractColorFromImage(img) {
+    /* EXAKTE Connected Component Flood-Fill Methode */
+    function extractLargestConnectedColor(img) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      canvas.width = 40;
-      canvas.height = 40;
+      const width = 64;
+      const height = 64;
+      canvas.width = width;
+      canvas.height = height;
 
-      ctx.drawImage(img, 0, 0, 40, 40);
-      const imgData = ctx.getImageData(0, 0, 40, 40).data;
+      ctx.drawImage(img, 0, 0, width, height);
+      const imgData = ctx.getImageData(0, 0, width, height).data;
 
-      let bestVibrantColor = null;
-      let maxVibrantScore = -1;
-      
-      let bestMonoColor = null;
-      let maxMonoBrightness = -1;
+      const visited = new Uint8Array(width * height);
+      const colorBins = new Int32Array(width * height);
 
-      for (let i = 0; i < imgData.length; i += 4) {
-        const r = imgData[i];
-        const g = imgData[i + 1];
-        const b = imgData[i + 2];
-        const a = imgData[i + 3];
+      for (let i = 0; i < width * height; i++) {
+        const idx = i * 4;
+        const r = imgData[idx];
+        const g = imgData[idx + 1];
+        const b = imgData[idx + 2];
+        const a = imgData[idx + 3];
 
-        if (a < 128) continue; // Transparente Pixel überspringen
+        if (a < 128) {
+          colorBins[i] = -1; // Transparenz
+          continue;
+        }
 
-        const [h, s, v] = rgbToHsv(r, g, b);
+        const qR = Math.floor(r / 32);
+        const qG = Math.floor(g / 32);
+        const qB = Math.floor(b / 32);
+        colorBins[i] = (qR << 10) | (qG << 5) | qB;
+      }
 
-        // Prüfen auf Buntfarbe (Sättigung >= 20%)
-        if (v >= 0.18 && v <= 0.98 && s >= 0.20) {
-          const score = s * 2.5 + v;
-          if (score > maxVibrantScore) {
-            maxVibrantScore = score;
-            bestVibrantColor = `rgb(${r}, ${g}, ${b})`;
+      let maxColorScore = -1;
+      let bestColorRgb = null;
+
+      let maxMonoSize = -1;
+      let bestMonoRgb = null;
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const pos = y * width + x;
+          if (visited[pos] || colorBins[pos] === -1) continue;
+
+          const bin = colorBins[pos];
+          let currentRegionSize = 0;
+          let sumR = 0, sumG = 0, sumB = 0;
+
+          const queue = [pos];
+          visited[pos] = 1;
+
+          while (queue.length > 0) {
+            const curr = queue.pop();
+            const cx = curr % width;
+            const cy = Math.floor(curr / width);
+            const pixelIdx = curr * 4;
+
+            currentRegionSize++;
+            sumR += imgData[pixelIdx];
+            sumG += imgData[pixelIdx + 1];
+            sumB += imgData[pixelIdx + 2];
+
+            const neighbors = [];
+            if (cx > 0) neighbors.push(curr - 1);
+            if (cx < width - 1) neighbors.push(curr + 1);
+            if (cy > 0) neighbors.push(curr - width);
+            if (cy < height - 1) neighbors.push(curr + width);
+
+            for (const n of neighbors) {
+              if (n >= 0 && n < width * height && !visited[n] && colorBins[n] === bin) {
+                visited[n] = 1;
+                queue.push(n);
+              }
+            }
           }
-        } else {
-          // Schwarz/Weiß/Graustufen Fallback
-          if (v > maxMonoBrightness) {
-            maxMonoBrightness = v;
-            bestMonoColor = `rgb(${r}, ${g}, ${b})`;
+
+          const avgR = Math.round(sumR / currentRegionSize);
+          const avgG = Math.round(sumG / currentRegionSize);
+          const avgB = Math.round(sumB / currentRegionSize);
+
+          const [h, s, v] = rgbToHsv(avgR, avgG, avgB);
+
+          // Prüfen ob Buntfarbe vorliegt
+          const isChromaticallyVibrant = (v >= 0.20 && v <= 0.98 && s >= 0.20);
+
+          if (isChromaticallyVibrant) {
+            const score = currentRegionSize * (1 + s);
+            if (score > maxColorScore) {
+              maxColorScore = score;
+              bestColorRgb = `rgb(${avgR}, ${avgG}, ${avgB})`;
+            }
+          } else {
+            // Schwarz/Weiß/Graustufen Fallback-Verarbeitung
+            if (currentRegionSize > maxMonoSize) {
+              maxMonoSize = currentRegionSize;
+              bestMonoRgb = `rgb(${avgR}, ${avgG}, ${avgB})`;
+            }
           }
         }
       }
 
-      return bestVibrantColor || bestMonoColor;
+      // Falls Buntfarbe existiert, nimm diese; sonst nimm die größte Schwarz/Weiß/Grau-Fläche
+      return bestColorRgb || bestMonoRgb;
     }
 
     function rgbToHsv(r, g, b) {
