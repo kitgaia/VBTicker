@@ -25,13 +25,14 @@ Verwende die folgenden URL-Parameter, um das Scoreboard zu steuern:
 
 ```text
 [https://deine-domain.de/scoreboard.html?match=SPIEL_ID&assoc=VERBAND](https://deine-domain.de/scoreboard.html?match=SPIEL_ID&assoc=VERBAND)
-
+```
 Parameter,Beschreibung,Beispiel
 match,Eindeutige ID des Spiels,9f93d1e6-58df-4116...
 assoc / verband,Kürzel des zuständigen Verbands,wvv
 
+---
 
-3. Empfohlene Einstellungen in OBS
+### 3. Empfohlene Einstellungen in OBS
 Breite: 1920 (oder 1280)
 
 Höhe: 1080 (oder 720)
@@ -41,6 +42,8 @@ FPS: 30 oder 60
 Benutzerdefiniertes CSS: (leer lassen)
 
 Haken setzen bei: Szenenaktivierung neu laden (optional)
+
+---
 
 ⚙️ Tech Stack
 Frontend: HTML5, CSS3 (Flexbox, CSS Variables, Animations), JavaScript (ES6+)
