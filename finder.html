@@ -611,8 +611,8 @@
   <div id="toast" class="toast-message">Kopiert!</div>
 
   <script>
-    // Angepasst auf deinen dedizierten Ticker-Worker
-    const WORKER_URL = "https://tickerv2.nick-valbert2006.workers.dev";
+    // Worker-URL ohne erzwungenen assoc-Parameter
+    const WORKER_URL = "https://rapid-bread-25a8.nick-valbert2006.workers.dev";
     const SCOREBOARD_BASE_URL = "https://kitgaia.github.io/VBTicker/scoreboardV2.html";
 
     let allMatches = [];
@@ -788,7 +788,7 @@
 
       document.getElementById('btn-copy-scoreboard').addEventListener('click', () => {
         if (!currentActiveMatch) return;
-        copyTextToClipboard(`${SCOREBOARD_BASE_URL}?match=${currentActiveMatch.id}&assoc=wvv`, "Scoreboard-Link kopiert!");
+        copyTextToClipboard(`${SCOREBOARD_BASE_URL}?match=${currentActiveMatch.id}`, "Scoreboard-Link kopiert!");
       });
 
       document.getElementById('btn-copy-id').addEventListener('click', () => {
@@ -817,11 +817,12 @@
       walk(data);
     }
 
-    /* Rekursive & Sichere Extraktion aller Spiele aus dem SAMS Verbandsobjekt */
     async function loadMatches() {
       const statusEl = document.getElementById('status');
       try {
-        const response = await fetch(`${WORKER_URL}/?assoc=wvv`);
+        // Reiner Worker-Aufruf ohne vorgegebene asso Parameter
+        const fetchUrl = window.location.search ? `${WORKER_URL}/${window.location.search}` : WORKER_URL;
+        const response = await fetch(fetchUrl);
         if (!response.ok) throw new Error("Worker konnte nicht geladen werden.");
 
         const data = await response.json();
@@ -832,7 +833,6 @@
         const todayStart = new Date(new Date().setHours(0,0,0,0)).getTime();
         const rawMatchList = [];
 
-        // 1. Spiele aus flachen MatchDays sammeln
         if (Array.isArray(data.matchDays)) {
           data.matchDays.forEach(day => {
             if (Array.isArray(day.matches)) {
@@ -841,7 +841,6 @@
           });
         }
 
-        // 2. Spiele aus tief verschachtelten Ligen/Serien-Objekten sammeln (Fallback)
         function extractMatchesFromObject(obj, currentLeague = '', currentGender = '', depth = 0) {
           if (!obj || typeof obj !== 'object' || depth > 7) return;
           const leagueName = obj.name || obj.leagueName || currentLeague;
@@ -866,7 +865,6 @@
           extractMatchesFromObject(data);
         }
 
-        // Duplikate filtern und einheitlich verarbeiten
         const processedIds = new Set();
 
         rawMatchList.forEach(item => {
@@ -1114,11 +1112,11 @@
 
       updateModalScore(m.parsedScore);
 
-      document.getElementById('btn-open-scoreboard').setAttribute('href', `${SCOREBOARD_BASE_URL}?match=${m.id}&assoc=wvv`);
+      document.getElementById('btn-open-scoreboard').setAttribute('href', `${SCOREBOARD_BASE_URL}?match=${m.id}`);
       document.getElementById('match-modal').classList.add('active');
 
       try {
-        const liveRes = await fetch(`${WORKER_URL}/?match=${m.id}&assoc=wvv`);
+        const liveRes = await fetch(`${WORKER_URL}/?match=${m.id}`);
         if (liveRes.ok) {
           const liveData = await liveRes.json();
           const liveParsed = parseScore(liveData);
