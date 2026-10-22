@@ -162,7 +162,7 @@
       backdrop-filter: blur(4px);
     }
 
-    /* Mobile Responsive Layout: Untereinander bei schmalen Bildschirmen */
+    /* Mobile Responsive Layout */
     @media (max-width: 600px) {
       .scoreboard {
         flex-direction: column;
@@ -229,7 +229,7 @@
   </div>
 
   <script>
-    const WORKER_URL = "https://scoreboardv2.nick-valbert2006.workers.dev/";
+    const WORKER_URL = "https://tickerv2.nick-valbert2006.workers.dev";
     
     let prevP1 = null, prevP2 = null, prevS1 = null, prevS2 = null;
     let isInitialized = false;
@@ -362,7 +362,7 @@
       };
     }
 
-    /* NEU: Größte zusammenhängende Einzelfläche im Logo ermitteln (Connected Component Flood Fill) */
+    /* NEU: Größte zusammenhängende Einzelfläche mit Schwarz/Weiß/Graustufen Fallback */
     function extractLargestConnectedColor(img) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -374,11 +374,9 @@
       ctx.drawImage(img, 0, 0, width, height);
       const imgData = ctx.getImageData(0, 0, width, height).data;
 
-      // Matrix für Farb-Bins und Besuchsstatus
       const visited = new Uint8Array(width * height);
       const colorBins = new Int32Array(width * height);
 
-      // Quantisierung: Farbtöne in ähnliche Bins gruppieren
       for (let i = 0; i < width * height; i++) {
         const idx = i * 4;
         const r = imgData[idx];
@@ -391,17 +389,18 @@
           continue;
         }
 
-        // Bins vereinfachen (Raster von 32x32x32 Farben)
         const qR = Math.floor(r / 32);
         const qG = Math.floor(g / 32);
         const qB = Math.floor(b / 32);
         colorBins[i] = (qR << 10) | (qG << 5) | qB;
       }
 
-      let maxRegionSize = 0;
-      let bestRgb = null;
+      let maxColorScore = -1;
+      let bestColorRgb = null;
 
-      // Connected Component Flood-Fill durchführen
+      let maxMonoSize = -1;
+      let bestMonoRgb = null;
+
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
           const pos = y * width + x;
@@ -425,42 +424,47 @@
             sumG += imgData[pixelIdx + 1];
             sumB += imgData[pixelIdx + 2];
 
-            // 4er Nachbarschaft prüfen
             const neighbors = [];
             if (cx > 0) neighbors.push(curr - 1);
             if (cx < width - 1) neighbors.push(curr + 1);
             if (cy > 0) neighbors.push(curr - width);
-            if (cy < height - 1) neighbors.push(curr + width);
+            if (cy < height - 1) neighbors.push(curr + height ? curr + width : curr + width);
 
             for (const n of neighbors) {
-              if (!visited[n] && colorBins[n] === bin) {
+              if (n >= 0 && n < width * height && !visited[n] && colorBins[n] === bin) {
                 visited[n] = 1;
                 queue.push(n);
               }
             }
           }
 
-          // Durchschnittsfarbe der zusammenhängenden Region
           const avgR = Math.round(sumR / currentRegionSize);
           const avgG = Math.round(sumG / currentRegionSize);
           const avgB = Math.round(sumB / currentRegionSize);
 
           const [h, s, v] = rgbToHsv(avgR, avgG, avgB);
 
-          // Ausschluss von Weiß, Schwarz und blassen Grautönen
-          if (v < 0.2 || v > 0.98 || s < 0.22) continue;
+          // Prüfen ob Buntfarbe vorliegt
+          const isChromaticallyVibrant = (v >= 0.20 && v <= 0.98 && s >= 0.20);
 
-          // Bevorzugung von zusammenhängender Größe + lebendiger Farbe
-          const score = currentRegionSize * (1 + s);
-
-          if (score > maxRegionSize) {
-            maxRegionSize = score;
-            bestRgb = `rgb(${avgR}, ${avgG}, ${avgB})`;
+          if (isChromaticallyVibrant) {
+            const score = currentRegionSize * (1 + s);
+            if (score > maxColorScore) {
+              maxColorScore = score;
+              bestColorRgb = `rgb(${avgR}, ${avgG}, ${avgB})`;
+            }
+          } else {
+            // Schwarz/Weiß/Graustufen Fallback-Verarbeitung
+            if (currentRegionSize > maxMonoSize) {
+              maxMonoSize = currentRegionSize;
+              bestMonoRgb = `rgb(${avgR}, ${avgG}, ${avgB})`;
+            }
           }
         }
       }
 
-      return bestRgb;
+      // Falls Buntfarbe existiert, nimm diese; sonst nimm die größte Schwarz/Weiß/Grau-Fläche
+      return bestColorRgb || bestMonoRgb;
     }
 
     function rgbToHsv(r, g, b) {
