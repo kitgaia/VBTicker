@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Volleyball Scoreboard Overlay - V1.5 OBS Fixed</title>
+  <title>Volleyball Scoreboard Overlay - V1.5 Base</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: transparent; /* In OBS vollkommen transparent */
+      background: transparent; /* Für OBS transparent */
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 'Helvetica Neue', Arial, sans-serif;
       overflow: hidden;
       width: 100vw;
@@ -26,7 +26,7 @@
       --color-guest-text: #ffffff;
     }
 
-    /* Scoreboard Wrapper */
+    /* Scoreboard Container */
     .scoreboard-wrapper {
       position: absolute;
       top: 20px;
@@ -46,7 +46,7 @@
       100% { opacity: 1; transform: translate(-50%, 0); }
     }
 
-    /* Haupt-Scoreboard Container */
+    /* Scoreboard Rumpf */
     .scoreboard {
       display: flex;
       align-items: center;
@@ -84,7 +84,6 @@
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
     }
 
-    /* Vollständiger Teamname zentriert */
     .team-name-wrapper {
       flex-grow: 1;
       display: flex;
@@ -143,7 +142,26 @@
     .sets-score { font-size: clamp(16px, 2.8vw, 22px); color: #f8fafc; letter-spacing: 2px; font-weight: 900; }
     .sets-label { font-size: 8px; color: #38bdf8; text-transform: uppercase; letter-spacing: 1px; font-weight: 900; }
 
-    /* Mobile Responsive Layout */
+    /* Version Badge */
+    .version-badge {
+      position: fixed;
+      bottom: 12px;
+      right: 12px;
+      background: rgba(3, 7, 18, 0.85);
+      border: 1px solid rgba(0, 242, 254, 0.4);
+      color: #00f2fe;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 3px 8px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+      z-index: 1000;
+      text-transform: uppercase;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Responsive Screen Layout */
     @media (max-width: 600px) {
       .scoreboard {
         flex-direction: column;
@@ -161,9 +179,7 @@
         justify-content: space-between;
       }
 
-      .team.guest {
-        flex-direction: row;
-      }
+      .team.guest { flex-direction: row; }
 
       .sets-container {
         border-left: none;
@@ -179,9 +195,11 @@
 </head>
 <body>
 
+  <div class="version-badge">v1.5 Base</div>
+
   <div class="scoreboard-wrapper">
     <div class="scoreboard" id="main-scoreboard">
-      <!-- HEIM TEAM -->
+      <!-- HEIM -->
       <div class="team home" id="team-home">
         <img id="team1-logo" class="team-logo" src="" style="display:none;" alt="">
         <div class="team-name-wrapper">
@@ -190,13 +208,13 @@
         <span id="team1-points" class="points">0</span>
       </div>
 
-      <!-- SÄTZE MITTE -->
+      <!-- SÄTZE -->
       <div class="sets-container">
         <span class="sets-label">SÄTZE</span>
         <span id="sets-score" class="sets-score">0 : 0</span>
       </div>
 
-      <!-- GAST TEAM -->
+      <!-- GAST -->
       <div class="team guest" id="team-guest">
         <img id="team2-logo" class="team-logo" src="" style="display:none;" alt="">
         <div class="team-name-wrapper">
@@ -256,6 +274,7 @@
       document.getElementById('team1-name').innerText = d.team1;
       document.getElementById('team2-name').innerText = d.team2;
 
+      // Bewährte v1.2 Logo-Setz-Logik
       setupTeamLogoAndColor('team1-logo', d.logo1, '--color-home', '--color-home-text', '#0a84ff');
       setupTeamLogoAndColor('team2-logo', d.logo2, '--color-guest', '--color-guest-text', '#ff9f0a');
 
@@ -323,128 +342,69 @@
         return;
       }
 
-      // OBS CORS Safe Image Loading
-      const tempImg = new Image();
-      tempImg.crossOrigin = 'anonymous';
+      img.src = logoUrl;
+      img.style.display = 'block';
 
-      tempImg.onload = () => {
-        img.src = logoUrl;
-        img.style.display = 'block';
+      img.onload = () => {
         try {
-          const color = extractLargestConnectedColor(tempImg);
+          const color = extractLogoColor(img);
           applyColor(cssVarName, cssTextVarName, color || fallbackColor);
         } catch (e) {
+          // Falls OBS Canvas aus Sicherheitsgründen sperrt, direkt Fallback nutzen!
           applyColor(cssVarName, cssTextVarName, fallbackColor);
         }
       };
 
-      tempImg.onerror = () => {
-        // Zweiter Versuch ohne CORS Header (Fallback für OBS)
-        img.src = logoUrl;
-        img.style.display = 'block';
+      img.onerror = () => {
+        img.style.display = 'none';
         applyColor(cssVarName, cssTextVarName, fallbackColor);
       };
-
-      tempImg.src = logoUrl;
     }
 
-    /* OBS-sichere Canvas Analyse */
-    function extractLargestConnectedColor(img) {
+    /* OBS Safe Color Extraction */
+    function extractLogoColor(img) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const width = 48;
-      const height = 48;
+      const width = 32;
+      const height = 32;
       canvas.width = width;
       canvas.height = height;
 
       ctx.drawImage(img, 0, 0, width, height);
       const imgData = ctx.getImageData(0, 0, width, height).data;
 
-      const visited = new Uint8Array(width * height);
-      const colorBins = new Int32Array(width * height);
-
-      for (let i = 0; i < width * height; i++) {
-        const idx = i * 4;
-        const r = imgData[idx];
-        const g = imgData[idx + 1];
-        const b = imgData[idx + 2];
-        const a = imgData[idx + 3];
-
-        if (a < 128) {
-          colorBins[i] = -1;
-          continue;
-        }
-
-        const qR = Math.floor(r / 32);
-        const qG = Math.floor(g / 32);
-        const qB = Math.floor(b / 32);
-        colorBins[i] = (qR << 10) | (qG << 5) | qB;
-      }
-
-      let maxColorScore = -1;
       let bestColorRgb = null;
+      let maxScore = -1;
       let maxMonoSize = -1;
       let bestMonoRgb = null;
 
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          const pos = y * width + x;
-          if (visited[pos] || colorBins[pos] === -1) continue;
+      for (let i = 0; i < imgData.length; i += 4) {
+        const r = imgData[i];
+        const g = imgData[i + 1];
+        const b = imgData[i + 2];
+        const a = imgData[i + 3];
 
-          const bin = colorBins[pos];
-          let currentRegionSize = 0;
-          let sumR = 0, sumG = 0, sumB = 0;
+        if (a < 128) continue; // Transparenz ignorieren
 
-          const queue = [pos];
-          visited[pos] = 1;
+        const [h, s, v] = rgbToHsv(r, g, b);
 
-          while (queue.length > 0) {
-            const curr = queue.pop();
-            const cx = curr % width;
-            const cy = Math.floor(curr / width);
-            const pixelIdx = curr * 4;
-
-            currentRegionSize++;
-            sumR += imgData[pixelIdx];
-            sumG += imgData[pixelIdx + 1];
-            sumB += imgData[pixelIdx + 2];
-
-            if (cx > 0) checkNeighbor(curr - 1, bin, queue, visited, colorBins);
-            if (cx < width - 1) checkNeighbor(curr + 1, bin, queue, visited, colorBins);
-            if (cy > 0) checkNeighbor(curr - width, bin, queue, visited, colorBins);
-            if (cy < height - 1) checkNeighbor(curr + width, bin, queue, visited, colorBins);
+        // Buntfarben bevorzugen
+        if (v >= 0.20 && v <= 0.98 && s >= 0.22) {
+          const score = s * 2 + v;
+          if (score > maxScore) {
+            maxScore = score;
+            bestColorRgb = `rgb(${r}, ${g}, ${b})`;
           }
-
-          const avgR = Math.round(sumR / currentRegionSize);
-          const avgG = Math.round(sumG / currentRegionSize);
-          const avgB = Math.round(sumB / currentRegionSize);
-
-          const [h, s, v] = rgbToHsv(avgR, avgG, avgB);
-          const isChromaticallyVibrant = (v >= 0.20 && v <= 0.98 && s >= 0.20);
-
-          if (isChromaticallyVibrant) {
-            const score = currentRegionSize * (1 + s);
-            if (score > maxColorScore) {
-              maxColorScore = score;
-              bestColorRgb = `rgb(${avgR}, ${avgG}, ${avgB})`;
-            }
-          } else {
-            if (currentRegionSize > maxMonoSize) {
-              maxMonoSize = currentRegionSize;
-              bestMonoRgb = `rgb(${avgR}, ${avgG}, ${avgB})`;
-            }
+        } else {
+          // Schwarz/Weiß/Graustufen Fallback
+          if (v > maxMonoSize) {
+            maxMonoSize = v;
+            bestMonoRgb = `rgb(${r}, ${g}, ${b})`;
           }
         }
       }
 
       return bestColorRgb || bestMonoRgb;
-    }
-
-    function checkNeighbor(n, bin, queue, visited, colorBins) {
-      if (n >= 0 && n < colorBins.length && !visited[n] && colorBins[n] === bin) {
-        visited[n] = 1;
-        queue.push(n);
-      }
     }
 
     function rgbToHsv(r, g, b) {
