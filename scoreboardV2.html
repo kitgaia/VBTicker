@@ -229,7 +229,7 @@
   </div>
 
   <script>
-    const WORKER_URL = "https://vb-ticker-node-5.vbticker.workers.dev";
+    const WORKER_URL = "https://vb-ticker-router.vbticker.workers.dev";
     
     let prevP1 = null, prevP2 = null, prevS1 = null, prevS2 = null;
     let isInitialized = false;
@@ -240,7 +240,7 @@
       const assoc = urlParams.get('assoc') || urlParams.get('verband') || 'wvv';
 
       fetchScore(matchId, assoc);
-      setInterval(() => fetchScore(matchId, assoc), 5000);
+      setInterval(() => fetchScore(matchId, assoc), 4000);
     });
 
     async function fetchScore(matchId, assoc) {
