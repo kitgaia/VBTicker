@@ -5,30 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>SAMS Match Finder</title>
   <style>
-    /* CSS Design Tokens for Liquid Glass Aesthetics, Dynamic Themes & Scaling */
+    /* CSS Design Tokens für Liquid Glass & Skalierung */
     :root {
-      --font-scale: 1rem;
+      --font-scale: 0.95rem;
       --pad-scale: 1;
-      --radius-card: 22px;
+      --radius-card: 20px;
       --radius-pill: 9999px;
-      --radius-inner: 16px;
+      --radius-inner: 14px;
       --ease-ios: cubic-bezier(0.16, 1, 0.3, 1);
       --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    [data-scale="compact"] {
-      --font-scale: 0.88rem;
-      --pad-scale: 0.85;
-      --radius-card: 18px;
-      --radius-inner: 12px;
-    }
-
-    [data-scale="large"] {
-      --font-scale: 1.12rem;
-      --pad-scale: 1.15;
-      --radius-card: 26px;
-      --radius-inner: 18px;
-    }
+    [data-scale="compact"] { --font-scale: 0.85rem; --pad-scale: 0.85; --radius-card: 16px; --radius-inner: 10px; }
+    [data-scale="large"] { --font-scale: 1.08rem; --pad-scale: 1.15; --radius-card: 24px; --radius-inner: 16px; }
 
     /* Dark Liquid Glass Palette */
     [data-theme="dark"] {
@@ -36,26 +25,23 @@
       --bg-gradient: radial-gradient(circle at 15% -10%, rgba(10, 132, 255, 0.22) 0%, transparent 45%),
                       radial-gradient(circle at 85% 110%, rgba(48, 209, 88, 0.12) 0%, transparent 50%),
                       radial-gradient(circle at 50% 50%, rgba(191, 90, 242, 0.08) 0%, transparent 60%);
-      --glass-capsule-bg: rgba(20, 22, 28, 0.68);
+      --glass-capsule-bg: rgba(20, 22, 28, 0.82);
       --glass-surface: rgba(255, 255, 255, 0.07);
       --glass-surface-hover: rgba(255, 255, 255, 0.13);
-      --glass-surface-active: rgba(255, 255, 255, 0.18);
-      --glass-border: rgba(255, 255, 255, 0.16);
-      --glass-border-light: rgba(255, 255, 255, 0.28);
-      --glass-shadow: 0 20px 48px rgba(0, 0, 0, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.28);
+      --glass-border: rgba(255, 255, 255, 0.14);
+      --glass-border-light: rgba(255, 255, 255, 0.26);
+      --glass-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.25);
       --text-primary: #ffffff;
       --text-muted: #98989d;
       --accent-contrast: #ffffff;
-      --badge-bg: rgba(255, 255, 255, 0.1);
-      --badge-border: rgba(255, 255, 255, 0.22);
-      --input-bg: rgba(0, 0, 0, 0.55);
+      --badge-bg: rgba(255, 255, 255, 0.09);
+      --badge-border: rgba(255, 255, 255, 0.2);
+      --input-bg: rgba(0, 0, 0, 0.5);
+      --modal-bg: rgba(14, 16, 22, 0.94);
       
-      /* Past Match Specifics (Dark) */
-      --past-card-bg: rgba(255, 255, 255, 0.025);
-      --past-border: rgba(255, 255, 255, 0.08);
-      --past-opacity: 0.42;
-      --past-badge-bg: rgba(255, 255, 255, 0.06);
-      --past-badge-text: #8e8e93;
+      --past-card-bg: rgba(255, 255, 255, 0.02);
+      --past-border: rgba(255, 255, 255, 0.06);
+      --past-opacity: 0.52;
     }
 
     /* Light Liquid Glass Palette */
@@ -63,29 +49,26 @@
       --bg-body: #f2f2f7;
       --bg-gradient: radial-gradient(circle at 20% -10%, rgba(0, 122, 255, 0.14) 0%, transparent 45%),
                       radial-gradient(circle at 80% 110%, rgba(52, 199, 89, 0.12) 0%, transparent 50%);
-      --glass-capsule-bg: rgba(255, 255, 255, 0.76);
-      --glass-surface: rgba(255, 255, 255, 0.72);
-      --glass-surface-hover: rgba(255, 255, 255, 0.88);
-      --glass-surface-active: rgba(255, 255, 255, 0.95);
+      --glass-capsule-bg: rgba(255, 255, 255, 0.88);
+      --glass-surface: rgba(255, 255, 255, 0.76);
+      --glass-surface-hover: rgba(255, 255, 255, 0.92);
       --glass-border: rgba(0, 0, 0, 0.12);
-      --glass-border-light: rgba(0, 0, 0, 0.22);
-      --glass-shadow: 0 14px 36px rgba(0, 0, 0, 0.09), inset 0 1px 1px rgba(255, 255, 255, 0.95);
+      --glass-border-light: rgba(0, 0, 0, 0.2);
+      --glass-shadow: 0 12px 32px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.9);
       --text-primary: #000000;
       --text-muted: #6c6c70;
       --accent-contrast: #000000;
       --badge-bg: rgba(0, 0, 0, 0.06);
       --badge-border: rgba(0, 0, 0, 0.14);
       --input-bg: rgba(255, 255, 255, 0.85);
+      --modal-bg: rgba(245, 245, 250, 0.95);
       
-      /* Past Match Specifics (Light) */
-      --past-card-bg: rgba(0, 0, 0, 0.03);
-      --past-border: rgba(0, 0, 0, 0.06);
-      --past-opacity: 0.52;
-      --past-badge-bg: rgba(0, 0, 0, 0.05);
-      --past-badge-text: #6c6c70;
+      --past-card-bg: rgba(0, 0, 0, 0.02);
+      --past-border: rgba(0, 0, 0, 0.05);
+      --past-opacity: 0.60;
     }
 
-    /* Dynamic Accent Color Modes */
+    /* Dynamische Akzentfarben */
     [data-accent="contrast"][data-theme="dark"] { --accent: #ffffff; --accent-glow: rgba(255, 255, 255, 0.35); --accent-text: #000000; }
     [data-accent="contrast"][data-theme="light"] { --accent: #000000; --accent-glow: rgba(0, 0, 0, 0.25); --accent-text: #ffffff; }
     [data-accent="blue"] { --accent: #0a84ff; --accent-glow: rgba(10, 132, 255, 0.38); --accent-text: #ffffff; }
@@ -93,60 +76,37 @@
     [data-accent="orange"] { --accent: #ff9f0a; --accent-glow: rgba(255, 159, 10, 0.38); --accent-text: #000000; }
     [data-accent="purple"] { --accent: #bf5af2; --accent-glow: rgba(191, 90, 242, 0.38); --accent-text: #ffffff; }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
     body {
       background-color: var(--bg-body);
       background-image: var(--bg-gradient);
       background-attachment: fixed;
       color: var(--text-primary);
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
       font-size: var(--font-scale);
       padding: env(safe-area-inset-top, 16px) 16px calc(env(safe-area-inset-bottom, 24px) + 32px) 16px;
-      line-height: 1.45;
+      line-height: 1.4;
       -webkit-font-smoothing: antialiased;
       transition: background-color 0.3s ease, color 0.3s ease;
     }
 
-    .container {
-      max-width: 1080px;
-      margin: 0 auto;
-    }
+    .container { max-width: 1040px; margin: 0 auto; }
 
-    /* 1. Scrollable Header Area (Scrolls out of view naturally) */
-    .scrollable-header {
-      padding: 12px 6px 18px 6px;
-      text-align: center;
-    }
+    /* Header Bereich */
+    .scrollable-header { padding: 10px 4px 16px 4px; text-align: center; }
+    h1 { font-size: calc(1.75rem * var(--pad-scale)); font-weight: 800; letter-spacing: -0.6px; }
+    .subtitle { color: var(--text-muted); font-size: calc(0.85rem * var(--pad-scale)); margin-top: 3px; }
 
-    h1 {
-      font-size: calc(1.85rem * var(--pad-scale));
-      font-weight: 800;
-      letter-spacing: -0.7px;
-      color: var(--text-primary);
-    }
-
-    .subtitle {
-      color: var(--text-muted);
-      font-size: calc(0.88rem * var(--pad-scale));
-      margin-top: 4px;
-      font-weight: 400;
-    }
-
-    /* 2. Floating Liquid Glass Island (No solid background block) */
+    /* Schwebende Liquid Capsule Leiste */
     .floating-bar-wrapper {
       position: sticky;
-      top: 12px;
+      top: 10px;
       z-index: 100;
-      margin: 0 auto 24px auto;
-      max-width: 760px;
+      margin: 0 auto 20px auto;
+      max-width: 740px;
       width: 100%;
-      pointer-events: none; /* Let scroll passes through margins */
+      pointer-events: none;
     }
 
     .search-row {
@@ -154,16 +114,15 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 6px;
+      padding: 5px 6px;
       background: var(--glass-capsule-bg);
-      backdrop-filter: blur(32px) saturate(210%);
-      -webkit-backdrop-filter: blur(32px) saturate(210%);
+      backdrop-filter: blur(28px) saturate(200%);
+      -webkit-backdrop-filter: blur(28px) saturate(200%);
       border: 1px solid var(--glass-border);
       border-radius: var(--radius-pill);
       box-shadow: var(--glass-shadow);
       position: relative;
-      transition: transform 0.25s var(--ease-bounce), border-color 0.3s ease, box-shadow 0.3s ease;
-      will-change: transform;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
     }
 
     .search-row:focus-within {
@@ -171,27 +130,18 @@
       box-shadow: var(--glass-shadow), 0 0 0 3px var(--accent-glow);
     }
 
-    .search-wrapper {
-      position: relative;
-      flex: 1;
-    }
-
+    .search-wrapper { position: relative; flex: 1; }
     .search-box {
       width: 100%;
-      height: calc(44px * var(--pad-scale));
-      padding: 0 16px 0 42px;
+      height: calc(42px * var(--pad-scale));
+      padding: 0 14px 0 40px;
       background: transparent;
       border: none;
       color: var(--text-primary);
-      font-size: calc(0.95rem * var(--pad-scale));
+      font-size: calc(0.92rem * var(--pad-scale));
       outline: none;
     }
-
-    .search-box::placeholder {
-      color: var(--text-muted);
-      opacity: 0.8;
-    }
-
+    .search-box::placeholder { color: var(--text-muted); opacity: 0.8; }
     .search-icon {
       position: absolute;
       left: 14px;
@@ -201,18 +151,14 @@
       height: 18px;
       fill: var(--text-muted);
       pointer-events: none;
-      transition: fill 0.25s ease;
+      transition: fill 0.2s ease;
     }
+    .search-box:focus + .search-icon { fill: var(--accent); }
 
-    .search-box:focus + .search-icon,
-    .search-wrapper:focus-within .search-icon {
-      fill: var(--accent);
-    }
-
-    /* Icon Buttons (Circular Filter & Settings Buttons inside capsule) */
+    /* Runde Icon Buttons */
     .icon-btn {
-      width: calc(42px * var(--pad-scale));
-      height: calc(42px * var(--pad-scale));
+      width: calc(40px * var(--pad-scale));
+      height: calc(40px * var(--pad-scale));
       border-radius: 50%;
       background: var(--glass-surface);
       border: 1px solid var(--glass-border);
@@ -221,526 +167,362 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.22s var(--ease-bounce);
+      transition: all 0.2s var(--ease-bounce);
       flex-shrink: 0;
-      position: relative;
-      overflow: hidden;
     }
-
-    /* Liquid Glass Shimmer effect on hover */
-    .icon-btn::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.2) 50%, transparent 60%);
-      transform: rotate(25deg) translateY(-100%);
-      transition: transform 0.6s ease;
-    }
-
-    .icon-btn:hover::before {
-      transform: rotate(25deg) translateY(100%);
-    }
-
-    .icon-btn:hover {
-      background: var(--glass-surface-hover);
-      transform: scale(1.06);
-    }
-
-    .icon-btn:active {
-      transform: scale(0.92);
-      opacity: 0.85;
-    }
-
+    .icon-btn:hover { background: var(--glass-surface-hover); transform: scale(1.05); }
+    .icon-btn:active { transform: scale(0.92); }
     .icon-btn.active {
       background: var(--accent);
       border-color: var(--accent);
       color: var(--accent-text);
-      box-shadow: 0 4px 18px var(--accent-glow);
+      box-shadow: 0 4px 16px var(--accent-glow);
     }
+    .icon-btn.active svg { fill: var(--accent-text); }
+    .icon-btn svg { width: 18px; height: 18px; fill: var(--text-primary); }
 
-    .icon-btn.active svg {
-      fill: var(--accent-text);
-    }
-
-    .icon-btn svg {
-      width: 19px;
-      height: 19px;
-      fill: var(--text-primary);
-      transition: fill 0.2s ease, transform 0.3s var(--ease-bounce);
-    }
-
-    .icon-btn:hover svg {
-      transform: rotate(12deg);
-    }
-
-    /* Autocomplete Suggestion Floating Dropdown */
+    /* Autocomplete Menü */
     .autocomplete-list {
       position: absolute;
-      top: calc(54px * var(--pad-scale));
+      top: calc(50px * var(--pad-scale));
       left: 0;
       right: 0;
       background: var(--glass-capsule-bg);
-      backdrop-filter: blur(32px) saturate(210%);
-      -webkit-backdrop-filter: blur(32px) saturate(210%);
+      backdrop-filter: blur(28px) saturate(200%);
+      -webkit-backdrop-filter: blur(28px) saturate(200%);
       border: 1px solid var(--glass-border-light);
       border-radius: var(--radius-card);
       box-shadow: var(--glass-shadow);
-      max-height: 250px;
+      max-height: 220px;
       overflow-y: auto;
       z-index: 105;
       display: none;
     }
-
     .autocomplete-item {
-      padding: 12px 18px;
-      font-size: calc(0.9rem * var(--pad-scale));
+      padding: 10px 16px;
+      font-size: calc(0.88rem * var(--pad-scale));
       cursor: pointer;
       border-bottom: 1px solid var(--glass-border);
       color: var(--text-primary);
-      transition: background 0.15s ease;
     }
+    .autocomplete-item:hover { background: var(--glass-surface-hover); color: var(--accent); }
 
-    .autocomplete-item:last-child {
-      border-bottom: none;
-    }
-
-    .autocomplete-item:hover, .autocomplete-item:active {
-      background: var(--glass-surface-hover);
-      color: var(--accent);
-    }
-
-    /* Highly Optimized GPU-Accelerated Drawer Panels (No Layout Reflow Lag!) */
+    /* Drawers (Filter & Settings) */
     .drawer-panel {
       pointer-events: auto;
       display: grid;
       grid-template-rows: 0fr;
       opacity: 0;
-      transform: translateY(-10px) scale(0.98);
-      transition: grid-template-rows 0.32s var(--ease-ios), 
-                  opacity 0.25s ease, 
-                  transform 0.3s var(--ease-ios), 
-                  margin-top 0.28s ease;
+      transform: translateY(-8px) scale(0.99);
+      transition: grid-template-rows 0.3s var(--ease-ios), opacity 0.22s ease, transform 0.25s var(--ease-ios), margin-top 0.25s ease;
       margin-top: 0;
       will-change: transform, opacity, grid-template-rows;
     }
-
     .drawer-panel.open {
       grid-template-rows: 1fr;
       opacity: 1;
       transform: translateY(0) scale(1);
-      margin-top: 12px;
+      margin-top: 10px;
     }
-
-    .drawer-inner {
-      overflow: hidden;
-    }
+    .drawer-inner { overflow: hidden; }
 
     .glass-card-panel {
       background: var(--glass-capsule-bg);
-      backdrop-filter: blur(32px) saturate(210%);
-      -webkit-backdrop-filter: blur(32px) saturate(210%);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
       border: 1px solid var(--glass-border);
       border-radius: var(--radius-card);
-      padding: calc(18px * var(--pad-scale));
+      padding: calc(16px * var(--pad-scale));
       box-shadow: var(--glass-shadow);
     }
 
-    .filter-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 12px;
-    }
-
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .filter-group label {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: var(--text-muted);
-    }
-
+    .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .filter-group label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
     .filter-control {
-      height: calc(42px * var(--pad-scale));
-      padding: 0 12px;
+      height: calc(38px * var(--pad-scale));
+      padding: 0 10px;
       background: var(--input-bg);
       border: 1px solid var(--glass-border);
       border-radius: var(--radius-inner);
       color: var(--text-primary);
-      font-size: calc(0.88rem * var(--pad-scale));
+      font-size: calc(0.85rem * var(--pad-scale));
       outline: none;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
-
-    .filter-control option {
-      background: var(--bg-body);
-      color: var(--text-primary);
-    }
-
-    .filter-control:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px var(--accent-glow);
-    }
-
+    .filter-control option { background: var(--bg-body); color: var(--text-primary); }
     .reset-filters-btn {
       grid-column: 1 / -1;
-      height: calc(40px * var(--pad-scale));
+      height: calc(36px * var(--pad-scale));
       background: var(--glass-surface-hover);
       border: 1px solid var(--glass-border);
       border-radius: var(--radius-pill);
       color: var(--text-primary);
-      font-size: calc(0.85rem * var(--pad-scale));
+      font-size: calc(0.82rem * var(--pad-scale));
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s var(--ease-bounce);
     }
 
-    .reset-filters-btn:hover {
-      background: var(--glass-border-light);
-      transform: translateY(-1px);
-    }
+    /* Settings UI */
+    .settings-section { display: flex; flex-direction: column; gap: 14px; }
+    .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .settings-label { font-size: calc(0.88rem * var(--pad-scale)); font-weight: 600; }
+    .settings-subtext { font-size: 11px; color: var(--text-muted); }
 
-    .reset-filters-btn:active {
-      transform: scale(0.97);
-    }
-
-    /* Settings UI Section */
-    .settings-section {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .settings-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .settings-label {
-      font-size: calc(0.92rem * var(--pad-scale));
-      font-weight: 600;
-    }
-
-    .settings-subtext {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    /* Segmented Controls */
     .segmented-control {
       display: inline-flex;
       background: var(--input-bg);
       border: 1px solid var(--glass-border);
-      padding: 3px;
+      padding: 2px;
       border-radius: var(--radius-pill);
-      gap: 4px;
+      gap: 3px;
     }
-
     .segment-btn {
       border: none;
       background: transparent;
-      padding: 6px 14px;
+      padding: 5px 12px;
       border-radius: var(--radius-pill);
       color: var(--text-muted);
-      font-size: calc(0.82rem * var(--pad-scale));
+      font-size: calc(0.8rem * var(--pad-scale));
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s var(--ease-bounce);
     }
+    .segment-btn.active { background: var(--accent); color: var(--accent-text); }
 
-    .segment-btn.active {
-      background: var(--accent);
-      color: var(--accent-text);
-      box-shadow: 0 2px 10px var(--accent-glow);
-    }
-
-    /* Color Swatches */
-    .color-swatches {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-
+    .color-swatches { display: flex; gap: 8px; align-items: center; }
     .swatch {
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       border: 2px solid transparent;
       cursor: pointer;
-      transition: transform 0.25s var(--ease-bounce), border-color 0.2s ease;
+      transition: transform 0.2s ease;
     }
-
-    .swatch:hover {
-      transform: scale(1.18);
-    }
-
-    .swatch.active {
-      border-color: var(--text-primary);
-      transform: scale(1.18);
-      box-shadow: 0 0 0 2px var(--bg-body);
-    }
-
+    .swatch:hover { transform: scale(1.15); }
+    .swatch.active { border-color: var(--text-primary); transform: scale(1.15); }
     .swatch-contrast { background: linear-gradient(135deg, #ffffff 50%, #000000 50%); border: 1px solid var(--glass-border-light); }
     .swatch-blue { background: #0a84ff; }
     .swatch-emerald { background: #30d158; }
     .swatch-orange { background: #ff9f0a; }
     .swatch-purple { background: #bf5af2; }
 
-    /* 3. Responsive Multi-Column Grid Layout (Desktop & Tablet) */
-    .match-list {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
+    /* Match Liste Grid */
+    .match-list { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    @media (min-width: 680px) { .match-list { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); } }
+    @media (min-width: 1024px) { .match-list { grid-template-columns: repeat(3, 1fr); } }
 
-    @media (min-width: 680px) {
-      .match-list {
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      }
-      .filter-grid {
-        grid-template-columns: repeat(4, 1fr);
-      }
-    }
-
-    @media (min-width: 1024px) {
-      .match-list {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-
-    /* Match Cards with Refined Liquid Glass Effect & Animations */
+    /* Match Karten */
     .match-card {
       background: var(--glass-surface);
-      backdrop-filter: blur(24px) saturate(180%);
-      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
       border: 1px solid var(--glass-border);
       border-radius: var(--radius-card);
       padding: calc(18px * var(--pad-scale));
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 12px;
+      gap: 14px;
       box-shadow: var(--glass-shadow);
-      position: relative;
-      overflow: hidden;
-      animation: glassFadeIn 0.38s var(--ease-ios) forwards;
-      transition: transform 0.28s var(--ease-bounce), 
-                  background 0.22s ease, 
-                  border-color 0.22s ease, 
-                  opacity 0.22s ease, 
-                  filter 0.22s ease;
-      will-change: transform;
+      cursor: pointer;
+      animation: glassFadeIn 0.35s var(--ease-ios) forwards;
+      transition: transform 0.24s var(--ease-bounce), background 0.2s ease, border-color 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
     }
+    .match-card:hover { transform: translateY(-3px) scale(1.01); background: var(--glass-surface-hover); border-color: var(--glass-border-light); }
+    .match-card:active { transform: scale(0.98); }
 
-    .match-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
-      transition: transform 0.75s ease;
-      pointer-events: none;
-    }
-
-    .match-card:hover::before {
-      transform: translateX(200%);
-    }
-
-    .match-card:hover {
-      transform: translateY(-3px) scale(1.01);
-      background: var(--glass-surface-hover);
-      border-color: var(--glass-border-light);
-    }
-
-    .match-card:active {
-      transform: scale(0.98);
-    }
-
-    /* Visual Styling for Past / Completed Matches */
+    /* Dezentes Ausgrauen vergangener Spiele */
     .match-card.past-match {
       opacity: var(--past-opacity);
       background: var(--past-card-bg);
       border-color: var(--past-border);
-      filter: grayscale(40%) contrast(90%);
+      filter: grayscale(35%);
     }
+    .match-card.past-match:hover { opacity: 0.90; filter: grayscale(0%); background: var(--glass-surface-hover); }
 
-    .match-card.past-match:hover {
-      opacity: 0.88;
-      filter: grayscale(0%) contrast(100%);
-      background: var(--glass-surface-hover);
-    }
-
-    .match-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      font-size: calc(0.8rem * var(--pad-scale));
-      gap: 10px;
-    }
-
-    .badge-container {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
+    .match-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    
     .match-league-badge {
       color: var(--accent);
       font-weight: 700;
       background: var(--badge-bg);
       border: 1px solid var(--badge-border);
-      padding: 4px 10px;
+      padding: 3px 9px;
       border-radius: var(--radius-pill);
-      font-size: calc(0.75rem * var(--pad-scale));
-      letter-spacing: -0.01em;
-    }
-
-    /* Past Match Badge Indicator */
-    .past-status-badge {
-      background: var(--past-badge-bg);
-      color: var(--past-badge-text);
-      border: 1px solid var(--glass-border);
-      padding: 3px 8px;
-      border-radius: var(--radius-pill);
-      font-size: calc(0.7rem * var(--pad-scale));
-      font-weight: 600;
-      letter-spacing: -0.01em;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .match-date {
-      color: var(--text-muted);
-      font-weight: 500;
-      font-size: calc(0.8rem * var(--pad-scale));
-      white-space: nowrap;
-    }
-
-    .match-teams {
-      font-size: calc(1.08rem * var(--pad-scale));
-      font-weight: 700;
-      color: var(--text-primary);
-      line-height: 1.35;
-      letter-spacing: -0.015em;
-    }
-
-    .match-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 4px;
-      padding-top: 10px;
-      border-top: 1px solid var(--glass-border);
-      gap: 10px;
-    }
-
-    .match-id {
-      font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: calc(0.72rem * var(--pad-scale));
-      color: var(--text-muted);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
 
-    .btn-group {
-      display: flex;
-      gap: 8px;
+    .match-date { color: var(--text-muted); font-weight: 500; font-size: calc(0.78rem * var(--pad-scale)); white-space: nowrap; }
+
+    .teams-versus-container { display: flex; flex-direction: column; gap: 10px; }
+    .team-row { display: flex; align-items: center; gap: 10px; }
+
+    .team-logo-wrapper {
+      width: calc(34px * var(--pad-scale));
+      height: calc(34px * var(--pad-scale));
+      border-radius: 50%;
       flex-shrink: 0;
-    }
-
-    .action-btn {
-      border: none;
-      height: calc(36px * var(--pad-scale));
-      padding: 0 16px;
-      font-weight: 600;
-      font-size: calc(0.82rem * var(--pad-scale));
-      border-radius: var(--radius-pill);
-      cursor: pointer;
-      transition: all 0.22s var(--ease-bounce);
-      text-decoration: none;
-      display: inline-flex;
+      display: flex;
       align-items: center;
       justify-content: center;
-    }
-
-    .action-btn:hover {
-      transform: translateY(-2px) scale(1.03);
-    }
-
-    .action-btn:active {
-      transform: scale(0.92);
-    }
-
-    .copy-btn {
-      background: var(--accent);
-      color: var(--accent-text);
-      box-shadow: 0 4px 14px var(--accent-glow);
-    }
-
-    .copy-btn.copied {
-      background: #30d158;
-      color: #000000;
-      box-shadow: 0 4px 14px rgba(48, 209, 88, 0.4);
-    }
-
-    .open-btn {
-      background: var(--glass-surface-hover);
-      color: var(--text-primary);
+      overflow: hidden;
+      background: var(--glass-surface);
       border: 1px solid var(--glass-border);
     }
+    .team-logo-img { width: 100%; height: 100%; object-fit: contain; padding: 2px; }
+    .team-logo-fallback {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: calc(0.72rem * var(--pad-scale));
+      color: #ffffff;
+    }
+
+    .team-name { font-size: calc(0.98rem * var(--pad-scale)); font-weight: 700; color: var(--text-primary); flex: 1; }
+
+    .card-footer-hint {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--glass-border);
+      padding-top: 8px;
+      font-size: calc(0.72rem * var(--pad-scale));
+      color: var(--text-muted);
+    }
+    .clickable-hint { color: var(--accent); font-weight: 600; }
+
+    /* Modal Overlay & Details */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+    .modal-card {
+      background: var(--modal-bg);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      border: 1px solid var(--glass-border-light);
+      border-radius: calc(24px * var(--pad-scale));
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.7);
+      padding: calc(20px * var(--pad-scale));
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transform: scale(0.94) translateY(16px);
+      transition: transform 0.3s var(--ease-bounce);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-overlay.active .modal-card { transform: scale(1) translateY(0); }
+
+    .modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .modal-close-btn {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--glass-surface-hover);
+      border: 1px solid var(--glass-border);
+      color: var(--text-primary);
+      font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .hero-versus-box {
+      background: var(--glass-surface);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-inner);
+      padding: 18px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      text-align: center;
+    }
+    .hero-team { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .hero-logo-wrapper {
+      width: calc(52px * var(--pad-scale));
+      height: calc(52px * var(--pad-scale));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      background: var(--glass-surface);
+      border: 1px solid var(--glass-border);
+    }
+    .hero-team-name { font-size: calc(0.88rem * var(--pad-scale)); font-weight: 700; line-height: 1.2; }
+
+    .hero-score-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 6px; }
+    .hero-score-main { font-size: calc(2.2rem * var(--pad-scale)); font-weight: 900; letter-spacing: -1px; color: var(--accent); line-height: 1; }
+
+    .modal-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    .modal-btn {
+      width: 100%;
+      height: calc(42px * var(--pad-scale));
+      border-radius: var(--radius-pill);
+      font-size: calc(0.85rem * var(--pad-scale));
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.2s var(--ease-bounce);
+      text-decoration: none;
+    }
+    .modal-btn:hover { transform: translateY(-1px); }
+    .modal-btn:active { transform: scale(0.96); }
+    .modal-btn-primary { background: var(--accent); color: var(--accent-text); box-shadow: 0 4px 16px var(--accent-glow); }
+    .modal-btn-secondary { background: var(--glass-surface-hover); color: var(--text-primary); border: 1px solid var(--glass-border-light); }
+    .modal-btn-tertiary { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); border: 1px solid var(--glass-border); font-family: monospace; font-size: 11px; }
+
+    /* Toast Info */
+    .toast-message {
+      position: fixed;
+      bottom: 20px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--accent); color: var(--accent-text);
+      padding: 10px 20px; border-radius: var(--radius-pill);
+      font-weight: 700; font-size: 13px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      z-index: 2000; opacity: 0;
+      transition: all 0.25s var(--ease-bounce);
+      pointer-events: none;
+    }
+    .toast-message.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
     .status-box {
-      grid-column: 1 / -1;
-      text-align: center;
-      color: var(--text-muted);
-      padding: 48px 20px;
-      font-size: 15px;
-      background: var(--glass-surface);
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
-      border: 1px solid var(--glass-border);
+      grid-column: 1 / -1; text-align: center; color: var(--text-muted);
+      padding: 40px 16px; font-size: 14px;
+      background: var(--glass-surface); border: 1px solid var(--glass-border);
       border-radius: var(--radius-card);
-      box-shadow: var(--glass-shadow);
     }
 
-    @keyframes glassFadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(12px) scale(0.98);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
+    @keyframes glassFadeIn { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <!-- 1. Scrollable Header Area (Scrolls out of view naturally) -->
     <header class="scrollable-header">
       <h1>SAMS Match Finder</h1>
-      <p class="subtitle">Begegnungen suchen & OBS-Overlay Link erstellen</p>
+      <p class="subtitle">Spiele suchen & OBS Scoreboard-Link abrufen</p>
     </header>
 
-    <!-- 2. Floating Liquid Glass Capsule Bar (Centered floating island) -->
     <div class="floating-bar-wrapper">
       <div class="search-row">
         <div class="search-wrapper">
@@ -751,22 +533,16 @@
           <div id="autocomplete-list" class="autocomplete-list"></div>
         </div>
 
-        <!-- Filter Toggle Button -->
-        <button id="filter-toggle" class="icon-btn" aria-label="Filter umschalten" title="Filter öffnen">
-          <svg viewBox="0 0 24 24">
-            <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
-          </svg>
+        <button id="filter-toggle" class="icon-btn" aria-label="Filter" title="Filter">
+          <svg viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
         </button>
 
-        <!-- Settings Toggle Button -->
-        <button id="settings-toggle" class="icon-btn" aria-label="Einstellungen umschalten" title="Einstellungen">
-          <svg viewBox="0 0 24 24">
-            <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6 3.6z"/>
-          </svg>
+        <button id="settings-toggle" class="icon-btn" aria-label="Einstellungen" title="Einstellungen">
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6 3.6z"/></svg>
         </button>
       </div>
 
-      <!-- Filter Drawer Panel -->
+      <!-- Filter Drawer -->
       <div id="filter-drawer" class="drawer-panel">
         <div class="drawer-inner">
           <div class="glass-card-panel">
@@ -806,7 +582,7 @@
         </div>
       </div>
 
-      <!-- Settings Drawer Panel -->
+      <!-- Settings Drawer -->
       <div id="settings-drawer" class="drawer-panel">
         <div class="drawer-inner">
           <div class="glass-card-panel">
@@ -814,7 +590,7 @@
               <div class="settings-row">
                 <div>
                   <div class="settings-label">Erscheinungsbild</div>
-                  <div class="settings-subtext">Wähle zwischen Dunkel- und Hellmodus</div>
+                  <div class="settings-subtext">Dunkel- oder Hellmodus</div>
                 </div>
                 <div class="segmented-control">
                   <button class="segment-btn active" data-theme-val="dark">Dunkel</button>
@@ -828,7 +604,7 @@
                   <div class="settings-subtext">Farbe für Buttons & Akzente</div>
                 </div>
                 <div class="color-swatches">
-                  <div class="swatch swatch-contrast active" data-accent-val="contrast" title="Kontrast (Modus-Farbe)"></div>
+                  <div class="swatch swatch-contrast active" data-accent-val="contrast" title="Kontrast"></div>
                   <div class="swatch swatch-blue" data-accent-val="blue" title="Apple Blue"></div>
                   <div class="swatch swatch-emerald" data-accent-val="emerald" title="Smaragd"></div>
                   <div class="swatch swatch-orange" data-accent-val="orange" title="Sonnenorange"></div>
@@ -839,7 +615,7 @@
               <div class="settings-row">
                 <div>
                   <div class="settings-label">UI-Skalierung</div>
-                  <div class="settings-subtext">Text- und Elementgröße anpassen</div>
+                  <div class="settings-subtext">Größe anpassen</div>
                 </div>
                 <div class="segmented-control">
                   <button class="segment-btn" data-scale-val="compact">Klein</button>
@@ -853,10 +629,55 @@
       </div>
     </div>
 
-    <!-- 3. Match Grid List Area -->
+    <!-- Match-Liste -->
     <div id="status" class="status-box">Lade aktuelle Spieldaten...</div>
     <div id="match-list" class="match-list"></div>
   </div>
+
+  <!-- Detail Modal -->
+  <div id="match-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span id="modal-league-badge" class="match-league-badge">--</span>
+          <div id="modal-match-date" class="match-date" style="margin-top: 4px;">--</div>
+        </div>
+        <button id="modal-close-btn" class="modal-close-btn" title="Schließen">&times;</button>
+      </div>
+
+      <div class="hero-versus-box">
+        <div class="hero-team">
+          <div id="modal-team1-logo" class="hero-logo-wrapper"></div>
+          <div id="modal-team1-name" class="hero-team-name">Team 1</div>
+        </div>
+
+        <div class="hero-score-box">
+          <div id="modal-hero-score" class="hero-score-main">- : -</div>
+        </div>
+
+        <div class="hero-team">
+          <div id="modal-team2-logo" class="hero-logo-wrapper"></div>
+          <div id="modal-team2-name" class="hero-team-name">Team 2</div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btn-copy-scoreboard" class="modal-btn modal-btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+          Scoreboard-Link kopieren
+        </button>
+
+        <a id="btn-open-scoreboard" href="#" target="_blank" rel="noopener" class="modal-btn modal-btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+          Scoreboard öffnen
+        </a>
+
+        <button id="btn-copy-id" class="modal-btn modal-btn-tertiary">Match-ID kopieren</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast-message">Kopiert!</div>
 
   <script>
     const WORKER_URL = "https://tickerv2.nick-valbert2006.workers.dev";
@@ -864,33 +685,104 @@
 
     let allMatches = [];
     let leagueLookupMap = new Map();
+    let currentActiveMatch = null;
 
-    /* --- Performance Optimization 1: RegEx Caching for Word Boundaries --- */
+    const LOGO_GRADIENTS = [
+      ['#ff416c', '#ff4b2b'], ['#00c6ff', '#0072ff'], ['#f7971e', '#ffd200'],
+      ['#11998e', '#38ef7d'], ['#8e2de2', '#4a00e0'], ['#fc466b', '#3f5efb']
+    ];
+
+    function getTeamInitials(name) {
+      if (!name || name === 'Unbekannt') return '?';
+      const parts = name.replace(/[^a-zA-Z0-9\s]/g, '').trim().split(/\s+/);
+      if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+      return name.substring(0, 2).toUpperCase();
+    }
+
+    function generateFallbackStyle(name) {
+      let hash = 0;
+      for (let i = 0; i < (name || '').length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      const pair = LOGO_GRADIENTS[Math.abs(hash) % LOGO_GRADIENTS.length];
+      return `background: linear-gradient(135deg, ${pair[0]}, ${pair[1]});`;
+    }
+
+    function recursiveFindLogo(obj, name, id, depth = 0, visited = new Set()) {
+      if (!obj || typeof obj !== 'object' || depth > 6 || visited.has(obj)) return null;
+      visited.add(obj);
+
+      const keys = ['logoImage200', 'logoImage', 'smallLogoImage', 'clubLogo', 'logo', 'teamLogo', 'logoUrl', 'imageUrl'];
+      const objId = obj.id || obj.uuid || obj.teamId;
+      const objName = obj.name || obj.teamName || obj.caption;
+      const isTarget = (id && String(objId) === String(id)) || (name && typeof objName === 'string' && objName.toLowerCase().trim() === name.toLowerCase().trim());
+
+      if (isTarget || depth === 0) {
+        for (const k of keys) {
+          if (typeof obj[k] === 'string' && obj[k].trim().length > 5) {
+            let u = obj[k].trim();
+            if (u.startsWith('//')) u = 'https:' + u;
+            else if (u.startsWith('/')) u = 'https://www.volleyball-nrw.de' + u;
+            if (u.startsWith('http://') || u.startsWith('https://')) return u;
+          }
+        }
+      }
+
+      for (const k of Object.keys(obj)) {
+        if (typeof obj[k] === 'object' && obj[k] !== null) {
+          const res = recursiveFindLogo(obj[k], name, id, depth + 1, visited);
+          if (res) return res;
+        }
+      }
+      return null;
+    }
+
+    function renderLogoElement(logoUrl, name, customClass = "team-logo-wrapper") {
+      const init = getTeamInitials(name);
+      const style = generateFallbackStyle(name);
+
+      if (logoUrl) {
+        return `
+          <div class="${customClass}">
+            <img src="${logoUrl}" alt="${name}" class="team-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="team-logo-fallback" style="${style} display:none;">${init}</div>
+          </div>`;
+      }
+      return `<div class="${customClass}"><div class="team-logo-fallback" style="${style}">${init}</div></div>`;
+    }
+
+    function parseScore(m) {
+      let sets1 = 0, sets2 = 0;
+      if (m.score?.sets) {
+        sets1 = m.score.sets.team1 ?? 0;
+        sets2 = m.score.sets.team2 ?? 0;
+      } else if (m.team1Sets !== undefined && m.team2Sets !== undefined) {
+        sets1 = Number(m.team1Sets);
+        sets2 = Number(m.team2Sets);
+      } else if (m.results?.sets1 !== undefined || m.results?.sets2 !== undefined) {
+        sets1 = Number(m.results?.sets1 || 0);
+        sets2 = Number(m.results?.sets2 || 0);
+      }
+      return { sets1, sets2 };
+    }
+
+    /* RegEx Caching für exakte Wortgrenzen */
     const regexCache = new Map();
     function getExactWordRegex(word) {
       if (regexCache.has(word)) return regexCache.get(word);
       const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const isRomanOrNum = /^(i|ii|iii|iv|v|vi|vii|viii|ix|x|[0-9]+)$/i.test(word);
-      const pattern = isRomanOrNum ? `\\b${escaped}\\b` : `\\b${escaped}`;
-      const rx = new RegExp(pattern, 'i');
+      const rx = new RegExp(isRomanOrNum ? `\\b${escaped}\\b` : `\\b${escaped}`, 'i');
       regexCache.set(word, rx);
       return rx;
     }
 
-    /* Exact word boundary query matching (e.g., "TuS Meinerzhagen II" vs "III") */
     function matchesExactQuery(text, query) {
       if (!query) return true;
-      const words = query.trim().split(/\s+/).filter(Boolean);
-      return words.every(word => getExactWordRegex(word).test(text));
+      return query.trim().split(/\s+/).filter(Boolean).every(w => getExactWordRegex(w).test(text));
     }
 
-    /* --- Performance Optimization 2: Debounce Helper --- */
     function debounce(fn, delay = 100) {
-      let timer;
-      return function(...args) {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn.apply(this, args), delay);
-      };
+      let t;
+      return function(...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), delay); };
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -899,39 +791,28 @@
       loadMatches();
     });
 
-    /* --- Preferences & Settings Management --- */
     function initSettings() {
-      const savedTheme = localStorage.getItem('sams_theme') || 'dark';
-      const savedAccent = localStorage.getItem('sams_accent') || 'contrast';
-      const savedScale = localStorage.getItem('sams_scale') || 'normal';
-
-      setTheme(savedTheme);
-      setAccent(savedAccent);
-      setScale(savedScale);
+      setTheme(localStorage.getItem('sams_theme') || 'dark');
+      setAccent(localStorage.getItem('sams_accent') || 'contrast');
+      setScale(localStorage.getItem('sams_scale') || 'normal');
     }
 
-    function setTheme(theme) {
-      document.documentElement.setAttribute('data-theme', theme);
-      localStorage.setItem('sams_theme', theme);
-      document.querySelectorAll('[data-theme-val]').forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('data-theme-val') === theme);
-      });
+    function setTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      localStorage.setItem('sams_theme', t);
+      document.querySelectorAll('[data-theme-val]').forEach(b => b.classList.toggle('active', b.getAttribute('data-theme-val') === t));
     }
 
-    function setAccent(accent) {
-      document.documentElement.setAttribute('data-accent', accent);
-      localStorage.setItem('sams_accent', accent);
-      document.querySelectorAll('[data-accent-val]').forEach(swatch => {
-        swatch.classList.toggle('active', swatch.getAttribute('data-accent-val') === accent);
-      });
+    function setAccent(a) {
+      document.documentElement.setAttribute('data-accent', a);
+      localStorage.setItem('sams_accent', a);
+      document.querySelectorAll('[data-accent-val]').forEach(s => s.classList.toggle('active', s.getAttribute('data-accent-val') === a));
     }
 
-    function setScale(scale) {
-      document.documentElement.setAttribute('data-scale', scale);
-      localStorage.setItem('sams_scale', scale);
-      document.querySelectorAll('[data-scale-val]').forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('data-scale-val') === scale);
-      });
+    function setScale(s) {
+      document.documentElement.setAttribute('data-scale', s);
+      localStorage.setItem('sams_scale', s);
+      document.querySelectorAll('[data-scale-val]').forEach(b => b.classList.toggle('active', b.getAttribute('data-scale-val') === s));
     }
 
     function initEventListeners() {
@@ -940,164 +821,102 @@
       const settingsToggle = document.getElementById('settings-toggle');
       const filterDrawer = document.getElementById('filter-drawer');
       const settingsDrawer = document.getElementById('settings-drawer');
+      const modalOverlay = document.getElementById('match-modal');
 
-      // Debounced search input handler
-      const debouncedApplyFilters = debounce(() => applyFilters(false), 100);
+      const debouncedApply = debounce(() => applyFilters(false), 100);
 
-      searchInput.addEventListener('input', (e) => {
-        handleAutocomplete(e.target.value);
-        debouncedApplyFilters();
-      });
+      searchInput.addEventListener('input', (e) => { handleAutocomplete(e.target.value); debouncedApply(); });
+      searchInput.addEventListener('focus', (e) => { if (e.target.value.trim()) handleAutocomplete(e.target.value); });
+      document.addEventListener('click', (e) => { if (!e.target.closest('.search-wrapper')) closeAutocomplete(); });
 
-      searchInput.addEventListener('focus', (e) => {
-        if (e.target.value.trim().length > 0) {
-          handleAutocomplete(e.target.value);
-        }
-      });
-
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('.search-wrapper')) {
-          closeAutocomplete();
-        }
-      });
-
-      // Optimized drawer toggling (no reflow lag)
       filterToggle.addEventListener('click', () => {
-        const isOpen = filterDrawer.classList.toggle('open');
-        filterToggle.classList.toggle('active', isOpen);
-        if (isOpen) {
-          settingsDrawer.classList.remove('open');
-          settingsToggle.classList.remove('active');
-        }
+        const open = filterDrawer.classList.toggle('open');
+        filterToggle.classList.toggle('active', open);
+        if (open) { settingsDrawer.classList.remove('open'); settingsToggle.classList.remove('active'); }
       });
 
       settingsToggle.addEventListener('click', () => {
-        const isOpen = settingsDrawer.classList.toggle('open');
-        settingsToggle.classList.toggle('active', isOpen);
-        if (isOpen) {
-          filterDrawer.classList.remove('open');
-          filterToggle.classList.remove('active');
-        }
+        const open = settingsDrawer.classList.toggle('open');
+        settingsToggle.classList.toggle('active', open);
+        if (open) { filterDrawer.classList.remove('open'); filterToggle.classList.remove('active'); }
       });
 
-      // Settings Buttons Listeners
-      document.querySelectorAll('[data-theme-val]').forEach(btn => {
-        btn.addEventListener('click', () => setTheme(btn.getAttribute('data-theme-val')));
-      });
+      document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+      modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
-      document.querySelectorAll('[data-accent-val]').forEach(swatch => {
-        swatch.addEventListener('click', () => setAccent(swatch.getAttribute('data-accent-val')));
-      });
+      document.querySelectorAll('[data-theme-val]').forEach(b => b.addEventListener('click', () => setTheme(b.getAttribute('data-theme-val'))));
+      document.querySelectorAll('[data-accent-val]').forEach(s => s.addEventListener('click', () => setAccent(s.getAttribute('data-accent-val'))));
+      document.querySelectorAll('[data-scale-val]').forEach(b => b.addEventListener('click', () => setScale(b.getAttribute('data-scale-val'))));
 
-      document.querySelectorAll('[data-scale-val]').forEach(btn => {
-        btn.addEventListener('click', () => setScale(btn.getAttribute('data-scale-val')));
-      });
-
-      // Cascading Filter Reactions
-      document.getElementById('filter-gender').addEventListener('change', () => {
-        updateCascadingDropdowns();
-        applyFilters(false);
-      });
-
-      document.getElementById('filter-league').addEventListener('change', () => {
-        updateTeamDropdown();
-        applyFilters(false);
-      });
-
+      document.getElementById('filter-gender').addEventListener('change', () => { updateCascadingDropdowns(); applyFilters(false); });
+      document.getElementById('filter-league').addEventListener('change', () => { updateTeamDropdown(); applyFilters(false); });
       document.getElementById('filter-team').addEventListener('change', () => applyFilters(false));
       document.getElementById('filter-date').addEventListener('change', () => applyFilters(false));
       document.getElementById('reset-filters').addEventListener('click', resetFilters);
+
+      document.getElementById('btn-copy-scoreboard').addEventListener('click', () => {
+        if (!currentActiveMatch) return;
+        copyTextToClipboard(`${SCOREBOARD_BASE_URL}?match=${currentActiveMatch.id}&assoc=wvv`, "Scoreboard-Link kopiert!");
+      });
+
+      document.getElementById('btn-copy-id').addEventListener('click', () => {
+        if (!currentActiveMatch) return;
+        copyTextToClipboard(currentActiveMatch.id, "Match-ID kopiert!");
+      });
     }
 
-    /* --- Performance Optimization 3: Single-Pass Tree Indexing --- */
     function buildLeagueLookupMap(data) {
       leagueLookupMap.clear();
-
       function walk(obj, depth = 0) {
         if (!obj || typeof obj !== 'object' || depth > 8) return;
+        const objId = obj.id || obj.uuid || obj.leagueId || obj.seriesId;
+        const objName = obj.name || obj.leagueName || obj.caption || obj.groupName;
+        const objGender = obj.gender || obj.leagueGender;
 
-        const objId = obj.id || obj.uuid || obj.leagueId || obj.seriesId || obj.matchSeriesId;
-        const objName = obj.name || obj.leagueName || obj.competitionName || obj.caption || obj.groupName || obj.title || obj.seriesName;
-        const objGender = obj.gender || obj.leagueGender || obj.competitionGender;
-
-        if (objId && objName && typeof objName === 'string') {
-          leagueLookupMap.set(String(objId), { name: objName, gender: objGender || '' });
-        }
-
+        if (objId && objName && typeof objName === 'string') leagueLookupMap.set(String(objId), { name: objName, gender: objGender || '' });
         if (Array.isArray(obj.matches) && objName) {
           obj.matches.forEach(m => {
             const mId = typeof m === 'object' ? (m.id || m.uuid || m.matchId) : m;
-            if (mId) {
-              leagueLookupMap.set(`match_${mId}`, { name: objName, gender: objGender || '' });
-            }
+            if (mId) leagueLookupMap.set(`match_${mId}`, { name: objName, gender: objGender || '' });
           });
         }
-
-        for (const key of Object.keys(obj)) {
-          if (typeof obj[key] === 'object' && obj[key] !== null) {
-            walk(obj[key], depth + 1);
-          }
-        }
+        for (const k of Object.keys(obj)) if (typeof obj[k] === 'object' && obj[k] !== null) walk(obj[k], depth + 1);
       }
-
       walk(data);
-    }
-
-    function deepSearchLeagueAndGender(rootData, matchId, matchObj) {
-      let foundName = null;
-      let foundGender = null;
-
-      function search(obj, depth = 0) {
-        if (!obj || typeof obj !== 'object' || depth > 8 || (foundName && foundGender)) return;
-
-        const hasMatch = Array.isArray(obj.matches) && obj.matches.some(m => {
-          const id = typeof m === 'object' ? (m.id || m.uuid || m.matchId) : m;
-          return id === matchId;
-        });
-
-        const targetIds = [matchObj.leagueId, matchObj.seriesId, matchObj.matchSeriesId, matchObj.groupId].filter(Boolean);
-        const isTargetId = targetIds.some(id => id === obj.id || id === obj.uuid);
-
-        if (hasMatch || isTargetId) {
-          const name = obj.name || obj.leagueName || obj.competitionName || obj.caption || obj.groupName || obj.title;
-          const gender = obj.gender || obj.leagueGender || obj.competitionGender;
-          
-          if (name && !foundName) foundName = name;
-          if (gender && !foundGender) foundGender = gender;
-        }
-
-        for (const key of Object.keys(obj)) {
-          if (typeof obj[key] === 'object' && obj[key] !== null) {
-            search(obj[key], depth + 1);
-          }
-        }
-      }
-
-      search(rootData);
-      return { name: foundName, gender: foundGender };
     }
 
     async function loadMatches() {
       const statusEl = document.getElementById('status');
       try {
         const response = await fetch(`${WORKER_URL}/?assoc=wvv`);
-        if (!response.ok) throw new Error("Fehler beim Abrufen der Daten vom Worker.");
+        if (!response.ok) throw new Error("Worker konnte nicht geladen werden.");
 
         const data = await response.json();
         allMatches = [];
 
         buildLeagueLookupMap(data);
 
+        const todayStart = new Date(new Date().setHours(0,0,0,0)).getTime();
+
         if (Array.isArray(data.matchDays)) {
           data.matchDays.forEach(day => {
             if (Array.isArray(day.matches)) {
               day.matches.forEach(m => {
-                const team1 = m.team1?.name || m.team1Name || m.teamDescription1 || '';
-                const team2 = m.team2?.name || m.team2Name || m.teamDescription2 || '';
-                const matchId = m.id || m.matchId || m.uuid || m.matchUuid || '';
+                const team1Obj = m.team1 || {};
+                const team2Obj = m.team2 || {};
+                const team1Name = team1Obj.name || m.team1Name || m.teamDescription1 || '';
+                const team2Name = team2Obj.name || m.team2Name || m.teamDescription2 || '';
+                const team1Id = team1Obj.id || team1Obj.uuid || m.team1Id;
+                const team2Id = team2Obj.id || team2Obj.uuid || m.team2Id;
+
+                const matchId = m.id || m.matchId || m.uuid || '';
                 const rawDate = m.date || m.startDate || day.date || null;
 
-                let rawLeague = m.leagueName || m.league?.name || m.competitionName || m.groupName || m.seriesName;
+                const team1Logo = recursiveFindLogo(team1Obj, team1Name, team1Id, 0) || recursiveFindLogo(data, team1Name, team1Id, 0);
+                const team2Logo = recursiveFindLogo(team2Obj, team2Name, team2Id, 0) || recursiveFindLogo(data, team2Name, team2Id, 0);
+
+                let rawLeague = m.leagueName || m.league?.name || m.competitionName || m.seriesName;
                 let rawGender = m.gender || m.leagueGender || m.league?.gender;
 
                 if (!rawLeague && leagueLookupMap.has(`match_${matchId}`)) {
@@ -1106,38 +925,33 @@
                   if (!rawGender) rawGender = info.gender;
                 }
 
-                const possibleIds = [m.leagueId, m.seriesId, m.matchSeriesId, m.groupId, m.competitionId].filter(Boolean);
-                for (const id of possibleIds) {
-                  if ((!rawLeague || !rawGender) && leagueLookupMap.has(String(id))) {
-                    const info = leagueLookupMap.get(String(id));
-                    if (!rawLeague) rawLeague = info.name;
-                    if (!rawGender) rawGender = info.gender;
-                  }
-                }
-
-                if (!rawLeague || !rawGender) {
-                  const deepRes = deepSearchLeagueAndGender(data, matchId, m);
-                  if (!rawLeague) rawLeague = deepRes.name;
-                  if (!rawGender) rawGender = deepRes.gender;
-                }
-
                 if (!rawLeague) rawLeague = "Unbekannte Liga";
                 if (!rawGender) rawGender = parseGenderFromLeague(rawLeague);
 
                 const formattedGender = formatGender(rawGender);
                 const leagueDisplay = formattedGender ? `${rawLeague} (${formattedGender})` : rawLeague;
 
-                if (matchId && (team1 || team2)) {
+                const dateObj = rawDate ? new Date(rawDate) : new Date(0);
+                const matchDayTime = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()).getTime();
+                const isPast = matchDayTime < todayStart;
+
+                const parsed = parseScore(m);
+
+                if (matchId && (team1Name || team2Name)) {
                   allMatches.push({
-                    id: matchId,
-                    team1: team1 || 'Unbekannt',
-                    team2: team2 || 'Unbekannt',
-                    dateObj: rawDate ? new Date(rawDate) : new Date(0),
+                    id: String(matchId),
+                    team1: team1Name || 'Unbekannt',
+                    team2: team2Name || 'Unbekannt',
+                    team1Logo: team1Logo,
+                    team2Logo: team2Logo,
+                    dateObj: dateObj,
                     formattedDate: formatDate(rawDate),
                     rawDateString: rawDate ? new Date(rawDate).toISOString().split('T')[0] : '',
                     leagueRaw: rawLeague,
                     leagueDisplay: leagueDisplay,
-                    gender: formattedGender || 'Unbekannt'
+                    gender: formattedGender || 'Unbekannt',
+                    isPast: isPast,
+                    parsedScore: parsed
                   });
                 }
               });
@@ -1146,10 +960,8 @@
         }
 
         allMatches.sort((a, b) => a.dateObj - b.dateObj);
-
         updateCascadingDropdowns();
         statusEl.style.display = 'none';
-        
         applyFilters(true);
 
       } catch (err) {
@@ -1157,54 +969,43 @@
       }
     }
 
-    function parseGenderFromLeague(leagueName) {
-      if (!leagueName) return '';
-      const lower = leagueName.toLowerCase();
-      if (lower.includes('männer') || lower.includes('herren') || lower.includes(' männer')) return 'Herren';
-      if (lower.includes('frauen') || lower.includes('damen') || lower.includes(' damen')) return 'Damen';
+    function parseGenderFromLeague(name) {
+      if (!name) return '';
+      const lower = name.toLowerCase();
+      if (lower.includes('männer') || lower.includes('herren')) return 'Herren';
+      if (lower.includes('frauen') || lower.includes('damen')) return 'Damen';
       if (lower.includes('mixed')) return 'Mixed';
       return '';
     }
 
-    function formatGender(genderStr) {
-      if (!genderStr) return '';
-      const g = genderStr.toString().toUpperCase();
-      if (g === 'MALE' || g === 'MÄNNER' || g === 'HERREN' || g === 'M') return 'Herren';
-      if (g === 'FEMALE' || g === 'FRAUEN' || g === 'DAMEN' || g === 'W') return 'Damen';
+    function formatGender(gStr) {
+      if (!gStr) return '';
+      const g = gStr.toString().toUpperCase();
+      if (g === 'MALE' || g === 'HERREN' || g === 'M') return 'Herren';
+      if (g === 'FEMALE' || g === 'DAMEN' || g === 'W') return 'Damen';
       if (g === 'MIXED') return 'Mixed';
-      return genderStr;
+      return gStr;
     }
 
-    /* --- Cascading Filter Logic (Gender -> League -> Team) --- */
     function updateCascadingDropdowns() {
       const selectedGender = document.getElementById('filter-gender').value;
       const leagueSelect = document.getElementById('filter-league');
-      const previousSelectedLeague = leagueSelect.value;
+      const prev = leagueSelect.value;
 
       leagueSelect.innerHTML = '<option value="">Alle Ligen</option>';
-
       const validLeagues = new Map();
+
       allMatches.forEach(m => {
-        if (!selectedGender || m.gender === selectedGender) {
-          validLeagues.set(m.leagueRaw, m.leagueDisplay);
-        }
+        if (!selectedGender || m.gender === selectedGender) validLeagues.set(m.leagueRaw, m.leagueDisplay);
       });
 
-      Array.from(validLeagues.entries())
-        .sort((a, b) => a[1].localeCompare(b[1]))
-        .forEach(([raw, display]) => {
-          const opt = document.createElement('option');
-          opt.value = raw;
-          opt.textContent = display;
-          leagueSelect.appendChild(opt);
-        });
+      Array.from(validLeagues.entries()).sort((a, b) => a[1].localeCompare(b[1])).forEach(([raw, display]) => {
+        const opt = document.createElement('option');
+        opt.value = raw; opt.textContent = display;
+        leagueSelect.appendChild(opt);
+      });
 
-      if (validLeagues.has(previousSelectedLeague)) {
-        leagueSelect.value = previousSelectedLeague;
-      } else {
-        leagueSelect.value = "";
-      }
-
+      leagueSelect.value = validLeagues.has(prev) ? prev : "";
       updateTeamDropdown();
     }
 
@@ -1212,72 +1013,44 @@
       const selectedGender = document.getElementById('filter-gender').value;
       const selectedLeague = document.getElementById('filter-league').value;
       const teamSelect = document.getElementById('filter-team');
-      const previousSelectedTeam = teamSelect.value;
+      const prev = teamSelect.value;
 
       teamSelect.innerHTML = '<option value="">Alle Mannschaften</option>';
-
       const validTeams = new Set();
-      allMatches.forEach(m => {
-        const matchesGender = !selectedGender || m.gender === selectedGender;
-        const matchesLeague = !selectedLeague || m.leagueRaw === selectedLeague;
 
-        if (matchesGender && matchesLeague) {
+      allMatches.forEach(m => {
+        if ((!selectedGender || m.gender === selectedGender) && (!selectedLeague || m.leagueRaw === selectedLeague)) {
           if (m.team1 && m.team1 !== 'Unbekannt') validTeams.add(m.team1);
           if (m.team2 && m.team2 !== 'Unbekannt') validTeams.add(m.team2);
         }
       });
 
-      Array.from(validTeams)
-        .sort((a, b) => a.localeCompare(b))
-        .forEach(team => {
-          const opt = document.createElement('option');
-          opt.value = team;
-          opt.textContent = team;
-          teamSelect.appendChild(opt);
-        });
+      Array.from(validTeams).sort((a, b) => a.localeCompare(b)).forEach(team => {
+        const opt = document.createElement('option');
+        opt.value = team; opt.textContent = team;
+        teamSelect.appendChild(opt);
+      });
 
-      if (validTeams.has(previousSelectedTeam)) {
-        teamSelect.value = previousSelectedTeam;
-      } else {
-        teamSelect.value = "";
-      }
+      teamSelect.value = validTeams.has(prev) ? prev : "";
     }
 
     function handleAutocomplete(query) {
       const listEl = document.getElementById('autocomplete-list');
       const val = query.trim();
+      if (val.length < 2) { closeAutocomplete(); return; }
 
-      if (val.length < 2) {
-        closeAutocomplete();
-        return;
-      }
+      const teams = new Set();
+      allMatches.forEach(m => { if (m.team1) teams.add(m.team1); if (m.team2) teams.add(m.team2); });
 
-      const allTeams = new Set();
-      allMatches.forEach(m => {
-        if (m.team1) allTeams.add(m.team1);
-        if (m.team2) allTeams.add(m.team2);
-      });
+      const matches = Array.from(teams).filter(t => matchesExactQuery(t, val)).slice(0, 6);
+      if (matches.length === 0) { closeAutocomplete(); return; }
 
-      const matches = Array.from(allTeams)
-        .filter(team => matchesExactQuery(team, val))
-        .slice(0, 6);
-
-      if (matches.length === 0) {
-        closeAutocomplete();
-        return;
-      }
-
-      listEl.innerHTML = matches.map(team => `
-        <div class="autocomplete-item" onclick="selectSuggestion('${escapeQuotes(team)}')">
-          ${team}
-        </div>
-      `).join('');
-
+      listEl.innerHTML = matches.map(t => `<div class="autocomplete-item" onclick="selectSuggestion('${escapeQuotes(t)}')">${t}</div>`).join('');
       listEl.style.display = 'block';
     }
 
-    function selectSuggestion(teamName) {
-      document.getElementById('search-input').value = teamName;
+    function selectSuggestion(team) {
+      document.getElementById('search-input').value = team;
       closeAutocomplete();
       applyFilters(false);
     }
@@ -1288,9 +1061,7 @@
       listEl.innerHTML = '';
     }
 
-    function escapeQuotes(str) {
-      return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-    }
+    function escapeQuotes(str) { return str.replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
 
     function applyFilters(shouldJumpToToday = false) {
       const searchVal = document.getElementById('search-input').value;
@@ -1299,29 +1070,19 @@
       const teamVal = document.getElementById('filter-team').value;
       const dateVal = document.getElementById('filter-date').value;
 
-      const isUnfiltered = !searchVal && !genderVal && !leagueVal && !teamVal && !dateVal;
-
       const filtered = allMatches.filter(m => {
-        const matchesSearch = !searchVal || 
-          matchesExactQuery(m.team1, searchVal) ||
-          matchesExactQuery(m.team2, searchVal) ||
-          m.leagueDisplay.toLowerCase().includes(searchVal.toLowerCase());
-
+        const matchesSearch = !searchVal || matchesExactQuery(m.team1, searchVal) || matchesExactQuery(m.team2, searchVal) || m.leagueDisplay.toLowerCase().includes(searchVal.toLowerCase());
         const matchesGender = !genderVal || m.gender === genderVal;
         const matchesLeague = !leagueVal || m.leagueRaw === leagueVal;
-        const matchesTeam = !teamVal || 
-          m.team1 === teamVal || 
-          m.team2 === teamVal;
+        const matchesTeam = !teamVal || m.team1 === teamVal || m.team2 === teamVal;
         const matchesDate = !dateVal || m.rawDateString === dateVal;
-
         return matchesSearch && matchesGender && matchesLeague && matchesTeam && matchesDate;
       });
 
       renderMatches(filtered);
-
-      if (shouldJumpToToday && isUnfiltered) {
-        jumpDirectlyToToday();
-      }
+      
+      // Bei Aufruf und bei aktiven Filtern direkt zum heutigen Tag springen
+      jumpDirectlyToToday();
     }
 
     function resetFilters() {
@@ -1335,97 +1096,108 @@
       applyFilters(true);
     }
 
-    /* --- Performance Optimization 4: DOM Fragment Batch Rendering --- */
     function renderMatches(matches) {
       const listEl = document.getElementById('match-list');
-
       if (matches.length === 0) {
         listEl.innerHTML = '<div class="status-box">Keine Begegnungen gefunden.</div>';
         return;
       }
 
-      const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-
-      const htmlContent = matches.map(m => {
-        const fullLink = `${SCOREBOARD_BASE_URL}?match=${m.id}&assoc=wvv`;
-        const matchDayTime = new Date(m.dateObj.getFullYear(), m.dateObj.getMonth(), m.dateObj.getDate()).getTime();
-        const isPast = matchDayTime < todayStart;
+      listEl.innerHTML = matches.map(m => {
+        const t1Logo = renderLogoElement(m.team1Logo, m.team1);
+        const t2Logo = renderLogoElement(m.team2Logo, m.team2);
 
         return `
-          <div class="match-card ${isPast ? 'past-match' : ''}" data-time="${m.dateObj.getTime()}">
+          <div class="match-card ${m.isPast ? 'past-match' : ''}" data-time="${m.dateObj.getTime()}" onclick="openMatchModal('${m.id}')">
             <div>
               <div class="match-header">
-                <div class="badge-container">
-                  <span class="match-league-badge">${m.leagueDisplay}</span>
-                  ${isPast ? '<span class="past-status-badge"><span>✓</span> Beendet</span>' : ''}
-                </div>
+                <span class="match-league-badge">${m.leagueDisplay}</span>
                 <span class="match-date">${m.formattedDate}</span>
               </div>
-              <div class="match-teams" style="margin-top: 10px;">${m.team1} vs. ${m.team2}</div>
-            </div>
-            <div class="match-footer">
-              <span class="match-id" title="${m.id}">ID: ${m.id}</span>
-              <div class="btn-group">
-                <a href="${fullLink}" target="_blank" rel="noopener" class="action-btn open-btn">Öffnen</a>
-                <button class="action-btn copy-btn" onclick="copyToClipboard('${fullLink}', this)">Kopieren</button>
+
+              <div class="teams-versus-container" style="margin-top: 12px;">
+                <div class="team-row">${t1Logo}<div class="team-name">${m.team1}</div></div>
+                <div class="team-row">${t2Logo}<div class="team-name">${m.team2}</div></div>
               </div>
             </div>
-          </div>
-        `;
-      }).join('');
 
-      listEl.innerHTML = htmlContent;
+            <div class="card-footer-hint">
+              <span>Scoreboard & Details</span>
+              <span class="clickable-hint">Ansehen &rarr;</span>
+            </div>
+          </div>`;
+      }).join('');
     }
+
+    async function openMatchModal(targetMatchId) {
+      const m = allMatches.find(x => String(x.id) === String(targetMatchId));
+      if (!m) return;
+
+      currentActiveMatch = m;
+
+      document.getElementById('modal-league-badge').textContent = m.leagueDisplay;
+      document.getElementById('modal-match-date').textContent = m.formattedDate;
+      document.getElementById('modal-team1-name').textContent = m.team1;
+      document.getElementById('modal-team2-name').textContent = m.team2;
+
+      document.getElementById('modal-team1-logo').innerHTML = renderLogoElement(m.team1Logo, m.team1, "hero-logo-wrapper").replace('class="hero-logo-wrapper"', 'style="width:100%;height:100%;"');
+      document.getElementById('modal-team2-logo').innerHTML = renderLogoElement(m.team2Logo, m.team2, "hero-logo-wrapper").replace('class="hero-logo-wrapper"', 'style="width:100%;height:100%;"');
+
+      updateModalScore(m.parsedScore);
+
+      document.getElementById('btn-open-scoreboard').setAttribute('href', `${SCOREBOARD_BASE_URL}?match=${m.id}&assoc=wvv`);
+      document.getElementById('match-modal').classList.add('active');
+
+      try {
+        const liveRes = await fetch(`${WORKER_URL}/?match=${m.id}&assoc=wvv`);
+        if (liveRes.ok) {
+          const liveData = await liveRes.json();
+          const liveParsed = parseScore(liveData);
+          updateModalScore(liveParsed);
+        }
+      } catch (e) {}
+    }
+
+    function updateModalScore(parsed) {
+      const scoreMain = document.getElementById('modal-hero-score');
+      if (parsed.sets1 > 0 || parsed.sets2 > 0) {
+        scoreMain.textContent = `${parsed.sets1} : ${parsed.sets2}`;
+      } else {
+        scoreMain.textContent = "- : -";
+      }
+    }
+
+    function closeModal() { document.getElementById('match-modal').classList.remove('active'); }
 
     function formatDate(dateInput) {
       if (!dateInput) return 'Datum unbekannt';
       try {
         const d = new Date(dateInput);
         if (isNaN(d.getTime())) return dateInput;
-        return d.toLocaleDateString('de-DE', {
-          weekday: 'short',
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        }) + ' Uhr';
-      } catch {
-        return dateInput;
-      }
+        return d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' Uhr';
+      } catch { return dateInput; }
     }
 
     function jumpDirectlyToToday() {
-      const nowTime = new Date().getTime();
+      const nowTime = Date.now();
       const cards = document.querySelectorAll('.match-card');
-      let targetCard = null;
-
-      for (let card of cards) {
-        const cardTime = parseInt(card.getAttribute('data-time'));
-        if (cardTime >= nowTime) {
-          targetCard = card;
+      for (let c of cards) {
+        if (parseInt(c.getAttribute('data-time')) >= nowTime) {
+          c.scrollIntoView({ behavior: 'auto', block: 'center' });
           break;
         }
       }
-
-      if (targetCard) {
-        targetCard.scrollIntoView({ behavior: 'auto', block: 'center' });
-      }
     }
 
-    function copyToClipboard(text, btnElement) {
-      navigator.clipboard.writeText(text).then(() => {
-        const originalText = btnElement.innerText;
-        btnElement.innerText = "Kopiert!";
-        btnElement.classList.add('copied');
-        setTimeout(() => {
-          btnElement.innerText = originalText;
-          btnElement.classList.remove('copied');
-        }, 2000);
-      }).catch(err => {
-        alert('Fehler beim Kopieren: ' + err);
-      });
+    function copyTextToClipboard(text, msg) {
+      navigator.clipboard.writeText(text).then(() => showToast(msg)).catch(() => showToast("Fehler beim Kopieren!"));
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
     }
   </script>
 </body>
