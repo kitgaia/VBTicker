@@ -238,7 +238,7 @@
       const assoc = urlParams.get('assoc') || urlParams.get('verband') || 'wvv';
 
       fetchScore(matchId, assoc);
-      setInterval(() => fetchScore(matchId, assoc), 4000);
+      setInterval(() => fetchScore(matchId, assoc), 5000);
     });
 
     async function fetchScore(matchId, assoc) {
