@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Volleyball Scoreboard Overlay - V1.5 Base</title>
+  <title>Volleyball Scoreboard Overlay - V1.5 OBS Fixed</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #0b0f19;
+      background: transparent; /* In OBS vollkommen transparent */
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 'Helvetica Neue', Arial, sans-serif;
-      overflow-x: hidden;
+      overflow: hidden;
       width: 100vw;
       height: 100vh;
       display: flex;
@@ -143,25 +143,6 @@
     .sets-score { font-size: clamp(16px, 2.8vw, 22px); color: #f8fafc; letter-spacing: 2px; font-weight: 900; }
     .sets-label { font-size: 8px; color: #38bdf8; text-transform: uppercase; letter-spacing: 1px; font-weight: 900; }
 
-    /* Version Badge */
-    .version-badge {
-      position: fixed;
-      bottom: 12px;
-      right: 12px;
-      background: rgba(3, 7, 18, 0.85);
-      border: 1px solid rgba(0, 242, 254, 0.4);
-      color: #00f2fe;
-      font-size: 10px;
-      font-weight: 900;
-      padding: 3px 8px;
-      border-radius: 4px;
-      letter-spacing: 1px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-      z-index: 1000;
-      text-transform: uppercase;
-      backdrop-filter: blur(4px);
-    }
-
     /* Mobile Responsive Layout */
     @media (max-width: 600px) {
       .scoreboard {
@@ -198,13 +179,11 @@
 </head>
 <body>
 
-  <div class="version-badge">v1.5 Base</div>
-
   <div class="scoreboard-wrapper">
     <div class="scoreboard" id="main-scoreboard">
       <!-- HEIM TEAM -->
       <div class="team home" id="team-home">
-        <img id="team1-logo" class="team-logo" src="" style="display:none;" crossorigin="anonymous" alt="">
+        <img id="team1-logo" class="team-logo" src="" style="display:none;" alt="">
         <div class="team-name-wrapper">
           <span id="team1-name" class="team-name">HEIM</span>
         </div>
@@ -219,7 +198,7 @@
 
       <!-- GAST TEAM -->
       <div class="team guest" id="team-guest">
-        <img id="team2-logo" class="team-logo" src="" style="display:none;" crossorigin="anonymous" alt="">
+        <img id="team2-logo" class="team-logo" src="" style="display:none;" alt="">
         <div class="team-name-wrapper">
           <span id="team2-name" class="team-name">GAST</span>
         </div>
@@ -344,30 +323,37 @@
         return;
       }
 
-      img.src = logoUrl;
-      img.style.display = 'block';
+      // OBS CORS Safe Image Loading
+      const tempImg = new Image();
+      tempImg.crossOrigin = 'anonymous';
 
-      img.onload = () => {
+      tempImg.onload = () => {
+        img.src = logoUrl;
+        img.style.display = 'block';
         try {
-          const color = extractLargestConnectedColor(img);
+          const color = extractLargestConnectedColor(tempImg);
           applyColor(cssVarName, cssTextVarName, color || fallbackColor);
         } catch (e) {
           applyColor(cssVarName, cssTextVarName, fallbackColor);
         }
       };
 
-      img.onerror = () => {
-        img.style.display = 'none';
+      tempImg.onerror = () => {
+        // Zweiter Versuch ohne CORS Header (Fallback für OBS)
+        img.src = logoUrl;
+        img.style.display = 'block';
         applyColor(cssVarName, cssTextVarName, fallbackColor);
       };
+
+      tempImg.src = logoUrl;
     }
 
-    /* NEU: Größte zusammenhängende Einzelfläche mit Schwarz/Weiß/Graustufen Fallback */
+    /* OBS-sichere Canvas Analyse */
     function extractLargestConnectedColor(img) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const width = 64;
-      const height = 64;
+      const width = 48;
+      const height = 48;
       canvas.width = width;
       canvas.height = height;
 
@@ -385,7 +371,7 @@
         const a = imgData[idx + 3];
 
         if (a < 128) {
-          colorBins[i] = -1; // Transparenz
+          colorBins[i] = -1;
           continue;
         }
 
@@ -397,7 +383,6 @@
 
       let maxColorScore = -1;
       let bestColorRgb = null;
-
       let maxMonoSize = -1;
       let bestMonoRgb = null;
 
@@ -424,18 +409,10 @@
             sumG += imgData[pixelIdx + 1];
             sumB += imgData[pixelIdx + 2];
 
-            const neighbors = [];
-            if (cx > 0) neighbors.push(curr - 1);
-            if (cx < width - 1) neighbors.push(curr + 1);
-            if (cy > 0) neighbors.push(curr - width);
-            if (cy < height - 1) neighbors.push(curr + height ? curr + width : curr + width);
-
-            for (const n of neighbors) {
-              if (n >= 0 && n < width * height && !visited[n] && colorBins[n] === bin) {
-                visited[n] = 1;
-                queue.push(n);
-              }
-            }
+            if (cx > 0) checkNeighbor(curr - 1, bin, queue, visited, colorBins);
+            if (cx < width - 1) checkNeighbor(curr + 1, bin, queue, visited, colorBins);
+            if (cy > 0) checkNeighbor(curr - width, bin, queue, visited, colorBins);
+            if (cy < height - 1) checkNeighbor(curr + width, bin, queue, visited, colorBins);
           }
 
           const avgR = Math.round(sumR / currentRegionSize);
@@ -443,8 +420,6 @@
           const avgB = Math.round(sumB / currentRegionSize);
 
           const [h, s, v] = rgbToHsv(avgR, avgG, avgB);
-
-          // Prüfen ob Buntfarbe vorliegt
           const isChromaticallyVibrant = (v >= 0.20 && v <= 0.98 && s >= 0.20);
 
           if (isChromaticallyVibrant) {
@@ -454,7 +429,6 @@
               bestColorRgb = `rgb(${avgR}, ${avgG}, ${avgB})`;
             }
           } else {
-            // Schwarz/Weiß/Graustufen Fallback-Verarbeitung
             if (currentRegionSize > maxMonoSize) {
               maxMonoSize = currentRegionSize;
               bestMonoRgb = `rgb(${avgR}, ${avgG}, ${avgB})`;
@@ -463,8 +437,14 @@
         }
       }
 
-      // Falls Buntfarbe existiert, nimm diese; sonst nimm die größte Schwarz/Weiß/Grau-Fläche
       return bestColorRgb || bestMonoRgb;
+    }
+
+    function checkNeighbor(n, bin, queue, visited, colorBins) {
+      if (n >= 0 && n < colorBins.length && !visited[n] && colorBins[n] === bin) {
+        visited[n] = 1;
+        queue.push(n);
+      }
     }
 
     function rgbToHsv(r, g, b) {
