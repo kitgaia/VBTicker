@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>SAMS Match Finder</title>
   <style>
-    /* CSS Variables for Liquid Glass Themes & Scales */
+    /* CSS Design Tokens for Liquid Glass Aesthetics, Theme Themes & Dynamic Scaling */
     :root {
-      /* Base Scaling (Normal Scale Default) */
+      /* Dynamic UI Scaling System */
       --font-scale: 1rem;
       --pad-scale: 1;
-      --radius-card: 22px;
+      --radius-card: 20px;
       --radius-pill: 9999px;
       --radius-inner: 14px;
       --ease-ios: cubic-bezier(0.16, 1, 0.3, 1);
@@ -20,24 +20,28 @@
       --font-scale: 0.88rem;
       --pad-scale: 0.85;
       --radius-card: 16px;
+      --radius-inner: 12px;
     }
 
     [data-scale="large"] {
       --font-scale: 1.12rem;
       --pad-scale: 1.15;
-      --radius-card: 26px;
+      --radius-card: 24px;
+      --radius-inner: 16px;
     }
 
-    /* Dark Theme Palette */
+    /* Dark Liquid Glass Palette */
     [data-theme="dark"] {
       --bg-body: #030508;
-      --bg-gradient: radial-gradient(circle at 20% -10%, rgba(10, 132, 255, 0.16) 0%, transparent 50%),
+      --bg-gradient: radial-gradient(circle at 20% -10%, rgba(10, 132, 255, 0.18) 0%, transparent 50%),
                       radial-gradient(circle at 80% 100%, rgba(48, 209, 88, 0.08) 0%, transparent 50%);
+      --sticky-bg: rgba(3, 5, 8, 0.78);
       --glass-surface: rgba(255, 255, 255, 0.07);
       --glass-surface-hover: rgba(255, 255, 255, 0.12);
+      --glass-surface-active: rgba(255, 255, 255, 0.16);
       --glass-border: rgba(255, 255, 255, 0.14);
-      --glass-border-light: rgba(255, 255, 255, 0.22);
-      --glass-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.18);
+      --glass-border-light: rgba(255, 255, 255, 0.25);
+      --glass-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.22);
       --text-primary: #ffffff;
       --text-muted: #98989d;
       --accent-contrast: #ffffff;
@@ -47,44 +51,46 @@
       
       /* Past Match Specifics (Dark) */
       --past-card-bg: rgba(255, 255, 255, 0.025);
-      --past-border: rgba(255, 255, 255, 0.07);
-      --past-opacity: 0.38;
-      --past-badge-bg: rgba(255, 255, 255, 0.05);
+      --past-border: rgba(255, 255, 255, 0.08);
+      --past-opacity: 0.42;
+      --past-badge-bg: rgba(255, 255, 255, 0.06);
       --past-badge-text: #8e8e93;
     }
 
-    /* Light Theme Palette */
+    /* Light Liquid Glass Palette */
     [data-theme="light"] {
       --bg-body: #f2f2f7;
-      --bg-gradient: radial-gradient(circle at 30% -10%, rgba(0, 122, 255, 0.1) 0%, transparent 50%),
+      --bg-gradient: radial-gradient(circle at 30% -10%, rgba(0, 122, 255, 0.12) 0%, transparent 50%),
                       radial-gradient(circle at 70% 100%, rgba(52, 199, 89, 0.08) 0%, transparent 50%);
+      --sticky-bg: rgba(242, 242, 247, 0.8);
       --glass-surface: rgba(255, 255, 255, 0.72);
       --glass-surface-hover: rgba(255, 255, 255, 0.88);
+      --glass-surface-active: rgba(255, 255, 255, 0.95);
       --glass-border: rgba(0, 0, 0, 0.1);
-      --glass-border-light: rgba(0, 0, 0, 0.16);
+      --glass-border-light: rgba(0, 0, 0, 0.18);
       --glass-shadow: 0 12px 30px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.9);
       --text-primary: #000000;
       --text-muted: #6c6c70;
       --accent-contrast: #000000;
       --badge-bg: rgba(0, 0, 0, 0.06);
       --badge-border: rgba(0, 0, 0, 0.12);
-      --input-bg: rgba(255, 255, 255, 0.75);
+      --input-bg: rgba(255, 255, 255, 0.82);
       
       /* Past Match Specifics (Light) */
       --past-card-bg: rgba(0, 0, 0, 0.03);
       --past-border: rgba(0, 0, 0, 0.06);
-      --past-opacity: 0.45;
+      --past-opacity: 0.52;
       --past-badge-bg: rgba(0, 0, 0, 0.05);
       --past-badge-text: #6c6c70;
     }
 
-    /* Dynamic Accent Colors */
-    [data-accent="contrast"][data-theme="dark"] { --accent: #ffffff; --accent-glow: rgba(255,255,255,0.3); --accent-text: #000000; }
-    [data-accent="contrast"][data-theme="light"] { --accent: #000000; --accent-glow: rgba(0,0,0,0.2); --accent-text: #ffffff; }
-    [data-accent="blue"] { --accent: #0a84ff; --accent-glow: rgba(10, 132, 255, 0.35); --accent-text: #ffffff; }
-    [data-accent="emerald"] { --accent: #30d158; --accent-glow: rgba(48, 209, 88, 0.35); --accent-text: #000000; }
-    [data-accent="orange"] { --accent: #ff9f0a; --accent-glow: rgba(255, 159, 10, 0.35); --accent-text: #000000; }
-    [data-accent="purple"] { --accent: #bf5af2; --accent-glow: rgba(191, 90, 242, 0.35); --accent-text: #ffffff; }
+    /* Dynamic Accent Color Modes */
+    [data-accent="contrast"][data-theme="dark"] { --accent: #ffffff; --accent-glow: rgba(255, 255, 255, 0.35); --accent-text: #000000; }
+    [data-accent="contrast"][data-theme="light"] { --accent: #000000; --accent-glow: rgba(0, 0, 0, 0.25); --accent-text: #ffffff; }
+    [data-accent="blue"] { --accent: #0a84ff; --accent-glow: rgba(10, 132, 255, 0.38); --accent-text: #ffffff; }
+    [data-accent="emerald"] { --accent: #30d158; --accent-glow: rgba(48, 209, 88, 0.38); --accent-text: #000000; }
+    [data-accent="orange"] { --accent: #ff9f0a; --accent-glow: rgba(255, 159, 10, 0.38); --accent-text: #000000; }
+    [data-accent="purple"] { --accent: #bf5af2; --accent-glow: rgba(191, 90, 242, 0.38); --accent-text: #ffffff; }
 
     * {
       box-sizing: border-box;
@@ -111,7 +117,7 @@
       margin: 0 auto;
     }
 
-    /* 1. Scrollable Header (Naturally scrolls out of view) */
+    /* 1. Scrollable Header Area (Scrolls out of view naturally) */
     .scrollable-header {
       padding: 12px 4px 16px 4px;
     }
@@ -130,13 +136,13 @@
       font-weight: 400;
     }
 
-    /* 2. Sticky Bar (Only Search & Action Buttons Pin to Top) */
+    /* 2. Sticky Search Bar Row (Pinned at Top with Frosted Glass) */
     .sticky-bar-wrapper {
       position: sticky;
       top: 0;
       padding: 10px 0;
       z-index: 100;
-      background: var(--bg-body);
+      background: var(--sticky-bg);
       backdrop-filter: blur(28px) saturate(200%);
       -webkit-backdrop-filter: blur(28px) saturate(200%);
       margin-bottom: 20px;
@@ -168,13 +174,13 @@
       outline: none;
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.18);
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.22);
       transition: all 0.25s var(--ease-ios);
     }
 
     .search-box:focus {
       border-color: var(--accent);
-      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 0 0 3px var(--accent-glow);
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), 0 0 0 3px var(--accent-glow);
     }
 
     .search-icon {
@@ -188,7 +194,7 @@
       pointer-events: none;
     }
 
-    /* Icon Buttons (Filter & Settings) */
+    /* Icon Buttons (Circular Filter & Settings Buttons) */
     .icon-btn {
       width: calc(46px * var(--pad-scale));
       height: calc(46px * var(--pad-scale));
@@ -202,7 +208,7 @@
       justify-content: center;
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.18);
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.22);
       transition: all 0.22s var(--ease-ios);
       flex-shrink: 0;
     }
@@ -235,7 +241,7 @@
       transition: fill 0.2s ease;
     }
 
-    /* Autocomplete Dropdown List */
+    /* Autocomplete Suggestion Dropdown */
     .autocomplete-list {
       position: absolute;
       top: calc(52px * var(--pad-scale));
@@ -441,23 +447,23 @@
     .swatch-orange { background: #ff9f0a; }
     .swatch-purple { background: #bf5af2; }
 
-    /* 3. Responsive Grid Layout (Desktop Multi-Column) */
+    /* 3. Responsive Multi-Column Grid Layout (Desktop & Tablet) */
     .match-list {
       display: grid;
       grid-template-columns: 1fr;
       gap: 16px;
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 680px) {
       .match-list {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
       }
       .filter-grid {
         grid-template-columns: repeat(4, 1fr);
       }
     }
 
-    @media (min-width: 1100px) {
+    @media (min-width: 1024px) {
       .match-list {
         grid-template-columns: repeat(3, 1fr);
       }
@@ -490,7 +496,7 @@
       transform: scale(0.985);
     }
 
-    /* Visual Styling for Past / Completed Matches (Verbessert) */
+    /* Visual Styling for Past / Completed Matches */
     .match-card.past-match {
       opacity: var(--past-opacity);
       background: var(--past-card-bg);
@@ -499,7 +505,7 @@
     }
 
     .match-card.past-match:hover {
-      opacity: 0.85;
+      opacity: 0.88;
       filter: grayscale(0%) contrast(100%);
       background: var(--glass-surface-hover);
     }
@@ -655,13 +661,13 @@
 <body>
 
   <div class="container">
-    <!-- 1. Scrollable Header (Will scroll out of view naturally) -->
+    <!-- 1. Scrollable Header Area (Scrolls out of view naturally) -->
     <header class="scrollable-header">
       <h1>SAMS Match Finder</h1>
       <p class="subtitle">Begegnungen suchen & OBS-Overlay Link erstellen</p>
     </header>
 
-    <!-- 2. Sticky Bar (Pins search controls to top) -->
+    <!-- 2. Sticky Search Bar Row (Pins Search, Filter & Settings controls to top) -->
     <div class="sticky-bar-wrapper">
       <div class="search-row">
         <div class="search-wrapper">
@@ -672,14 +678,14 @@
           <div id="autocomplete-list" class="autocomplete-list"></div>
         </div>
 
-        <!-- Filter Toggle Button -->
+        <!-- Filter Toggle Button (3 Filter Lines Icon) -->
         <button id="filter-toggle" class="icon-btn" aria-label="Filter umschalten" title="Filter öffnen">
           <svg viewBox="0 0 24 24">
             <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
           </svg>
         </button>
 
-        <!-- Settings Toggle Button -->
+        <!-- Settings Toggle Button (Gear Icon) -->
         <button id="settings-toggle" class="icon-btn" aria-label="Einstellungen umschalten" title="Einstellungen">
           <svg viewBox="0 0 24 24">
             <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6 3.6z"/>
@@ -770,7 +776,7 @@
       </div>
     </div>
 
-    <!-- 3. Match Grid List -->
+    <!-- 3. Match Grid List Area -->
     <div id="status" class="status-box">Lade aktuelle Spieldaten...</div>
     <div id="match-list" class="match-list"></div>
   </div>
@@ -782,7 +788,7 @@
     let allMatches = [];
     let leagueLookupMap = new Map();
 
-    /* Performance-Optimierung 1: RegEx Cache */
+    /* --- Performance Optimization 1: RegEx Caching for Word Boundaries --- */
     const regexCache = new Map();
     function getExactWordRegex(word) {
       if (regexCache.has(word)) return regexCache.get(word);
@@ -794,13 +800,14 @@
       return rx;
     }
 
+    /* Exact word boundary query matching (e.g., "TuS Meinerzhagen II" vs "III") */
     function matchesExactQuery(text, query) {
       if (!query) return true;
       const words = query.trim().split(/\s+/).filter(Boolean);
       return words.every(word => getExactWordRegex(word).test(text));
     }
 
-    /* Performance-Optimierung 2: Debounced Input Helper */
+    /* --- Performance Optimization 2: Debounce Helper --- */
     function debounce(fn, delay = 120) {
       let timer;
       return function(...args) {
@@ -815,7 +822,7 @@
       loadMatches();
     });
 
-    /* --- Preferences & Settings --- */
+    /* --- Preferences & Settings Management --- */
     function initSettings() {
       const savedTheme = localStorage.getItem('sams_theme') || 'dark';
       const savedAccent = localStorage.getItem('sams_accent') || 'contrast';
@@ -857,7 +864,7 @@
       const filterDrawer = document.getElementById('filter-drawer');
       const settingsDrawer = document.getElementById('settings-drawer');
 
-      // Debounced search handling to avoid stuttering on mobile keyboards
+      // Debounced search input handler
       const debouncedApplyFilters = debounce(() => applyFilters(false), 120);
 
       searchInput.addEventListener('input', (e) => {
@@ -895,7 +902,7 @@
         }
       });
 
-      // Settings Listeners
+      // Settings Buttons Listeners
       document.querySelectorAll('[data-theme-val]').forEach(btn => {
         btn.addEventListener('click', () => setTheme(btn.getAttribute('data-theme-val')));
       });
@@ -924,7 +931,7 @@
       document.getElementById('reset-filters').addEventListener('click', resetFilters);
     }
 
-    /* Performance-Optimierung 3: Single-Pass Baum-Indexierung */
+    /* --- Performance Optimization 3: Single-Pass Tree Indexing --- */
     function buildLeagueLookupMap(data) {
       leagueLookupMap.clear();
 
@@ -1090,6 +1097,7 @@
       return genderStr;
     }
 
+    /* --- Cascading Filter Logic (Gender -> League -> Team) --- */
     function updateCascadingDropdowns() {
       const selectedGender = document.getElementById('filter-gender').value;
       const leagueSelect = document.getElementById('filter-league');
@@ -1249,7 +1257,7 @@
       applyFilters(true);
     }
 
-    /* Performance-Optimierung 4: Effizientes DOM-Rendering */
+    /* --- Performance Optimization 4: Efficient DOM Rendering --- */
     function renderMatches(matches) {
       const listEl = document.getElementById('match-list');
 
